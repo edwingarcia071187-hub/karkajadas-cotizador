@@ -10,52 +10,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: FORZAR TEMA CLARO EN TODA LA APLICACIÓN Y CABECERA ---
+# --- ESTILOS CSS COMPLEMENTARIOS (BOTONES EN GRIS LEVE Y TARJETAS) ---
 st.markdown("""
     <style>
-    /* Forzar fondo blanco absoluto en toda la aplicación principal y cabeceras */
-    .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"], section.main, header {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    
-    /* Barra superior de Streamlit (Header) en blanco impecable */
-    header[data-testid="stHeader"] {
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Botón de despliegue superior (Hamburguesa/Flecha) visible */
-    button[kind="header"], [data-testid="collapsedControl"] {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
-    }
-    
-    /* Barra lateral limpia con fondo blanco puro */
-    div[data-testid="stSidebar"], div[data-testid="stSidebar"] > div:first-child {
-        background-color: #FFFFFF !important;
-        border-right: 1px solid #E2E8F0;
-        padding-top: 1.5rem;
-    }
-    
-    /* Tipografía nítida y elegante para todos los textos */
-    h1, h2, h3, p, span, label, div {
-        color: #0F172A !important;
-    }
-    
     /* Tarjetas de contenido con diseño ejecutivo */
     .card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
         padding: 24px;
         border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         margin-bottom: 20px;
     }
     
     /* Botones principales: Gris leve ejecutivo con texto oscuro nítido y borde sutil */
     .stButton>button {
-        background-color: #F8FAFC !important;
+        background-color: #F1F5F9 !important; /* GRIS LEVE */
         color: #0F172A !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
@@ -66,48 +36,14 @@ st.markdown("""
         transition: all 0.2s ease;
         width: 100%;
     }
+    
+    /* Al pasar el mouse sobre los botones */
     .stButton>button:hover {
-        background-color: #E2E8F0 !important;
-        color: #0F172A !important;
+        background-color: #E2E8F0 !important; /* Un gris apenitas más oscuro */
         border-color: #94A3B8 !important;
     }
     .stButton>button p {
         color: #0F172A !important;
-    }
-    
-    /* --- SELECTORES Y MENÚS DESPLEGABLES --- */
-    div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border-color: #CBD5E1 !important;
-    }
-    
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[role="listbox"], div[class*="base-select"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        border: 1px solid #E2E8F0 !important;
-    }
-    
-    li[data-baseweb="option"], div[role="option"] {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-    }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover, li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
-        background-color: #F1F5F9 !important;
-        color: #0F172A !important;
-        border: 1px solid #94A3B8 !important;
-        border-radius: 4px;
-    }
-
-    input {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
-    }
-    
-    div[data-testid="stTable"], div[data-testid="stDataFrame"] {
-        border: 1px solid #E2E8F0;
-        border-radius: 6px;
-        background-color: #FFFFFF !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -116,7 +52,7 @@ st.markdown("""
 if "nav_menu" not in st.session_state:
     st.session_state.nav_menu = "Nueva Cotización"
 
-# --- BASES DE DATOS AUDITADAS Y AMPLIADAS ---
+# --- BASES DE DATOS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 
 clientes_lista = [
@@ -157,7 +93,6 @@ proveedores_catalogo = [
 # --- MENÚ LATERAL ---
 st.sidebar.markdown("<h2 style='color: #0F172A; font-size: 18px; font-weight: 700; letter-spacing: -0.5px;'>Karkajadas Group</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-
 st.sidebar.markdown("<p style='font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;'>Navegación</p>", unsafe_allow_html=True)
 
 if st.sidebar.button("Nueva Cotización"):
@@ -198,11 +133,9 @@ if menu == "Nueva Cotización":
     st.markdown("### Detalle de Ítems, Fechas y Servicios")
     
     if "items_cot" not in st.session_state:
-        st.session_state.items_cot = [
-            {"servicio": "Minicity", "proveedor": "Karkajadas Group", "ciudad": "Quito", "fecha": str(datetime.now().date()), "cantidad": 1, "costo": 200.0, "iva_prov": 0.0, "fee_pct": 25.0}
-        ]
+        st.session_state.items_cot = []
 
-    with st.expander("Añadir nuevo servicio al detalle con su fecha y ciudad"):
+    with st.expander("Añadir nuevo servicio al detalle con su fecha y ciudad", expanded=True):
         c_cat = st.selectbox("Seleccionar Servicio del Catálogo Real", [p["servicio"] for p in proveedores_catalogo])
         item_def = next(p for p in proveedores_catalogo if p["servicio"] == c_cat)
         
@@ -212,8 +145,8 @@ if menu == "Nueva Cotización":
         with col_b:
             costo_add = st.number_input("Costo Unitario ($)", value=item_def["precio_base"])
         with col_c:
-            # Reemplazamos el calendario nativo problemático por un campo de texto limpio de fecha (YYYY-MM-DD)
-            fecha_str = st.text_input("Fecha del Servicio (YYYY-MM-DD)", value=str(datetime.now().date()))
+            # HEMOS VUELTO AL CALENDARIO DESPLEGABLE, AHORA SÍ EN BLANCO
+            fecha_item = st.date_input("Fecha del Servicio", datetime.now())
         with col_d:
             ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
         with col_e:
@@ -226,7 +159,7 @@ if menu == "Nueva Cotización":
                 "servicio": c_cat,
                 "proveedor": item_def["proveedor"],
                 "ciudad": ciudad_item,
-                "fecha": fecha_str,
+                "fecha": str(fecha_item),
                 "cantidad": cant_add,
                 "costo": costo_add,
                 "iva_prov": iva_add,
@@ -235,7 +168,6 @@ if menu == "Nueva Cotización":
             st.success("¡Línea agregada con éxito!")
             st.rerun()
 
-    # Visualización y opción de eliminar ítems
     st.markdown("#### Ítems Actuales en la Cotización")
     subtotal_general = 0
     total_general = 0
@@ -282,34 +214,23 @@ if menu == "Nueva Cotización":
         if st.button("Generar Orden de Contratación (Proveedor)"):
             st.success("¡Orden de servicio a proveedor generada!")
 
-# --- MÓDULO 2: DIRECTORIO DE CLIENTES (AUDITADO) ---
+# --- MÓDULO 2: DIRECTORIO DE CLIENTES ---
 elif menu == "Directorio de Clientes":
     st.markdown("<h2>Directorio de Clientes Estandarizado</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B;'>Base de datos corporativa completa y depurada.</p>", unsafe_allow_html=True)
-    
     df_clientes = pd.DataFrame({
-        "Empresa Cliente": [
-            "Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito", 
-            "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", 
-            "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."
-        ],
-        "RUC": [
-            "1791179382001", "1790151234001", "1790012345001", 
-            "1792411149001", "1791314379001", "1791234567001", 
-            "1790987654001", "1791122334001", "1790930866001", "0990351260001"
-        ],
+        "Empresa Cliente": ["Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."],
+        "RUC": ["1791179382001", "1790151234001", "1790012345001", "1792411149001", "1791314379001", "1791234567001", "1790987654001", "1791122334001", "1790930866001", "0990351260001"],
         "Ciudad Principal": ["Quito", "Quito", "Quito", "Quito", "Quito", "Guayaquil", "Quito", "Quito", "Quito", "Guayaquil"],
         "Contacto Principal": ["Departamento de Compras", "Logística y Eventos", "Eventos y Logística", "Francisco Velasco", "Línea Corporativa", "Patricia Sevilla", "Gabriela Guano", "M. Buitrón", "Eva Baca", "Servicio al Cliente"]
     })
     st.dataframe(df_clientes, use_container_width=True)
 
-# --- MÓDULO 3: PROVEEDORES Y SERVICIOS (AUDITADO) ---
+# --- MÓDULO 3: PROVEEDORES Y SERVICIOS ---
 elif menu == "Proveedores y Servicios":
     st.markdown("<h2>Catálogo Maestro de Proveedores y Servicios</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B;'>Base de datos oficial de terceros y tarifas corporativas.</p>", unsafe_allow_html=True)
-    
-    df_prov = pd.DataFrame(proveedores_catalogo)
-    st.dataframe(df_prov, use_container_width=True)
+    st.dataframe(pd.DataFrame(proveedores_catalogo), use_container_width=True)
 
 # --- MÓDULO 4: DASHBOARD 360 Y CALENDARIO ---
 elif menu == "Dashboard 360° y Calendario":
@@ -325,12 +246,10 @@ elif menu == "Dashboard 360° y Calendario":
         st.selectbox("Año", [2026, 2025])
         
     st.markdown("<br>", unsafe_allow_html=True)
-    
     m1, m2, m3 = st.columns(3)
     m1.metric("Facturación Total", "$18,450.00", "+14% vs mes anterior")
     m2.metric("Ganancia Neta (FEE)", "$4,120.00", "+22% rentabilidad")
     m3.metric("Eventos Confirmados", "12", "Activos en curso")
-    
     st.markdown("---")
     st.markdown("### Calendario y Registro de Eventos Confirmados")
     st.info("Próximo evento: Feria de Salud con Cransa en Quito — Fecha: 07 de Octubre de 2026.")
