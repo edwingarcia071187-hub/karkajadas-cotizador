@@ -10,14 +10,25 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: TEMA CLARO CON GRIS LEVE EJECUTIVO ---
+# --- ESTILOS CSS MAESTROS: FORZAR TEMA CLARO EN TODA LA APLICACIÓN Y CABECERA ---
 st.markdown("""
     <style>
-    /* Forzar fondo blanco absoluto en toda la aplicación principal */
-    .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"], section.main {
+    /* Forzar fondo blanco absoluto en toda la aplicación principal y cabeceras */
+    .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"], section.main, header {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    
+    /* Barra superior de Streamlit (Header) en blanco impecable */
+    header[data-testid="stHeader"] {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* Botón de despliegue superior (Hamburguesa/Flecha) visible */
+    button[kind="header"], [data-testid="collapsedControl"] {
+        color: #0F172A !important;
+        background-color: #FFFFFF !important;
     }
     
     /* Barra lateral limpia con fondo blanco puro */
@@ -25,12 +36,6 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0;
         padding-top: 1.5rem;
-    }
-    
-    /* Botón de despliegue superior visible */
-    button[kind="header"] {
-        color: #0F172A !important;
-        background-color: #FFFFFF !important;
     }
     
     /* Tipografía nítida y elegante para todos los textos */
@@ -70,7 +75,7 @@ st.markdown("""
         color: #0F172A !important;
     }
     
-    /* --- SELECTORES, MENÚS Y POPUPS EN GRIS LEVE --- */
+    /* --- SELECTORES Y MENÚS DESPLEGABLES --- */
     div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -92,42 +97,6 @@ st.markdown("""
         color: #0F172A !important;
         border: 1px solid #94A3B8 !important;
         border-radius: 4px;
-    }
-
-    /* --- CALENDARIO CON FONDO GRIS LEVE Y MÁXIMA LEGIBILIDAD --- */
-    div[data-baseweb="calendar"], 
-    div[data-baseweb="popover"] div[data-baseweb="calendar"],
-    div[class*="calendar"], 
-    div[role="dialog"] {
-        background-color: #F8FAFC !important;
-        color: #0F172A !important;
-        border: 1px solid #CBD5E1 !important;
-        border-radius: 8px;
-    }
-    
-    div[data-baseweb="calendar"] *, 
-    div[role="dialog"] *,
-    div[data-baseweb="calendar"] button, 
-    div[data-baseweb="calendar"] div, 
-    span[class*="calendar"] {
-        background-color: transparent !important;
-        color: #0F172A !important;
-    }
-    
-    /* Efecto al pasar el cursor sobre los días del calendario */
-    div[data-baseweb="calendar"] button:hover {
-        background-color: #E2E8F0 !important;
-        border: 1px solid #94A3B8 !important;
-        border-radius: 50% !important;
-        color: #0F172A !important;
-    }
-    
-    /* Día seleccionado en el calendario: Gris leve elegante */
-    div[data-baseweb="calendar"] button[aria-selected="true"] {
-        background-color: #CBD5E1 !important;
-        color: #0F172A !important;
-        font-weight: 700;
-        border-radius: 50% !important;
     }
 
     input {
@@ -243,7 +212,8 @@ if menu == "Nueva Cotización":
         with col_b:
             costo_add = st.number_input("Costo Unitario ($)", value=item_def["precio_base"])
         with col_c:
-            fecha_item = st.date_input("Fecha del Servicio", datetime.now())
+            # Reemplazamos el calendario nativo problemático por un campo de texto limpio de fecha (YYYY-MM-DD)
+            fecha_str = st.text_input("Fecha del Servicio (YYYY-MM-DD)", value=str(datetime.now().date()))
         with col_d:
             ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
         with col_e:
@@ -256,7 +226,7 @@ if menu == "Nueva Cotización":
                 "servicio": c_cat,
                 "proveedor": item_def["proveedor"],
                 "ciudad": ciudad_item,
-                "fecha": str(fecha_item),
+                "fecha": fecha_str,
                 "cantidad": cant_add,
                 "costo": costo_add,
                 "iva_prov": iva_add,
