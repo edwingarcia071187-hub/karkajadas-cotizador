@@ -4,252 +4,250 @@ from datetime import datetime
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Karkajadas Group - Sistema de Gestión y Cotizaciones",
+    page_title="Karkajadas Group - ERP",
     page_icon="💼",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS COMPLEMENTARIOS (BOTONES EN GRIS LEVE Y TARJETAS) ---
+# --- ESTILOS CSS: OPTIMIZACIÓN DE ESPACIO Y CONTRASTE DE BOTONES ---
 st.markdown("""
     <style>
-    /* Tarjetas de contenido con diseño ejecutivo */
-    .card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        padding: 24px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
+    /* Fondo blanco absoluto */
+    .stApp, .main, header {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
     }
     
-    /* Botones principales: Gris leve ejecutivo con texto oscuro nítido y borde sutil */
+    /* Botones principales con contorno claro y elegante para ser visibles */
     .stButton>button {
-        background-color: #F1F5F9 !important; /* GRIS LEVE */
+        background-color: #FFFFFF !important;
         color: #0F172A !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
         font-weight: 600;
         font-size: 14px;
-        border: 1px solid #CBD5E1 !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        border: 2px solid #0F172A !important; /* CONTORNO AZUL MARINO/NEGRO ELEGANTE */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
         width: 100%;
     }
-    
-    /* Al pasar el mouse sobre los botones */
     .stButton>button:hover {
-        background-color: #E2E8F0 !important; /* Un gris apenitas más oscuro */
-        border-color: #94A3B8 !important;
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
     }
     .stButton>button p {
+        color: inherit !important;
+    }
+    
+    /* Tarjetas del menú principal */
+    .nav-card {
+        border: 1px solid #E2E8F0;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background-color: #F8FAFC;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .nav-card:hover {
+        border-color: #0F172A;
+        transform: translateY(-2px);
+    }
+    
+    /* Reducir espacios vacíos innecesarios arriba */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    /* Inputs y Selectores limpios */
+    div[data-baseweb="select"] > div, input {
+        background-color: #FFFFFF !important;
         color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+    
+    /* Totales destacados */
+    .total-box {
+        padding: 15px;
+        border-radius: 8px;
+        background-color: #F1F5F9;
+        border-left: 5px solid #0F172A;
+        font-size: 18px;
+        font-weight: bold;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- GESTIÓN DE ESTADO DE NAVEGACIÓN ---
+# --- INICIALIZACIÓN DE BASES DE DATOS Y ESTADOS ---
 if "nav_menu" not in st.session_state:
-    st.session_state.nav_menu = "Nueva Cotización"
+    st.session_state.nav_menu = "Panel Principal"
+if "items_cot" not in st.session_state:
+    st.session_state.items_cot = []
+if "cotizaciones_guardadas" not in st.session_state:
+    st.session_state.cotizaciones_guardadas = [
+        {"codigo": "KG-20260928-01", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
+        {"codigo": "KG-20260929-02", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-10-04", "estado": "Aprobada", "total": 840.50},
+        {"codigo": "KG-20260930-01", "cliente": "Hilton Colón Quito", "fecha": "2026-10-15", "estado": "Enviada", "total": 450.00}
+    ]
 
-# --- BASES DE DATOS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
-
-clientes_lista = [
-    "Corrugadora Nacional Cransa S.A. (1791179382001)",
-    "Siemens Ecuador S.A.",
-    "Hilton Colón Quito",
-    "Bebidas Arcacontinental (Arcador S.A.)",
-    "Essity Ecuador (1791314379001)",
-    "Intaco Ecuador S.A.",
-    "Procongelados S.A.",
-    "Levapan del Ecuador",
-    "Agencia Aseguradora Asertec S.A.",
-    "Industrias Lácteas Toni S.A."
-]
-
+clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 proveedores_catalogo = [
-    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
-    {"servicio": "Backing Fiestas", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 180.0, "iva": 0.0},
-    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15},
-    {"servicio": "Modelos con traje retro (6 hrs)", "proveedor": "José Luis Rodríguez", "categoria": "Personal", "ciudad": "Quito", "precio_base": 130.0, "iva": 0.0},
-    {"servicio": "Centros de mesas de dulces", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 9.60, "iva": 0.0},
-    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0},
-    {"servicio": "Papá Noel / Personaje navideño", "proveedor": "Jairto Arciniegas", "categoria": "Animación", "ciudad": "Quito", "precio_base": 180.0, "iva": 0.0},
-    {"servicio": "Mimos (2 horas)", "proveedor": "José Luis Rodríguez", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.0},
-    {"servicio": "Afiche publicitario", "proveedor": "Ángel Gordillo", "categoria": "Imprenta", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.15},
-    {"servicio": "Cantante en vivo (1 hora)", "proveedor": "Alejandra Guzmán", "categoria": "Música", "ciudad": "Quito", "precio_base": 120.0, "iva": 0.0},
-    {"servicio": "Parlante y micrófonos", "proveedor": "Karkajadas Group", "categoria": "Audio", "ciudad": "Quito", "precio_base": 45.0, "iva": 0.0},
-    {"servicio": "Tableros vestidos", "proveedor": "Karkajadas Group", "categoria": "Mobiliario", "ciudad": "Quito", "precio_base": 10.0, "iva": 0.0},
-    {"servicio": "Alfombra roja", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 70.0, "iva": 0.0},
-    {"servicio": "Árboles de navidad en globos", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 25.0, "iva": 0.0},
-    {"servicio": "Espejo mágico (2 horas)", "proveedor": "Mayac Eventos", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.15},
-    {"servicio": "Maquillaje social y artístico", "proveedor": "Cristina Taimal", "categoria": "Maquillaje", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.0},
-    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0},
-    {"servicio": "Minicity", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 200.0, "iva": 0.0},
-    {"servicio": "Estación de Arte", "proveedor": "Karkajadas Group", "categoria": "Actividades creativas", "ciudad": "Quito", "precio_base": 160.0, "iva": 0.0}
+    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "precio_base": 300.0, "iva": 0.0},
+    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "precio_base": 150.0, "iva": 0.15},
+    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "precio_base": 40.0, "iva": 0.0},
+    {"servicio": "Papá Noel / Personaje", "proveedor": "Jairto Arciniegas", "precio_base": 180.0, "iva": 0.0},
+    {"servicio": "Parlante y micrófonos", "proveedor": "Karkajadas Group", "precio_base": 45.0, "iva": 0.0},
+    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "precio_base": 125.0, "iva": 0.0}
 ]
 
 # --- MENÚ LATERAL ---
-st.sidebar.markdown("<h2 style='color: #0F172A; font-size: 18px; font-weight: 700; letter-spacing: -0.5px;'>Karkajadas Group</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;'>Navegación</p>", unsafe_allow_html=True)
-
-if st.sidebar.button("Nueva Cotización"):
-    st.session_state.nav_menu = "Nueva Cotización"
-    st.rerun()
-
-if st.sidebar.button("Directorio de Clientes"):
-    st.session_state.nav_menu = "Directorio de Clientes"
-    st.rerun()
-
-if st.sidebar.button("Proveedores y Servicios"):
-    st.session_state.nav_menu = "Proveedores y Servicios"
-    st.rerun()
-
-if st.sidebar.button("Dashboard 360° y Calendario"):
-    st.session_state.nav_menu = "Dashboard 360° y Calendario"
-    st.rerun()
-
-st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-st.sidebar.caption("Sistema Operativo Activo")
+st.sidebar.markdown("### Karkajadas Group")
+if st.sidebar.button("🏠 Panel Principal"): st.session_state.nav_menu = "Panel Principal"; st.rerun()
+if st.sidebar.button("✨ Nueva Cotización"): st.session_state.nav_menu = "Nueva Cotización"; st.rerun()
+if st.sidebar.button("📂 Consultar Cotizaciones"): st.session_state.nav_menu = "Consultar Cotizaciones"; st.rerun()
+if st.sidebar.button("👥 Clientes y Proveedores"): st.session_state.nav_menu = "Directorios"; st.rerun()
 
 menu = st.session_state.nav_menu
 
-# --- MÓDULO 1: NUEVA COTIZACIÓN ---
-if menu == "Nueva Cotización":
-    st.markdown("<h2>Generador Comercial de Cotizaciones</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 18px; font-weight: 700; color: #0F172A; letter-spacing: -0.5px;'>Karkajadas Group</p>", unsafe_allow_html=True)
+# --- VISTA 1: PANEL PRINCIPAL (HOME) ---
+if menu == "Panel Principal":
+    st.markdown("<h2>Karkajadas Group - Workspace</h2>", unsafe_allow_html=True)
     
-    with st.container():
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
-        col1, col2 = st.columns(2)
-        with col1:
-            cliente_sel = st.selectbox("Cliente Destino", clientes_lista)
-        with col2:
-            ciudad_gral = st.selectbox("Ámbito Geográfico General", ciudades_lista)
-        st.markdown("</div>", unsafe_allow_html=True)
-        
-    st.markdown("### Detalle de Ítems, Fechas y Servicios")
+    # Tarjetas de Navegación Rápida
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        if st.button("➕ Crear Nueva Cotización"):
+            st.session_state.nav_menu = "Nueva Cotización"
+            st.rerun()
+    with c2:
+        if st.button("📂 Ver Cotizaciones Guardadas"):
+            st.session_state.nav_menu = "Consultar Cotizaciones"
+            st.rerun()
+    with c3:
+        if st.button("📊 Reportes y Dashboard"):
+            st.success("Módulo de reportes en construcción.")
+            
+    st.markdown("---")
     
-    if "items_cot" not in st.session_state:
-        st.session_state.items_cot = []
+    # Visualizador de Eventos de la Semana (Solo Aprobadas)
+    st.markdown("### 📅 Eventos de esta Semana (Cotizaciones Aprobadas)")
+    eventos_aprobados = [cot para cot in st.session_state.cotizaciones_guardadas if cot["estado"] == "Aprobada"]
+    
+    if eventos_aprobados:
+        for ev in eventos_aprobados:
+            st.info(f"✅ **{ev['fecha']}** | Cliente: {ev['cliente']} | Código: {ev['codigo']} | Monto: ${ev['total']:.2f}")
+    else:
+        st.write("No hay eventos confirmados para esta semana.")
 
-    with st.expander("Añadir nuevo servicio al detalle con su fecha y ciudad", expanded=True):
-        c_cat = st.selectbox("Seleccionar Servicio del Catálogo Real", [p["servicio"] for p in proveedores_catalogo])
+# --- VISTA 2: NUEVA COTIZACIÓN (LAYOUT COMPACTO) ---
+elif menu == "Nueva Cotización":
+    st.markdown("<h3>Generador de Cotizaciones</h3>", unsafe_allow_html=True)
+    
+    # Generar código automático sugerido
+    codigo_sugerido = f"KG-{datetime.now().strftime('%Y%m%d')}-00{len(st.session_state.cotizaciones_guardadas)+1}"
+    
+    # 1. LAYOUT SUPERIOR SÚPER COMPACTO
+    col1, col2, col3, col4 = st.columns([1.5, 3, 1.5, 1.5])
+    with col1:
+        cod_cotizacion = st.text_input("Código Cotización", value=codigo_sugerido)
+    with col2:
+        cliente_sel = st.selectbox("Cliente", clientes_lista)
+    with col3:
+        fecha_gral = st.text_input("Fecha Gral. (YYYY-MM-DD)", value=str(datetime.now().date()))
+    with col4:
+        estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"])
+        
+    st.markdown("---")
+    
+    # 2. SECCIÓN DE ÍTEMS
+    with st.expander("➕ Añadir servicio (con fecha y ciudad específica)", expanded=True):
+        c_cat = st.selectbox("Servicio del Catálogo", [p["servicio"] for p in proveedores_catalogo])
         item_def = next(p for p in proveedores_catalogo if p["servicio"] == c_cat)
         
-        col_a, col_b, col_c, col_d, col_e, col_f = st.columns(6)
-        with col_a:
-            cant_add = st.number_input("Cantidad", min_value=1, value=1)
-        with col_b:
-            costo_add = st.number_input("Costo Unitario ($)", value=item_def["precio_base"])
-        with col_c:
-            # HEMOS VUELTO AL CALENDARIO DESPLEGABLE, AHORA SÍ EN BLANCO
-            fecha_item = st.date_input("Fecha del Servicio", datetime.now())
-        with col_d:
-            ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
-        with col_e:
-            iva_add = st.selectbox("IVA", [0.0, 0.15], index=1 if item_def["iva"] > 0 else 0)
-        with col_f:
-            fee_add = st.number_input("FEE %", value=20.0, step=5.0)
+        ca, cb, cc, cd, ce, cf = st.columns(6)
+        with ca: cant_add = st.number_input("Cant.", min_value=1, value=1)
+        with cb: costo_add = st.number_input("Costo Unit. ($)", value=item_def["precio_base"])
+        with cc: fecha_item = st.text_input("Fecha", value=fecha_gral)
+        with cd: ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
+        with ce: iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_def["iva"] > 0 else 0)
+        with cf: fee_add = st.number_input("FEE %", value=20.0, step=5.0)
             
         if st.button("Agregar a la Cotización"):
             st.session_state.items_cot.append({
-                "servicio": c_cat,
-                "proveedor": item_def["proveedor"],
-                "ciudad": ciudad_item,
-                "fecha": str(fecha_item),
-                "cantidad": cant_add,
-                "costo": costo_add,
-                "iva_prov": iva_add,
-                "fee_pct": fee_add
+                "servicio": c_cat, "proveedor": item_def["proveedor"], "ciudad": ciudad_item,
+                "fecha": fecha_item, "cantidad": cant_add, "costo": costo_add,
+                "iva_prov": iva_add, "fee_pct": fee_add
             })
-            st.success("¡Línea agregada con éxito!")
             st.rerun()
 
-    st.markdown("#### Ítems Actuales en la Cotización")
-    subtotal_general = 0
-    total_general = 0
-    
-    for idx, item in enumerate(st.session_state.items_cot):
-        sub_costo = item["cantidad"] * item["costo"]
-        iva_costo_val = sub_costo * item["iva_prov"]
-        sub_con_iva = sub_costo + iva_costo_val
-        fee_val = sub_con_iva * (item["fee_pct"] / 100.0)
-        total_item = sub_con_iva + fee_val
+    # 3. TABLA DE ÍTEMS ACTUALES
+    if st.session_state.items_cot:
+        subtotal_prov = 0
+        total_fee = 0
+        total_general = 0
         
-        subtotal_general += sub_con_iva
-        total_general += total_item
+        for idx, item in enumerate(st.session_state.items_cot):
+            sub_costo = item["cantidad"] * item["costo"]
+            sub_con_iva = sub_costo + (sub_costo * item["iva_prov"])
+            fee_val = sub_con_iva * (item["fee_pct"] / 100.0)
+            total_item = sub_con_iva + fee_val
+            
+            subtotal_prov += sub_con_iva
+            total_fee += fee_val
+            total_general += total_item
+            
+            cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
+            cx[0].write(f"**{item['servicio']}** (*{item['proveedor']}*)")
+            cx[1].write(f"{item['fecha']} | {item['ciudad']}")
+            cx[2].write(f"x{item['cantidad']}")
+            cx[3].write(f"${item['costo']:.2f}")
+            cx[4].write(f"IVA {int(item['iva_prov']*100)}%")
+            cx[5].write(f"FEE {item['fee_pct']}%")
+            cx[6].write(f"**${total_item:.2f}**")
+            if cx[7].button("X", key=f"del_{idx}"):
+                st.session_state.items_cot.pop(idx)
+                st.rerun()
+            st.markdown("<hr style='margin: 0;'>", unsafe_allow_html=True)
+            
+        # 4. TOTALES REESTRUCTURADOS Y CLAROS
+        st.markdown("<br>", unsafe_allow_html=True)
+        t1, t2, t3 = st.columns(3)
+        t1.metric("Costo Base Proveedores", f"${subtotal_prov:.2f}")
+        t2.metric("Ganancia Neta (FEE)", f"${total_fee:.2f}")
+        t3.markdown(f"<div class='total-box'>TOTAL: ${total_general:.2f}</div>", unsafe_allow_html=True)
         
-        cols = st.columns([2, 1.5, 1, 1, 1, 1, 1, 0.8])
-        cols[0].write(f"**{item['servicio']}**\n\n*Prov: {item['proveedor']}*")
-        cols[1].write(f"📅 {item['fecha']}\n📍 {item['ciudad']}")
-        cols[2].write(f"Cant: {item['cantidad']}")
-        cols[3].write(f"Costo: ${item['costo']:.2f}")
-        cols[4].write(f"IVA: {int(item['iva_prov']*100)}%")
-        cols[5].write(f"FEE: {item['fee_pct']}%")
-        cols[6].write(f"**Total: ${total_item:.2f}**")
-        
-        if cols[7].button("🗑", key=f"del_{idx}"):
-            st.session_state.items_cot.pop(idx)
-            st.rerun()
-        st.markdown("<hr style='margin: 4px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_r1, col_r2, col_r3 = st.columns(3)
-    with col_r1:
-        st.markdown(f"**Subtotal Operativo:** ${subtotal_general:.2f}")
-    with col_r2:
-        st.markdown(f"**Ganancia Neta (FEE):** ${total_general - subtotal_general:.2f}")
-    with col_r3:
-        st.markdown(f"### **Total Cliente:** ${total_general:.2f}")
-        
-    st.markdown("---")
-    c_btn1, c_btn2 = st.columns(2)
-    with c_btn1:
-        if st.button("Generar PDF Cotización (Cliente)"):
-            st.success("¡Cotización PDF generada y respaldada en Google Drive!")
-    with c_btn2:
-        if st.button("Generar Orden de Contratación (Proveedor)"):
-            st.success("¡Orden de servicio a proveedor generada!")
+        st.markdown("<br>", unsafe_allow_html=True)
+        btn1, btn2 = st.columns(2)
+        with btn1:
+            if st.button("💾 Guardar Cotización"):
+                st.session_state.cotizaciones_guardadas.append({
+                    "codigo": cod_cotizacion, "cliente": cliente_sel, 
+                    "fecha": fecha_gral, "estado": estado_cot, "total": total_general
+                })
+                st.session_state.items_cot = [] # Limpiar actual
+                st.success("Cotización guardada exitosamente.")
+        with btn2:
+            if st.button("📄 Generar PDF para el Cliente"):
+                st.success("PDF generado.")
 
-# --- MÓDULO 2: DIRECTORIO DE CLIENTES ---
-elif menu == "Directorio de Clientes":
-    st.markdown("<h2>Directorio de Clientes Estandarizado</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Base de datos corporativa completa y depurada.</p>", unsafe_allow_html=True)
-    df_clientes = pd.DataFrame({
-        "Empresa Cliente": ["Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."],
-        "RUC": ["1791179382001", "1790151234001", "1790012345001", "1792411149001", "1791314379001", "1791234567001", "1790987654001", "1791122334001", "1790930866001", "0990351260001"],
-        "Ciudad Principal": ["Quito", "Quito", "Quito", "Quito", "Quito", "Guayaquil", "Quito", "Quito", "Quito", "Guayaquil"],
-        "Contacto Principal": ["Departamento de Compras", "Logística y Eventos", "Eventos y Logística", "Francisco Velasco", "Línea Corporativa", "Patricia Sevilla", "Gabriela Guano", "M. Buitrón", "Eva Baca", "Servicio al Cliente"]
-    })
-    st.dataframe(df_clientes, use_container_width=True)
+# --- VISTA 3: CONSULTAR COTIZACIONES ---
+elif menu == "Consultar Cotizaciones":
+    st.markdown("<h3>Registro de Cotizaciones</h3>", unsafe_allow_html=True)
+    df_cot = pd.DataFrame(st.session_state.cotizaciones_guardadas)
+    if not df_cot.empty:
+        st.dataframe(df_cot, use_container_width=True)
+    else:
+        st.write("No hay cotizaciones registradas aún.")
 
-# --- MÓDULO 3: PROVEEDORES Y SERVICIOS ---
-elif menu == "Proveedores y Servicios":
-    st.markdown("<h2>Catálogo Maestro de Proveedores y Servicios</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Base de datos oficial de terceros y tarifas corporativas.</p>", unsafe_allow_html=True)
-    st.dataframe(pd.DataFrame(proveedores_catalogo), use_container_width=True)
-
-# --- MÓDULO 4: DASHBOARD 360 Y CALENDARIO ---
-elif menu == "Dashboard 360° y Calendario":
-    st.markdown("<h2>Dashboard 360° - Karkajadas Group</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Centro de análisis financiero y control de eventos.</p>", unsafe_allow_html=True)
-    
-    f1, f2, f3 = st.columns(3)
-    with f1:
-        st.selectbox("Filtrar por Empresa", ["Todas las empresas", "Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito"])
-    with f2:
-        st.selectbox("Filtrar por Mes", ["Octubre 2026", "Septiembre 2026", "Agosto 2026", "Todos los meses"])
-    with f3:
-        st.selectbox("Año", [2026, 2025])
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Facturación Total", "$18,450.00", "+14% vs mes anterior")
-    m2.metric("Ganancia Neta (FEE)", "$4,120.00", "+22% rentabilidad")
-    m3.metric("Eventos Confirmados", "12", "Activos en curso")
-    st.markdown("---")
-    st.markdown("### Calendario y Registro de Eventos Confirmados")
-    st.info("Próximo evento: Feria de Salud con Cransa en Quito — Fecha: 07 de Octubre de 2026.")
+# --- VISTA 4: DIRECTORIOS ---
+elif menu == "Directorios":
+    st.markdown("<h3>Base de Datos de Clientes y Proveedores</h3>", unsafe_allow_html=True)
+    t1, t2 = st.tabs(["Clientes", "Proveedores"])
+    with t1:
+        st.dataframe(pd.DataFrame({"Cliente": clientes_lista}), use_container_width=True)
+    with t2:
+        st.dataframe(pd.DataFrame(proveedores_catalogo), use_container_width=True)
