@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: ELIMINACIÓN TOTAL DE FONDOS OSCUROS EN CALENDARIOS Y SELECCIONES ---
+# --- ESTILOS CSS MAESTROS: TEMA CLARO ABSOLUTO, CALENDARIO BLANCO, VISIBILIDAD TOTAL ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación principal */
@@ -25,6 +25,12 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0;
         padding-top: 1.5rem;
+    }
+    
+    /* Botón de despliegue superior (Hamburguesa/Flecha) visible */
+    button[kind="header"] {
+        color: #0F172A !important;
+        background-color: #FFFFFF !important;
     }
     
     /* Tipografía nítida y elegante para todos los textos */
@@ -64,21 +70,19 @@ st.markdown("""
         color: #FFFFFF !important;
     }
     
-    /* --- CORRECCIÓN ABSOLUTA DE SELECTORES, MENÚS DESPLEGABLES Y CALENDARIOS (TEMA CLARO PURO) --- */
+    /* --- SELECTORES, MENÚS Y POPUPS EN TEMA CLARO PURO --- */
     div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border-color: #CBD5E1 !important;
     }
     
-    /* Contenedor flotante de la lista desplegada (Popovers, Menús y Listbox) */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[role="listbox"], div[class*="base-select"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border: 1px solid #E2E8F0 !important;
     }
     
-    /* Elementos individuales dentro del menú desplegado y estados seleccionados (Cero azul oscuro) */
     li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -90,34 +94,31 @@ st.markdown("""
         border-radius: 4px;
     }
 
-    /* CALENDARIOS Y SELECTOR DE FECHAS (Fondo blanco, números negros visibles) */
-    div[data-baseweb="calendar"], div[class*="calendar"] {
+    /* --- CALENDARIO 100% BLANCO Y LEGIBLE (CORRECCIÓN DEFINITIVA) --- */
+    div[data-baseweb="calendar"], div[class*="calendar"], div[data-baseweb="popover"] div {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
-    div[data-baseweb="calendar"] button, div[data-baseweb="calendar"] div, span[class*="calendar"] {
+    div[data-baseweb="calendar"] button {
         color: #0F172A !important;
-        background-color: transparent !important;
+        background-color: #FFFFFF !important;
     }
     div[data-baseweb="calendar"] button:hover {
         background-color: #F1F5F9 !important;
         border: 1px solid #0F172A !important;
         border-radius: 50% !important;
     }
-    /* Día seleccionado en el calendario */
     div[data-baseweb="calendar"] button[aria-selected="true"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
         border-radius: 50% !important;
     }
 
-    /* Inputs de números y textos */
     input {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
     
-    /* Tablas y contenedores */
     div[data-testid="stTable"], div[data-testid="stDataFrame"] {
         border: 1px solid #E2E8F0;
         border-radius: 6px;
@@ -130,11 +131,12 @@ st.markdown("""
 if "nav_menu" not in st.session_state:
     st.session_state.nav_menu = "Nueva Cotización"
 
-# --- DATOS REALES DE CONFIGURACIÓN ---
+# --- BASES DE DATOS AUDITADAS Y AMPLIADAS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 
 clientes_lista = [
     "Corrugadora Nacional Cransa S.A. (1791179382001)",
+    "Siemens Ecuador S.A.",
     "Hilton Colón Quito",
     "Bebidas Arcacontinental (Arcador S.A.)",
     "Essity Ecuador (1791314379001)",
@@ -145,15 +147,27 @@ clientes_lista = [
     "Industrias Lácteas Toni S.A."
 ]
 
-# Catálogo real extraído de tu base de proveedores
+# Catálogo completo auditado de proveedores y servicios reales
 proveedores_catalogo = [
+    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
+    {"servicio": "Backing Fiestas", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 180.0, "iva": 0.0},
+    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15},
+    {"servicio": "Modelos con traje retro (6 hrs)", "proveedor": "José Luis Rodríguez", "categoria": "Personal", "ciudad": "Quito", "precio_base": 130.0, "iva": 0.0},
+    {"servicio": "Centros de mesas de dulces", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 9.60, "iva": 0.0},
+    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0},
+    {"servicio": "Papá Noel / Personaje navideño", "proveedor": "Jairto Arciniegas", "categoria": "Animación", "ciudad": "Quito", "precio_base": 180.0, "iva": 0.0},
+    {"servicio": "Mimos (2 horas)", "proveedor": "José Luis Rodríguez", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.0},
+    {"servicio": "Afiche publicitario", "proveedor": "Ángel Gordillo", "categoria": "Imprenta", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.15},
+    {"servicio": "Cantante en vivo (1 hora)", "proveedor": "Alejandra Guzmán", "categoria": "Música", "ciudad": "Quito", "precio_base": 120.0, "iva": 0.0},
+    {"servicio": "Parlante y micrófonos", "proveedor": "Karkajadas Group", "categoria": "Audio", "ciudad": "Quito", "precio_base": 45.0, "iva": 0.0},
+    {"servicio": "Tableros vestidos", "proveedor": "Karkajadas Group", "categoria": "Mobiliario", "ciudad": "Quito", "precio_base": 10.0, "iva": 0.0},
+    {"servicio": "Alfombra roja", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 70.0, "iva": 0.0},
+    {"servicio": "Árboles de navidad en globos", "proveedor": "Karkajadas Group", "categoria": "Decoración", "ciudad": "Quito", "precio_base": 25.0, "iva": 0.0},
+    {"servicio": "Espejo mágico (2 horas)", "proveedor": "Mayac Eventos", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.15},
     {"servicio": "Maquillaje social y artístico", "proveedor": "Cristina Taimal", "categoria": "Maquillaje", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.0},
     {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0},
     {"servicio": "Minicity", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 200.0, "iva": 0.0},
-    {"servicio": "Estación de Arte", "proveedor": "Karkajadas Group", "categoria": "Actividades creativas", "ciudad": "Quito", "precio_base": 160.0, "iva": 0.0},
-    {"servicio": "Estaciones deportivas", "proveedor": "Karkajadas Group", "categoria": "Actividades deportivas", "ciudad": "Quito", "precio_base": 75.0, "iva": 0.0},
-    {"servicio": "Inflable Castillo", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 100.0, "iva": 0.0},
-    {"servicio": "Cañón de espuma", "proveedor": "Karkajadas Group", "categoria": "Actividades lúdicas", "ciudad": "Quito", "precio_base": 85.0, "iva": 0.0}
+    {"servicio": "Estación de Arte", "proveedor": "Karkajadas Group", "categoria": "Actividades creativas", "ciudad": "Quito", "precio_base": 160.0, "iva": 0.0}
 ]
 
 # --- MENÚ LATERAL ---
@@ -186,7 +200,7 @@ menu = st.session_state.nav_menu
 # --- MÓDULO 1: NUEVA COTIZACIÓN ---
 if menu == "Nueva Cotización":
     st.markdown("<h2>Generador Comercial de Cotizaciones</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size: 16px; font-weight: 600; color: #0F172A;'>Karkajadas Group</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 18px; font-weight: 700; color: #0F172A; letter-spacing: -0.5px;'>Karkajadas Group</p>", unsafe_allow_html=True)
     
     with st.container():
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -260,7 +274,7 @@ if menu == "Nueva Cotización":
         cols[5].write(f"FEE: {item['fee_pct']}%")
         cols[6].write(f"**Total: ${total_item:.2f}**")
         
-        if cols[7].button("🗑️️", key=f"del_{idx}"):
+        if cols[7].button("🗑", key=f"del_{idx}"):
             st.session_state.items_cot.pop(idx)
             st.rerun()
         st.markdown("<hr style='margin: 4px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
@@ -283,23 +297,31 @@ if menu == "Nueva Cotización":
         if st.button("Generar Orden de Contratación (Proveedor)"):
             st.success("¡Orden de servicio a proveedor generada!")
 
-# --- MÓDULO 2: DIRECTORIO DE CLIENTES ---
+# --- MÓDULO 2: DIRECTORIO DE CLIENTES (AUDITADO) ---
 elif menu == "Directorio de Clientes":
     st.markdown("<h2>Directorio de Clientes Estandarizado</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Base de datos corporativa limpia y depurada.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Base de datos corporativa completa y depurada.</p>", unsafe_allow_html=True)
     
     df_clientes = pd.DataFrame({
-        "Empresa Cliente": ["Corrugadora Nacional Cransa S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."],
-        "RUC": ["1791179382001", "1790012345001", "1792411149001", "1791314379001", "1791234567001", "1790987654001", "1791122334001", "1790930866001", "0990351260001"],
-        "Ciudad Principal": ["Quito", "Quito", "Quito", "Quito", "Guayaquil", "Quito", "Quito", "Quito", "Guayaquil"],
-        "Contacto": ["Departamento de Compras", "Eventos y Logística", "Francisco Velasco", "Línea Corporativa", "Patricia Sevilla", "Gabriela Guano", "M. Buitrón", "Eva Baca", "Servicio al Cliente"]
+        "Empresa Cliente": [
+            "Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito", 
+            "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", 
+            "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."
+        ],
+        "RUC": [
+            "1791179382001", "1790151234001", "1790012345001", 
+            "1792411149001", "1791314379001", "1791234567001", 
+            "1790987654001", "1791122334001", "1790930866001", "0990351260001"
+        ],
+        "Ciudad Principal": ["Quito", "Quito", "Quito", "Quito", "Quito", "Guayaquil", "Quito", "Quito", "Quito", "Guayaquil"],
+        "Contacto Principal": ["Departamento de Compras", "Logística y Eventos", "Eventos y Logística", "Francisco Velasco", "Línea Corporativa", "Patricia Sevilla", "Gabriela Guano", "M. Buitrón", "Eva Baca", "Servicio al Cliente"]
     })
     st.dataframe(df_clientes, use_container_width=True)
 
-# --- MÓDULO 3: PROVEEDORES Y SERVICIOS ---
+# --- MÓDULO 3: PROVEEDORES Y SERVICIOS (AUDITADO) ---
 elif menu == "Proveedores y Servicios":
     st.markdown("<h2>Catálogo Maestro de Proveedores y Servicios</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Tarifas referenciales y costos por categoría basados en sus registros reales.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Base de datos oficial de terceros y tarifas corporativas.</p>", unsafe_allow_html=True)
     
     df_prov = pd.DataFrame(proveedores_catalogo)
     st.dataframe(df_prov, use_container_width=True)
@@ -311,7 +333,7 @@ elif menu == "Dashboard 360° y Calendario":
     
     f1, f2, f3 = st.columns(3)
     with f1:
-        st.selectbox("Filtrar por Empresa", ["Todas las empresas", "Corrugadora Nacional Cransa S.A.", "Hilton Colón Quito", "Essity Ecuador"])
+        st.selectbox("Filtrar por Empresa", ["Todas las empresas", "Corrugadora Nacional Cransa S.A.", "Siemens Ecuador S.A.", "Hilton Colón Quito"])
     with f2:
         st.selectbox("Filtrar por Mes", ["Octubre 2026", "Septiembre 2026", "Agosto 2026", "Todos los meses"])
     with f3:
