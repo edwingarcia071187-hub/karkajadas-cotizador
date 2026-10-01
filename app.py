@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: TEMA CLARO ABSOLUTO, CALENDARIO BLANCO, VISIBILIDAD TOTAL ---
+# --- ESTILOS CSS MAESTROS: FORZAR FONDO BLANCO EN CALENDARIOS Y POPUPS DE BASEWEB ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación principal */
@@ -27,7 +27,7 @@ st.markdown("""
         padding-top: 1.5rem;
     }
     
-    /* Botón de despliegue superior (Hamburguesa/Flecha) visible */
+    /* Botón de despliegue superior visible */
     button[kind="header"] {
         color: #0F172A !important;
         background-color: #FFFFFF !important;
@@ -70,7 +70,7 @@ st.markdown("""
         color: #FFFFFF !important;
     }
     
-    /* --- SELECTORES, MENÚS Y POPUPS EN TEMA CLARO PURO --- */
+    /* --- SELECTORES Y MENÚS DESPLEGABLES --- */
     div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -94,20 +94,34 @@ st.markdown("""
         border-radius: 4px;
     }
 
-    /* --- CALENDARIO 100% BLANCO Y LEGIBLE (CORRECCIÓN DEFINITIVA) --- */
-    div[data-baseweb="calendar"], div[class*="calendar"], div[data-baseweb="popover"] div {
+    /* --- CORRECCIÓN ABSOLUTA Y EXHAUSTIVA DEL CALENDARIO (FONDO BLANCO PURO) --- */
+    div[data-baseweb="calendar"], 
+    div[data-baseweb="popover"] div[data-baseweb="calendar"],
+    div[class*="calendar"], 
+    div[role="dialog"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
-    div[data-baseweb="calendar"] button {
-        color: #0F172A !important;
+    
+    /* Todos los elementos internos, textos, días y botones del calendario */
+    div[data-baseweb="calendar"] *, 
+    div[role="dialog"] *,
+    div[data-baseweb="calendar"] button, 
+    div[data-baseweb="calendar"] div, 
+    span[class*="calendar"] {
         background-color: #FFFFFF !important;
+        color: #0F172A !important;
     }
+    
+    /* Efecto al pasar el cursor sobre los días del calendario */
     div[data-baseweb="calendar"] button:hover {
         background-color: #F1F5F9 !important;
         border: 1px solid #0F172A !important;
         border-radius: 50% !important;
+        color: #0F172A !important;
     }
+    
+    /* Día seleccionado en el calendario */
     div[data-baseweb="calendar"] button[aria-selected="true"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -147,7 +161,6 @@ clientes_lista = [
     "Industrias Lácteas Toni S.A."
 ]
 
-# Catálogo completo auditado de proveedores y servicios reales
 proveedores_catalogo = [
     {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
     {"servicio": "Backing Fiestas", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 180.0, "iva": 0.0},
