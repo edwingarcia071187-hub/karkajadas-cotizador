@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: BLANCO ABSOLUTO, CERO FONDOS OSCUROS, CONTRASTE PERFECTO ---
+# --- ESTILOS CSS MAESTROS: TEMA CLARO ABSOLUTO, CONTRASTE PERFECTO Y BORDES AZUL MARINO ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación */
@@ -27,7 +27,7 @@ st.markdown("""
         padding-top: 1.5rem;
     }
     
-    /* Tipografía nítida para todos los textos y títulos */
+    /* Tipografía nítida y elegante para todos los textos */
     h1, h2, h3, p, span, label, div {
         color: #0F172A !important;
     }
@@ -42,7 +42,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Botones de navegación y acción principales */
+    /* Botones principales: Azul marino ejecutivo con texto blanco */
     .stButton>button {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -56,25 +56,60 @@ st.markdown("""
         width: 100%;
     }
     .stButton>button:hover {
-        background-color: #334155 !important;
+        background-color: #1E293B !important;
         color: #FFFFFF !important;
     }
     .stButton>button p {
         color: #FFFFFF !important;
     }
     
-    /* Corrección estricta para selectores, inputs y menús desplegables (Cero fondos negros) */
-    div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"] {
+    /* --- CORRECCIÓN ABSOLUTA DE SELECTORES, DESPLEGABLES Y CALENDARIOS (FONDO BLANCO, TEXTO NEGRO, CONTORNO AZUL MARINO) --- */
+    div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border-color: #CBD5E1 !important;
     }
-    span[data-baseweb="tag"] {
-        background-color: #F1F5F9 !important;
+    div[data-baseweb="select"] > div:hover, div[data-baseweb="select"] > div:focus {
+        border-color: #0F172A !important;
+    }
+    
+    /* Cajas flotantes de los menús desplegables y popups de fechas (Fondo blanco, letra negra) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[class*="base-select"] {
+        background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
     
-    /* Ajustes limpios para tablas y contenedores de datos */
+    /* Opciones dentro de los desplegables */
+    li[data-baseweb="option"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+    li[data-baseweb="option"]:hover, li[data-baseweb="option"] [aria-selected="true"] {
+        background-color: #F1F5F9 !important;
+        color: #0F172A !important;
+        border: 1px solid #0F172A !important;
+    }
+
+    /* Calendarios y selector de fechas */
+    div[data-baseweb="calendar"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+    div[data-baseweb="calendar"] button {
+        color: #0F172A !important;
+    }
+    div[data-baseweb="calendar"] button:hover {
+        background-color: #F1F5F9 !important;
+        border: 1px solid #0F172A !important;
+    }
+
+    /* Inputs de números y textos */
+    input {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+    }
+    
+    /* Tablas y contenedores */
     div[data-testid="stTable"], div[data-testid="stDataFrame"] {
         border: 1px solid #E2E8F0;
         border-radius: 6px;
@@ -113,7 +148,7 @@ proveedores_catalogo = [
     {"servicio": "Cañón de espuma", "proveedor": "Karkajadas Group", "categoria": "Actividades lúdicas", "ciudad": "Quito", "precio_base": 85.0, "iva": 0.0}
 ]
 
-# --- MENÚ LATERAL LIMPIO ---
+# --- MENÚ LATERAL ---
 st.sidebar.markdown("<h2 style='color: #0F172A; font-size: 18px; font-weight: 700; letter-spacing: -0.5px;'>Karkajadas Group</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
@@ -161,7 +196,6 @@ if menu == "Nueva Cotización":
             {"servicio": "Minicity", "proveedor": "Karkajadas Group", "ciudad": "Quito", "fecha": str(datetime.now().date()), "cantidad": 1, "costo": 200.0, "iva_prov": 0.0, "fee_pct": 25.0}
         ]
 
-    # Formulario para agregar ítem con fecha específica
     with st.expander("Añadir nuevo servicio al detalle con su fecha y ciudad"):
         c_cat = st.selectbox("Seleccionar Servicio del Catálogo Real", [p["servicio"] for p in proveedores_catalogo])
         item_def = next(p for p in proveedores_catalogo if p["servicio"] == c_cat)
