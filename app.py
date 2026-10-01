@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: FORZAR FONDO BLANCO EN CALENDARIOS Y POPUPS DE BASEWEB ---
+# --- ESTILOS CSS MAESTROS: TEMA CLARO CON GRIS LEVE EJECUTIVO ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación principal */
@@ -48,29 +48,29 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Botones principales: Azul marino ejecutivo con texto blanco */
+    /* Botones principales: Gris leve ejecutivo con texto oscuro nítido y borde sutil */
     .stButton>button {
-        background-color: #0F172A !important;
-        color: #FFFFFF !important;
+        background-color: #F8FAFC !important;
+        color: #0F172A !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 14px;
-        border: none;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
-        transition: background-color 0.2s ease;
+        border: 1px solid #CBD5E1 !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition: all 0.2s ease;
         width: 100%;
     }
     .stButton>button:hover {
-        background-color: #1E293B !important;
-        color: #FFFFFF !important;
-        border: 1px solid #0F172A !important;
+        background-color: #E2E8F0 !important;
+        color: #0F172A !important;
+        border-color: #94A3B8 !important;
     }
     .stButton>button p {
-        color: #FFFFFF !important;
+        color: #0F172A !important;
     }
     
-    /* --- SELECTORES Y MENÚS DESPLEGABLES --- */
+    /* --- SELECTORES, MENÚS Y POPUPS EN GRIS LEVE --- */
     div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -90,41 +90,43 @@ st.markdown("""
     li[data-baseweb="option"]:hover, div[role="option"]:hover, li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
         background-color: #F1F5F9 !important;
         color: #0F172A !important;
-        border: 1px solid #0F172A !important;
+        border: 1px solid #94A3B8 !important;
         border-radius: 4px;
     }
 
-    /* --- CORRECCIÓN ABSOLUTA Y EXHAUSTIVA DEL CALENDARIO (FONDO BLANCO PURO) --- */
+    /* --- CALENDARIO CON FONDO GRIS LEVE Y MÁXIMA LEGIBILIDAD --- */
     div[data-baseweb="calendar"], 
     div[data-baseweb="popover"] div[data-baseweb="calendar"],
     div[class*="calendar"], 
     div[role="dialog"] {
-        background-color: #FFFFFF !important;
+        background-color: #F8FAFC !important;
         color: #0F172A !important;
+        border: 1px solid #CBD5E1 !important;
+        border-radius: 8px;
     }
     
-    /* Todos los elementos internos, textos, días y botones del calendario */
     div[data-baseweb="calendar"] *, 
     div[role="dialog"] *,
     div[data-baseweb="calendar"] button, 
     div[data-baseweb="calendar"] div, 
     span[class*="calendar"] {
-        background-color: #FFFFFF !important;
+        background-color: transparent !important;
         color: #0F172A !important;
     }
     
     /* Efecto al pasar el cursor sobre los días del calendario */
     div[data-baseweb="calendar"] button:hover {
-        background-color: #F1F5F9 !important;
-        border: 1px solid #0F172A !important;
+        background-color: #E2E8F0 !important;
+        border: 1px solid #94A3B8 !important;
         border-radius: 50% !important;
         color: #0F172A !important;
     }
     
-    /* Día seleccionado en el calendario */
+    /* Día seleccionado en el calendario: Gris leve elegante */
     div[data-baseweb="calendar"] button[aria-selected="true"] {
-        background-color: #0F172A !important;
-        color: #FFFFFF !important;
+        background-color: #CBD5E1 !important;
+        color: #0F172A !important;
+        font-weight: 700;
         border-radius: 50% !important;
     }
 
