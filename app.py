@@ -105,7 +105,6 @@ if "cotizaciones_guardadas" not in st.session_state:
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
-# Agregamos varios proveedores de "Carpas" en distintas ciudades para probar el buscador
 proveedores_catalogo = [
     {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
     {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15},
@@ -125,7 +124,7 @@ if st.sidebar.button("👥 Clientes y Proveedores", use_container_width=True): s
 
 menu = st.session_state.nav_menu
 
-# --- VISTA 1: PANEL PRINCIPAL (HOME PRO) ---
+# --- VISTA 1: PANEL PRINCIPAL ---
 if menu == "Panel Principal":
     st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - ERP Workspace</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Resumen Ejecutivo y Gestión Operativa</p>", unsafe_allow_html=True)
@@ -176,22 +175,19 @@ elif menu == "Nueva Cotización":
         
     st.markdown("---")
     
-    # --- REDISEÑO: BUSCADOR INTELIGENTE POR FILTROS EN CASCADA ---
-    with st.expander("🔍 Buscador de Proveedores y Servicios", expanded=True):
-        st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Filtrar Disponibilidad</p>", unsafe_allow_html=True)
+    # --- REDISEÑO 3 PASOS: BÚSQUEDA INTELIGENTE, COMPARATIVA Y SELECCIÓN ---
+    with st.expander("🔍 Buscador y Comparador de Servicios", expanded=True):
+        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 1: Filtrar Disponibilidad</p>", unsafe_allow_html=True)
         f1, f2 = st.columns([1, 2])
         with f1:
-            # Primero la ciudad
             ciudad_filtro = st.selectbox("1. Ciudad del Servicio", ciudades_lista, index=0)
         with f2:
-            # Luego la palabra clave
-            palabra_busqueda = st.text_input("2. Búsqueda por palabra clave (Ej. Carpa, Animador)", placeholder="Escribe para buscar...")
+            palabra_busqueda = st.text_input("2. Búsqueda por palabra clave (Ej. Carpa, Animador, Parlante)", placeholder="Escribe para buscar...")
         
-        # Filtrar base de datos
+        # Filtro en cascada
         resultados = []
         for p in proveedores_catalogo:
             if p["ciudad"] == ciudad_filtro:
-                # Si la palabra clave está vacía, muestra todos los de la ciudad. Si no, filtra por nombre, proveedor o categoría.
                 if palabra_busqueda == "" or \
                    palabra_busqueda.lower() in p["servicio"].lower() or \
                    palabra_busqueda.lower() in p["proveedor"].lower() or \
@@ -199,25 +195,31 @@ elif menu == "Nueva Cotización":
                     resultados.append(p)
         
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 2: Selección y Valores</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Comparar y Elegir Proveedor</p>", unsafe_allow_html=True)
         
         if not resultados:
             st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
         else:
-            # Crear lista de opciones formateada para el selectbox
-            opciones_str = [f"{r['servicio']} | {r['proveedor']} | Costo Base: ${r['precio_base']}" for r in resultados]
-            seleccion = st.selectbox("3. Seleccione el Proveedor exacto", opciones_str)
+            # 1. MOSTRAR TABLA DE RESULTADOS PARA COMPARAR PRECIOS
+            df_resultados = pd.DataFrame(resultados)[["servicio", "proveedor", "precio_base", "iva"]]
+            df_resultados.columns = ["Servicio Ofrecido", "Nombre del Proveedor", "Costo Base Unitario ($)", "Aplica IVA"]
+            df_resultados["Aplica IVA"] = df_resultados["Aplica IVA"].apply(lambda x: f"{int(x*100)}%")
+            st.dataframe(df_resultados, use_container_width=True)
             
-            # Encontrar el diccionario original del proveedor seleccionado
+            # 2. SELECTOR VISUAL (RADIO BUTTON) PARA ELEGIR EL GANADOR
+            opciones_str = [f"{r['servicio']} | {r['proveedor']} | Costo: ${r['precio_base']}" for r in resultados]
+            seleccion = st.radio("Seleccione el proveedor ganador para añadir a la cotización:", opciones_str)
             item_seleccionado = resultados[opciones_str.index(seleccion)]
             
-            # Fila de detalles financieros
+            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 3: Definir Cantidades y Valores Finales</p>", unsafe_allow_html=True)
+            
             ca, cb, cc, cd, ce = st.columns(5)
             with ca: fecha_item = st.date_input("Fecha Específica", value=fecha_gral)
-            with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
-            with cc: costo_add = st.number_input("Costo Unit. Prov ($)", value=float(item_seleccionado["precio_base"]))
+            with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
+            with cc: costo_add = st.number_input("Costo Unit. Negociado ($)", value=float(item_seleccionado["precio_base"]))
             with cd: iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
-            with ce: fee_add = st.number_input("FEE (%)", value=20.00, step=5.00, format="%.2f")
+            with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
                 
             if st.button("➕ Agregar este ítem a la Cotización"):
                 st.session_state.items_cot.append({
