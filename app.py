@@ -5,12 +5,12 @@ from datetime import datetime
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
     page_title="Karkajadas Group - Sistema de Gestión y Cotizaciones",
-    page_icon="🎨",
+    page_icon="💼",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS PROFESIONALES (FONDO BLANCO, BOTONES DE NAVEGACIÓN LIMPIOS) ---
+# --- ESTILOS CSS EJECUTIVOS Y ELEGANTES (BLANCO ABSOLUTO, AZUL MARINO, CERO EMOJIS) ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación */
@@ -20,50 +20,57 @@ st.markdown("""
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
     
-    /* Fondo claro y elegante para la barra lateral */
+    /* Fondo limpio y unificado para la barra lateral */
     div[data-testid="stSidebar"] {
-        background-color: #F9FAFB !important;
-        border-right: 1px solid #E5E7EB;
+        background-color: #F8FAFC !important;
+        border-right: 1px solid #E2E8F0;
         padding-top: 1.5rem;
     }
-    div[data-testid="stSidebar"] h2, div[data-testid="stSidebar"] p {
-        color: #111827 !important;
+    div[data-testid="stSidebar"] h2, div[data-testid="stSidebar"] p, div[data-testid="stSidebar"] span {
+        color: #0F172A !important;
     }
     
-    /* Textos generales oscuros y legibles */
+    /* Textos generales oscuros, limpios y corporativos */
     h1, h2, h3, p, span, label {
-        color: #111827 !important;
+        color: #0F172A !important;
     }
     
-    /* Tarjetas de contenido con bordes sutiles */
+    /* Tarjetas de contenido con diseño ejecutivo */
     .card {
         background: #FFFFFF;
-        border: 1px solid #E5E7EB;
+        border: 1px solid #E2E8F0;
         padding: 24px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
         margin-bottom: 20px;
     }
     
-    /* Botones de acción principales y del menú */
+    /* Botones de navegación y acción principales: Azul Marino Ejecutivo */
     .stButton>button {
-        background-color: #F97316 !important; /* Naranja corporativo Karkajadas */
-        color: white !important;
+        background-color: #0F172A !important; /* Azul marino ejecutivo */
+        color: #FFFFFF !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
-        font-weight: 600;
+        font-weight: 500;
+        font-size: 14px;
         border: none;
-        box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.1);
         transition: background-color 0.2s ease;
         width: 100%;
     }
     .stButton>button:hover {
-        background-color: #EA580C !important;
+        background-color: #1E293B !important;
+    }
+    
+    /* Ajustes limpios para tablas y contenedores de datos */
+    div[data-testid="stTable"], div[data-testid="stDataFrame"] {
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- GESTIÓN DE ESTADO DE NAVEGACIÓN ---
+# --- GESTIÓN DE ESTADO DE Navegación ---
 if "nav_menu" not in st.session_state:
     st.session_state.nav_menu = "Nueva Cotización"
 
@@ -91,38 +98,38 @@ proveedores_catalogo = [
     {"servicio": "Trípticos tamaño A4", "proveedor": "Proveedores Gráficos S.A.", "categoria": "Imprenta", "ciudad": "Guayaquil", "precio_base": 1.15, "iva": 0.15}
 ]
 
-# --- MENÚ LATERAL TIPO BOTONERA PROFESIONAL ---
-st.sidebar.markdown("<h2 style='color: #111827; font-size: 20px; font-weight: 700;'>🎨 Karkajadas Group</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size: 13px; color: #4B5563; line-height: 1.4;'><b>RUC:</b> 1713272845001<br><b>Gerencia:</b> Nancy García Chugá</p>", unsafe_allow_html=True)
-st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E5E7EB;'>", unsafe_allow_html=True)
+# --- MENÚ LATERAL EJECUTIVO (SIN EMOJIS, SOBRIO) ---
+st.sidebar.markdown("<h2 style='color: #0F172A; font-size: 18px; font-weight: 700; letter-spacing: -0.5px;'>Karkajadas Group</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size: 12px; color: #64748B; line-height: 1.4;'>RUC: 1713272845001<br>Gerencia: Nancy García Chugá</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
-st.sidebar.markdown("<p style='font-size: 12px; font-weight: 600; color: #6B7280; text-transform: uppercase;'>Navegación</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;'>Navegación</p>", unsafe_allow_html=True)
 
-if st.sidebar.button("✨ Nueva Cotización"):
+if st.sidebar.button("Nueva Cotización"):
     st.session_state.nav_menu = "Nueva Cotización"
     st.rerun()
 
-if st.sidebar.button("📁 Directorio de Clientes"):
+if st.sidebar.button("Directorio de Clientes"):
     st.session_state.nav_menu = "Directorio de Clientes"
     st.rerun()
 
-if st.sidebar.button("🤝 Proveedores y Servicios"):
+if st.sidebar.button("Proveedores y Servicios"):
     st.session_state.nav_menu = "Proveedores y Servicios"
     st.rerun()
 
-if st.sidebar.button("📊 Dashboard 360° & Calendario"):
-    st.session_state.nav_menu = "Dashboard 360° & Calendario"
+if st.sidebar.button("Dashboard 360° y Calendario"):
+    st.session_state.nav_menu = "Dashboard 360° y Calendario"
     st.rerun()
 
-st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E5E7EB;'>", unsafe_allow_html=True)
-st.sidebar.caption("Modo Operativo Activo")
+st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+st.sidebar.caption("Sistema Operativo Activo")
 
 menu = st.session_state.nav_menu
 
 # --- MÓDULO 1: NUEVA COTIZACIÓN ---
 if menu == "Nueva Cotización":
     st.markdown("<h2>Generador Comercial de Cotizaciones</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #4B5563;'>Arme cotizaciones detalladas asignando una ciudad específica a cada línea de servicio.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Seleccione el cliente e indique la ciudad correspondiente para cada línea de servicio.</p>", unsafe_allow_html=True)
     
     with st.container():
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -143,7 +150,7 @@ if menu == "Nueva Cotización":
             {"servicio": "Trípticos tamaño A4", "proveedor": "Proveedores Gráficos S.A.", "ciudad": "Guayaquil", "cantidad": 100, "costo": 1.15, "iva_prov": 0.15, "fee_pct": 20.0}
         ]
 
-    with st.expander("➕ Añadir nuevo servicio al detalle"):
+    with st.expander("Añadir nuevo servicio al detalle"):
         c_cat = st.selectbox("Seleccionar Servicio del Catálogo", [p["servicio"] for p in proveedores_catalogo])
         item_def = next(p for p in proveedores_catalogo if p["servicio"] == c_cat)
         
@@ -211,16 +218,16 @@ if menu == "Nueva Cotización":
     st.markdown("---")
     c_btn1, c_btn2 = st.columns(2)
     with c_btn1:
-        if st.button("📄 Generar PDF Cotización (Cliente)"):
+        if st.button("Generar PDF Cotización (Cliente)"):
             st.success("¡Cotización PDF generada y respaldada en Google Drive!")
     with c_btn2:
-        if st.button("📋 Generar Orden de Contratación (Proveedor)"):
+        if st.button("Generar Orden de Contratación (Proveedor)"):
             st.success("¡Orden de servicio a proveedor generada!")
 
 # --- MÓDULO 2: DIRECTORIO DE CLIENTES ---
 elif menu == "Directorio de Clientes":
     st.markdown("<h2>Directorio de Clientes Estandarizado</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #4B5563;'>Base de datos corporativa limpia y depurada.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Base de datos corporativa limpia y depurada.</p>", unsafe_allow_html=True)
     
     df_clientes = pd.DataFrame({
         "Empresa Cliente": ["Corrugadora Nacional Cransa S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Procongelados S.A.", "Levapan del Ecuador", "Asertec S.A.", "Industrias Lácteas Toni S.A."],
@@ -233,15 +240,15 @@ elif menu == "Directorio de Clientes":
 # --- MÓDULO 3: PROVEEDORES Y SERVICIOS ---
 elif menu == "Proveedores y Servicios":
     st.markdown("<h2>Catálogo Maestro de Proveedores y Servicios</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #4B5563;'>Tarifas referenciales y costos por categoría.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Tarifas referenciales y costos por categoría.</p>", unsafe_allow_html=True)
     
     df_prov = pd.DataFrame(proveedores_catalogo)
     st.dataframe(df_prov, use_container_width=True)
 
 # --- MÓDULO 4: DASHBOARD 360 Y CALENDARIO ---
-elif menu == "Dashboard 360° & Calendario":
+elif menu == "Dashboard 360° y Calendario":
     st.markdown("<h2>Dashboard 360° - Karkajadas Group</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #4B5563;'>Centro de análisis financiero y control de eventos.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B;'>Centro de análisis financiero y control de eventos.</p>", unsafe_allow_html=True)
     
     f1, f2, f3 = st.columns(3)
     with f1:
@@ -259,5 +266,5 @@ elif menu == "Dashboard 360° & Calendario":
     m3.metric("Eventos Confirmados", "12", "Activos en curso")
     
     st.markdown("---")
-    st.markdown("### 📅 Calendario y Registro de Eventos Confirmados")
-    st.info("💡 Próximo evento: Feria de Salud con Cransa en Quito — Fecha: 07 de Octubre de 2026.")
+    st.markdown("### Calendario y Registro de Eventos Confirmados")
+    st.info("Próximo evento: Feria de Salud con Cransa en Quito — Fecha: 07 de Octubre de 2026.")
