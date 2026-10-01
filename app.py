@@ -135,7 +135,9 @@ if menu == "Panel Principal":
     
     # Visualizador de Eventos de la Semana (Solo Aprobadas)
     st.markdown("### 📅 Eventos de esta Semana (Cotizaciones Aprobadas)")
-    eventos_aprobados = [cot para cot in st.session_state.cotizaciones_guardadas if cot["estado"] == "Aprobada"]
+    
+    # CORRECCIÓN DE LA LÍNEA DEL ERROR (for en lugar de para)
+    eventos_aprobados = [cot for cot in st.session_state.cotizaciones_guardadas if cot["estado"] == "Aprobada"]
     
     if eventos_aprobados:
         for ev in eventos_aprobados:
