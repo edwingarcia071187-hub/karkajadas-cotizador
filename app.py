@@ -10,12 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS: INTERFAZ PRO Y TARJETAS DE MÉTRICAS ---
+# --- ESTILOS CSS: HOVER ATRACTIVO Y MEJORA VISUAL ---
 st.markdown("""
     <style>
+    /* Fondo blanco absoluto */
     .stApp, .main, header { background-color: #FFFFFF !important; color: #0F172A !important; }
     
-    /* Botones de acción rápida: Anchos y elegantes */
+    /* Botones principales */
     .stButton>button {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -27,17 +28,24 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
     }
-    .stButton>button:hover { background-color: #0F172A !important; color: #FFFFFF !important; transform: translateY(-2px); }
-    .stButton>button p { color: inherit !important; }
+    .stButton>button:hover { 
+        background-color: #0F172A !important; 
+        color: #FFFFFF !important; 
+        transform: translateY(-2px); 
+    }
     
-    /* Convertir las Métricas (KPIs) en Tarjetas PRO */
+    /* Tarjetas de Métricas (KPIs) con efecto Hover */
     div[data-testid="metric-container"] {
         background-color: #F8FAFC;
         border: 1px solid #E2E8F0;
         border-radius: 8px;
         padding: 15px 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         border-left: 5px solid #0F172A;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="metric-container"]:hover {
+        background-color: #E1EFFE !important; /* HOVER AZUL/GRIS ATRACTIVO */
+        border-color: #93C5FD !important;
     }
     div[data-testid="stMetricLabel"] {
         font-size: 14px !important;
@@ -56,6 +64,28 @@ st.markdown("""
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border: 1px solid #CBD5E1 !important;
+    }
+    
+    /* --- RESALTADO (HOVER) EN LISTAS DESPLEGABLES --- */
+    li[data-baseweb="option"], div[role="option"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        transition: background-color 0.1s ease, color 0.1s ease;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+    }
+    
+    /* Color Azul/Gris atractivo al pasar el mouse por las opciones */
+    li[data-baseweb="option"]:hover, div[role="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
+        background-color: #E1EFFE !important; /* Fondo azul suave */
+        color: #1E40AF !important; /* Texto azul marino fuerte */
+        font-weight: bold !important;
+    }
+
+    /* Hover en Tablas nativas (Como la Vista Cliente) */
+    table tbody tr:hover {
+        background-color: #E1EFFE !important;
     }
     
     /* TOTAL DESTACADO */
@@ -113,20 +143,17 @@ if menu == "Panel Principal":
     st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - ERP Workspace</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Resumen Ejecutivo y Gestión Operativa</p>", unsafe_allow_html=True)
     
-    # 1. KPIs (Indicadores Clave)
     cots = st.session_state.cotizaciones_guardadas
     ingresos_aprobados = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
     num_aprobadas = len([c for c in cots if c["estado"] == "Aprobada"])
     num_pendientes = len([c for c in cots if c["estado"] in ["Borrador", "Enviada"]])
     
     m1, m2, m3 = st.columns(3)
-    m1.metric("💰 Ingresos Confirmados (Aprobados)", f"${ingresos_aprobados:,.2f}")
+    m1.metric("💰 Ingresos Confirmados", f"${ingresos_aprobados:,.2f}")
     m2.metric("✅ Eventos Aprobados", f"{num_aprobadas} eventos")
     m3.metric("⏳ Cotizaciones Pendientes", f"{num_pendientes} en gestión")
     
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    # 2. BOTONES DE ACCIÓN RÁPIDA (Estilo Bloque)
     st.markdown("#### 🚀 Accesos Rápidos")
     b1, b2, b3 = st.columns(3)
     with b1:
@@ -138,20 +165,13 @@ if menu == "Panel Principal":
             
     st.markdown("<hr style='margin: 20px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
     
-    # 3. CRONOGRAMA DE EVENTOS (Tabla de Datos Profesional)
-    st.markdown("#### 📅 Cronograma de Próximos Eventos (Solo Aprobados)")
+    st.markdown("#### 📅 Cronograma de Próximos Eventos (Aprobados)")
     eventos_aprobados = [cot for cot in cots if cot["estado"] == "Aprobada"]
     
     if eventos_aprobados:
-        # Transformar a DataFrame para una vista de tabla limpia
-        df_eventos = pd.DataFrame(eventos_aprobados)
-        # Reordenar y renombrar columnas para que se vea elegante
-        df_eventos = df_eventos[["fecha", "evento", "cliente", "codigo", "total"]]
+        df_eventos = pd.DataFrame(eventos_aprobados)[["fecha", "evento", "cliente", "codigo", "total"]]
         df_eventos.columns = ["Fecha Confirmada", "Nombre del Evento", "Cliente Corporativo", "Cod. Cotización", "Monto Total ($)"]
-        
-        # Formato de moneda
         df_eventos["Monto Total ($)"] = df_eventos["Monto Total ($)"].apply(lambda x: f"${x:,.2f}")
-        
         st.dataframe(df_eventos, use_container_width=True)
     else:
         st.info("No hay eventos confirmados para mostrar en este momento.")
