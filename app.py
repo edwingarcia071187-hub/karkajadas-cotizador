@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: FORZAR TEMA CLARO EN MENÚS FLOTANTES Y SELECTORES ---
+# --- ESTILOS CSS MAESTROS: ELIMINACIÓN TOTAL DE FONDOS OSCUROS EN CALENDARIOS Y SELECCIONES ---
 st.markdown("""
     <style>
     /* Forzar fondo blanco absoluto en toda la aplicación principal */
@@ -64,14 +64,11 @@ st.markdown("""
         color: #FFFFFF !important;
     }
     
-    /* --- CORRECCIÓN TOTAL DE SELECTORES Y MENÚS DESPLEGABLES (BASEWEB / POPUPS) --- */
-    div[data-baseweb="select"] > div {
+    /* --- CORRECCIÓN ABSOLUTA DE SELECTORES, MENÚS DESPLEGABLES Y CALENDARIOS (TEMA CLARO PURO) --- */
+    div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border-color: #CBD5E1 !important;
-    }
-    div[data-baseweb="select"] > div:hover {
-        border-color: #0F172A !important;
     }
     
     /* Contenedor flotante de la lista desplegada (Popovers, Menús y Listbox) */
@@ -81,32 +78,37 @@ st.markdown("""
         border: 1px solid #E2E8F0 !important;
     }
     
-    /* Elementos/Opciones individuales dentro del menú desplegado */
+    /* Elementos individuales dentro del menú desplegado y estados seleccionados (Cero azul oscuro) */
     li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
-    
-    /* Efecto al pasar el mouse o seleccionar: Fondo blanco, texto negro, solo borde azul marino */
     li[data-baseweb="option"]:hover, div[role="option"]:hover, li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
-        background-color: #FFFFFF !important;
+        background-color: #F1F5F9 !important;
         color: #0F172A !important;
         border: 1px solid #0F172A !important;
         border-radius: 4px;
     }
 
-    /* Calendarios y selector de fechas */
-    div[data-baseweb="calendar"] {
+    /* CALENDARIOS Y SELECTOR DE FECHAS (Fondo blanco, números negros visibles) */
+    div[data-baseweb="calendar"], div[class*="calendar"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
-    div[data-baseweb="calendar"] button {
+    div[data-baseweb="calendar"] button, div[data-baseweb="calendar"] div, span[class*="calendar"] {
         color: #0F172A !important;
+        background-color: transparent !important;
     }
     div[data-baseweb="calendar"] button:hover {
-        background-color: #FFFFFF !important;
+        background-color: #F1F5F9 !important;
         border: 1px solid #0F172A !important;
-        color: #0F172A !important;
+        border-radius: 50% !important;
+    }
+    /* Día seleccionado en el calendario */
+    div[data-baseweb="calendar"] button[aria-selected="true"] {
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
+        border-radius: 50% !important;
     }
 
     /* Inputs de números y textos */
@@ -184,7 +186,7 @@ menu = st.session_state.nav_menu
 # --- MÓDULO 1: NUEVA COTIZACIÓN ---
 if menu == "Nueva Cotización":
     st.markdown("<h2>Generador Comercial de Cotizaciones</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B;'>Configure el cliente, asigne múltiples fechas y ciudades por cada línea de servicio.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 16px; font-weight: 600; color: #0F172A;'>Karkajadas Group</p>", unsafe_allow_html=True)
     
     with st.container():
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -258,7 +260,7 @@ if menu == "Nueva Cotización":
         cols[5].write(f"FEE: {item['fee_pct']}%")
         cols[6].write(f"**Total: ${total_item:.2f}**")
         
-        if cols[7].button("🗑️", key=f"del_{idx}"):
+        if cols[7].button("🗑️️", key=f"del_{idx}"):
             st.session_state.items_cot.pop(idx)
             st.rerun()
         st.markdown("<hr style='margin: 4px 0; border: none; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
