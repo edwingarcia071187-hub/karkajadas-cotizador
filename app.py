@@ -10,42 +10,44 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS: HOVER ATRACTIVO Y MEJORA VISUAL ---
+# --- ESTILOS CSS: TONOS AZULES CORPORATIVOS Y ELEGANTES ---
 st.markdown("""
     <style>
-    /* Fondo blanco absoluto */
-    .stApp, .main, header { background-color: #FFFFFF !important; color: #0F172A !important; }
+    /* Fondo principal blanco */
+    .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; }
     
-    /* Botones principales */
+    /* Botones principales: Azul Corporativo Elegante */
     .stButton>button {
-        background-color: #FFFFFF !important;
-        color: #0F172A !important;
+        background-color: #1E3A8A !important; /* Azul marino corporativo */
+        color: #FFFFFF !important;
         border-radius: 6px;
         padding: 0.75rem 1rem;
         font-weight: 600;
         font-size: 15px;
-        border: 2px solid #0F172A !important; 
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        border: none !important; 
+        box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
     .stButton>button:hover { 
-        background-color: #0F172A !important; 
+        background-color: #1E40AF !important; /* Azul un poco más claro al pasar el mouse */
         color: #FFFFFF !important; 
         transform: translateY(-2px); 
+        box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3);
     }
     
-    /* Tarjetas de Métricas (KPIs) con efecto Hover */
+    /* Tarjetas de Métricas (KPIs) con toque de color */
     div[data-testid="metric-container"] {
-        background-color: #F8FAFC;
+        background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 8px;
         padding: 15px 20px;
-        border-left: 5px solid #0F172A;
+        border-left: 5px solid #3B82F6; /* Borde lateral azul brillante */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
     }
     div[data-testid="metric-container"]:hover {
-        background-color: #E1EFFE !important; /* HOVER AZUL/GRIS ATRACTIVO */
-        border-color: #93C5FD !important;
+        background-color: #F0F9FF !important; /* Fondo celestito al pasar el mouse */
+        border-color: #BAE6FD !important;
     }
     div[data-testid="stMetricLabel"] {
         font-size: 14px !important;
@@ -59,48 +61,50 @@ st.markdown("""
         color: #0F172A !important;
     }
     
+    /* Expander (Añadir servicio) con fondo suave */
+    [data-testid="stExpander"] {
+        background-color: #F8FAFC !important;
+        border: 1px solid #E2E8F0 !important;
+        border-radius: 8px !important;
+    }
+
     /* Inputs y Selectores */
     div[data-baseweb="select"] > div, input {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
+        color: #1E293B !important;
         border: 1px solid #CBD5E1 !important;
     }
     
-    /* --- RESALTADO (HOVER) EN LISTAS DESPLEGABLES --- */
+    /* HOVER EN LISTAS DESPLEGABLES (Menús) */
     li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        transition: background-color 0.1s ease, color 0.1s ease;
+        color: #1E293B !important;
         padding-top: 10px !important;
         padding-bottom: 10px !important;
     }
-    
-    /* Color Azul/Gris atractivo al pasar el mouse por las opciones */
     li[data-baseweb="option"]:hover, div[role="option"]:hover, 
     li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
-        background-color: #E1EFFE !important; /* Fondo azul suave */
-        color: #1E40AF !important; /* Texto azul marino fuerte */
+        background-color: #EFF6FF !important; 
+        color: #1D4ED8 !important; 
         font-weight: bold !important;
     }
 
-    /* Hover en Tablas nativas (Como la Vista Cliente) */
-    table tbody tr:hover {
-        background-color: #E1EFFE !important;
-    }
+    /* Hover en Tablas nativas */
+    table tbody tr:hover { background-color: #EFF6FF !important; }
     
-    /* TOTAL DESTACADO */
+    /* TOTAL DESTACADO (Tonos Celestes/Azules) */
     .total-box {
         padding: 10px 20px;
         border-radius: 8px;
-        background-color: #F8FAFC;
-        border-left: 6px solid #0F172A;
+        background-color: #EFF6FF; /* Fondo celeste clarito */
+        border-left: 6px solid #1D4ED8; /* Azul corporativo */
         font-size: 36px !important; 
         font-weight: 800;
-        color: #0F172A;
+        color: #1E3A8A; /* Texto azul oscuro */
         line-height: 1.2;
-        border: 1px solid #E2E8F0;
+        border: 1px solid #BFDBFE;
     }
-    .total-label { font-size: 14px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: -5px; }
+    .total-label { font-size: 14px; color: #3B82F6; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: -5px; }
     
     .block-container { padding-top: 2rem !important; }
     </style>
@@ -199,8 +203,10 @@ elif menu == "Nueva Cotización":
         with cb: costo_add = st.number_input("Costo Unit. Prov ($)", value=item_def["precio_base"])
         with cc: fecha_item = st.date_input("Fecha", value=fecha_gral) 
         with cd: ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
-        with ce: iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_def["iva"] > 0 else 0)
-        with cf: fee_add = st.number_input("FEE %", value=20.0, step=5.0)
+        with ce: 
+            iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_def["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+        with cf: 
+            fee_add = st.number_input("FEE (%)", value=20.00, step=5.00, format="%.2f")
             
         if st.button("Agregar a la Cotización"):
             st.session_state.items_cot.append({
@@ -212,6 +218,20 @@ elif menu == "Nueva Cotización":
 
     if st.session_state.items_cot:
         st.markdown("#### Ítems Actuales en la Cotización (Vista Interna)")
+        
+        # --- AQUÍ AÑADIMOS LOS ENCABEZADOS DE COLUMNA QUE FALTABAN ---
+        hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
+        hx[0].markdown("**Servicio / Proveedor**")
+        hx[1].markdown("**Fecha / Ciudad**")
+        hx[2].markdown("**Cant.**")
+        hx[3].markdown("**Costo U.**")
+        hx[4].markdown("**IVA**")
+        hx[5].markdown("**FEE**")
+        hx[6].markdown("**Subtotal**")
+        hx[7].markdown("**Del**")
+        st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
+        # -------------------------------------------------------------
+        
         subtotal_prov = 0; total_fee = 0; total_general = 0
         
         for idx, item in enumerate(st.session_state.items_cot):
@@ -223,16 +243,16 @@ elif menu == "Nueva Cotización":
             subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
             
             cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
-            cx[0].write(f"**{item['servicio']}** (*{item['proveedor']}*)")
-            cx[1].write(f"{item['fecha']} | {item['ciudad']}")
+            cx[0].write(f"**{item['servicio']}** \n\n*{item['proveedor']}*")
+            cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
             cx[3].write(f"${item['costo']:.2f}")
-            cx[4].write(f"IVA {int(item['iva_prov']*100)}%")
-            cx[5].write(f"FEE {item['fee_pct']}%")
+            cx[4].write(f"{int(item['iva_prov']*100)}%")
+            cx[5].write(f"{item['fee_pct']:.2f}%")
             cx[6].write(f"**${total_item:.2f}**")
             if cx[7].button("X", key=f"del_{idx}"):
                 st.session_state.items_cot.pop(idx); st.rerun()
-            st.markdown("<hr style='margin: 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
             
         st.markdown("<br>", unsafe_allow_html=True)
         t1, t2, t3 = st.columns(3)
