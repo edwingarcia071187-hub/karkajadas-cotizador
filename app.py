@@ -10,32 +10,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS EJECUTIVOS Y ELEGANTES (BLANCO ABSOLUTO, AZUL MARINO, CERO EMOJIS) ---
+# --- ESTILOS CSS DEFINITIVOS: BLANCO ABSOLUTO, CERO FONDOS OSCUROS, TEXTOS VISIBLES ---
 st.markdown("""
     <style>
-    /* Forzar fondo blanco absoluto en toda la aplicación */
-    .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"] {
+    /* Forzar fondo blanco absoluto en toda la aplicación principal y contenedores */
+    .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"], section.main {
         background-color: #FFFFFF !important;
-        color: #1F2937 !important;
+        color: #0F172A !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
     
-    /* Fondo limpio y unificado para la barra lateral */
-    div[data-testid="stSidebar"] {
-        background-color: #F8FAFC !important;
+    /* Fondo blanco impecable para la barra lateral (cero tonos oscuros) */
+    div[data-testid="stSidebar"], div[data-testid="stSidebar"] > div:first-child {
+        background-color: #FFFFFF !important;
         border-right: 1px solid #E2E8F0;
         padding-top: 1.5rem;
     }
-    div[data-testid="stSidebar"] h2, div[data-testid="stSidebar"] p, div[data-testid="stSidebar"] span {
-        color: #0F172A !important;
-    }
     
     /* Textos generales oscuros, limpios y corporativos */
-    h1, h2, h3, p, span, label {
+    h1, h2, h3, p, span, label, div {
         color: #0F172A !important;
     }
     
-    /* Tarjetas de contenido con diseño ejecutivo */
+    /* Tarjetas de contenido con diseño ejecutivo limpio */
     .card {
         background: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -45,9 +42,9 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* Botones de navegación y acción principales: Azul Marino Ejecutivo */
+    /* Botones de navegación y acción: Texto blanco nítido y fondo oscuro ejecutivo */
     .stButton>button {
-        background-color: #0F172A !important; /* Azul marino ejecutivo */
+        background-color: #0F172A !important;
         color: #FFFFFF !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
@@ -59,18 +56,25 @@ st.markdown("""
         width: 100%;
     }
     .stButton>button:hover {
-        background-color: #1E293B !important;
+        background-color: #334155 !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Forzar visibilidad del texto dentro de los botones */
+    .stButton>button p {
+        color: #FFFFFF !important;
     }
     
     /* Ajustes limpios para tablas y contenedores de datos */
     div[data-testid="stTable"], div[data-testid="stDataFrame"] {
         border: 1px solid #E2E8F0;
         border-radius: 6px;
+        background-color: #FFFFFF !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- GESTIÓN DE ESTADO DE Navegación ---
+# --- GESTIÓN DE ESTADO DE NAVEGACIÓN ---
 if "nav_menu" not in st.session_state:
     st.session_state.nav_menu = "Nueva Cotización"
 
@@ -98,9 +102,8 @@ proveedores_catalogo = [
     {"servicio": "Trípticos tamaño A4", "proveedor": "Proveedores Gráficos S.A.", "categoria": "Imprenta", "ciudad": "Guayaquil", "precio_base": 1.15, "iva": 0.15}
 ]
 
-# --- MENÚ LATERAL EJECUTIVO (SIN EMOJIS, SOBRIO) ---
+# --- MENÚ LATERAL LIMPIO (SIN RUC, SIN NOMBRES, TEXTOS VISIBLES) ---
 st.sidebar.markdown("<h2 style='color: #0F172A; font-size: 18px; font-weight: 700; letter-spacing: -0.5px;'>Karkajadas Group</h2>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size: 12px; color: #64748B; line-height: 1.4;'>RUC: 1713272845001<br>Gerencia: Nancy García Chugá</p>", unsafe_allow_html=True)
 st.sidebar.markdown("<hr style='margin: 12px 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
 st.sidebar.markdown("<p style='font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;'>Navegación</p>", unsafe_allow_html=True)
