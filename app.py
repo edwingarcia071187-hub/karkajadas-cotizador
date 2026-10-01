@@ -10,10 +10,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS MAESTROS: TEMA CLARO ABSOLUTO, CONTRASTE PERFECTO Y BORDES AZUL MARINO ---
+# --- ESTILOS CSS MAESTROS: FORZAR TEMA CLARO EN MENÚS FLOTANTES Y SELECTORES ---
 st.markdown("""
     <style>
-    /* Forzar fondo blanco absoluto en toda la aplicación */
+    /* Forzar fondo blanco absoluto en toda la aplicación principal */
     .stApp, .main, div[data-testid="stVerticalBlock"], div[data-testid="stBlock"], section.main {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
@@ -58,36 +58,41 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #1E293B !important;
         color: #FFFFFF !important;
+        border: 1px solid #0F172A !important;
     }
     .stButton>button p {
         color: #FFFFFF !important;
     }
     
-    /* --- CORRECCIÓN ABSOLUTA DE SELECTORES, DESPLEGABLES Y CALENDARIOS (FONDO BLANCO, TEXTO NEGRO, CONTORNO AZUL MARINO) --- */
-    div[data-baseweb="select"] > div, div.stSelectbox div[data-baseweb="select"], div[data-baseweb="base-input"] {
+    /* --- CORRECCIÓN TOTAL DE SELECTORES Y MENÚS DESPLEGABLES (BASEWEB / POPUPS) --- */
+    div[data-baseweb="select"] > div {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
         border-color: #CBD5E1 !important;
     }
-    div[data-baseweb="select"] > div:hover, div[data-baseweb="select"] > div:focus {
+    div[data-baseweb="select"] > div:hover {
         border-color: #0F172A !important;
     }
     
-    /* Cajas flotantes de los menús desplegables y popups de fechas (Fondo blanco, letra negra) */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[class*="base-select"] {
+    /* Contenedor flotante de la lista desplegada (Popovers, Menús y Listbox) */
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[data-baseweb="menu"], div[role="listbox"], div[class*="base-select"] {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border: 1px solid #E2E8F0 !important;
+    }
+    
+    /* Elementos/Opciones individuales dentro del menú desplegado */
+    li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
     }
     
-    /* Opciones dentro de los desplegables */
-    li[data-baseweb="option"] {
+    /* Efecto al pasar el mouse o seleccionar: Fondo blanco, texto negro, solo borde azul marino */
+    li[data-baseweb="option"]:hover, div[role="option"]:hover, li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
         background-color: #FFFFFF !important;
         color: #0F172A !important;
-    }
-    li[data-baseweb="option"]:hover, li[data-baseweb="option"] [aria-selected="true"] {
-        background-color: #F1F5F9 !important;
-        color: #0F172A !important;
         border: 1px solid #0F172A !important;
+        border-radius: 4px;
     }
 
     /* Calendarios y selector de fechas */
@@ -99,8 +104,9 @@ st.markdown("""
         color: #0F172A !important;
     }
     div[data-baseweb="calendar"] button:hover {
-        background-color: #F1F5F9 !important;
+        background-color: #FFFFFF !important;
         border: 1px solid #0F172A !important;
+        color: #0F172A !important;
     }
 
     /* Inputs de números y textos */
