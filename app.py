@@ -2,86 +2,64 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# --- CONFIGURACIÓN DE PÁGINA Y ESTILO ELEGANTE (FONDO BLANCO Y GRIS SUAVE) ---
+# --- CONFIGURACIÓN DE PÁGINA (FORZANDO MODO CLARO Y MENÚ COLAPSADO) ---
 st.set_page_config(
     page_title="Karkajadas Group - Sistema de Gestión y Cotizaciones",
     page_icon="🎨",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Estilos CSS personalizados: Fondo blanco dominante, tipografía legible y diseño corporativo
+# --- ESTILOS CSS: FONDO BLANCO DOMINANTE, TIPOGRAFÍA ELEGANTE Y CLARA ---
 st.markdown("""
     <style>
-    .main {
-        background-color: #FFFFFF;
-        color: #1F2937;
+    /* Forzar fondo blanco general */
+    .stApp, .main, div[data-testid="stVerticalBlock"] {
+        background-color: #FFFFFF !important;
+        color: #1F2937 !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     }
-    .stSidebar {
-        background-color: #F3F4F6;
+    /* Estilos de la barra lateral */
+    div[data-testid="stSidebar"] {
+        background-color: #F8F9FA !important;
         border-right: 1px solid #E5E7EB;
     }
-    .stSidebar h3, .stSidebar p {
+    div[data-testid="stSidebar"] h2, div[data-testid="stSidebar"] p, div[data-testid="stSidebar"] label {
         color: #111827 !important;
     }
+    /* Textos y títulos */
     h1, h2, h3 {
-        color: #111827;
+        color: #111827 !important;
         font-weight: 600;
     }
+    p, span, label {
+        color: #374151 !important;
+    }
+    /* Tarjetas blancas con bordes sutiles */
     .card {
         background: #FFFFFF;
         border: 1px solid #E5E7EB;
         padding: 24px;
         border-radius: 10px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
         margin-bottom: 20px;
     }
+    /* Botones corporativos */
     .stButton>button {
-        background-color: #F97316; /* Naranja corporativo Karkajadas */
-        color: white;
+        background-color: #F97316 !important; /* Naranja Karkajadas */
+        color: white !important;
         border-radius: 6px;
         padding: 0.5rem 1rem;
         font-weight: 600;
         border: none;
     }
     .stButton>button:hover {
-        background-color: #EA580C;
-        color: white;
+        background-color: #EA580C !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- AUTENTICACIÓN SEGURA ---
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-def check_login(username, password):
-    if username == "admin" and password == "Karkajadas2026*":
-        return True
-    return False
-
-if not st.session_state.authenticated:
-    col1, col2, col3 = st.columns([1, 1.2, 1])
-    with col2:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; color: #111827;'>Karkajadas Group</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #4B5563; font-size: 16px;'>Eventos Corporativos y Gestión Operativa</p>", unsafe_allow_html=True)
-        
-        with st.form("login_form"):
-            user = st.text_input("Usuario")
-            pwd = st.text_input("Contraseña", type="password")
-            submit = st.form_submit_button("Ingresar al Sistema")
-            
-            if submit:
-                if check_login(user, pwd):
-                    st.session_state.authenticated = True
-                    st.rerun()
-                else:
-                    st.error("Usuario o contraseña incorrectos.")
-    st.stop()
-
-# --- DATOS REALES CARGADOS DESDE TUS ARCHIVOS ---
+# --- DATOS REALES DE CONFIGURACIÓN ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 
 clientes_lista = [
@@ -96,7 +74,6 @@ clientes_lista = [
     "Industrias Lácteas Toni S.A."
 ]
 
-# Directorio de proveedores reales y servicios
 proveedores_catalogo = [
     {"servicio": "Maquillaje social y artístico", "proveedor": "Cristina Taimal", "categoria": "Maquillaje", "ciudad": "Quito", "precio_base": 30.0, "iva": 0.0},
     {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Entretenimiento infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0},
@@ -106,21 +83,20 @@ proveedores_catalogo = [
     {"servicio": "Trípticos tamaño A4", "proveedor": "Proveedores Gráficos S.A.", "categoria": "Imprenta", "ciudad": "Guayaquil", "precio_base": 1.15, "iva": 0.15}
 ]
 
-# --- BARRA LATERAL ELEGANTE ---
+# --- MENÚ LATERAL (OCULTO TRAS EL ICONO DE 3 LÍNEAS) ---
 st.sidebar.markdown("<h2 style='color: #111827; font-size: 20px;'>🎨 Karkajadas Group</h2>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='font-size: 13px; color: #4B5563;'><b>RUC:</b> 1713272845001<br><b>Gerencia:</b> Nancy García Chugá</p>", unsafe_allow_html=True)
 st.sidebar.markdown("---")
 
 menu = st.sidebar.radio("Navegación", ["Nueva Cotización", "Directorio de Clientes", "Proveedores y Servicios", "Dashboard 360° & Calendario"])
 
-if st.sidebar.button("Cerrar Sesión"):
-    st.session_state.authenticated = False
-    st.rerun()
+st.sidebar.markdown("---")
+st.sidebar.caption("Acceso directo activo (Sin contraseña)")
 
-# --- MÓDULO 1: NUEVA COTIZACIÓN CON CIUDAD POR ÍTEM ---
+# --- MÓDULO 1: NUEVA COTIZACIÓN ---
 if menu == "Nueva Cotización":
     st.markdown("<h2>Generador Comercial de Cotizaciones</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #4B5563;'>Arme cotizaciones detalladas asignando ciudades específicas por cada línea de servicio.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #4B5563;'>Arme cotizaciones detalladas asignando una ciudad específica a cada línea de servicio.</p>", unsafe_allow_html=True)
     
     with st.container():
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -241,7 +217,6 @@ elif menu == "Dashboard 360° & Calendario":
     st.markdown("<h2>Dashboard 360° - Karkajadas Group</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #4B5563;'>Centro de análisis financiero y control de eventos.</p>", unsafe_allow_html=True)
     
-    # Filtros superiores
     f1, f2, f3 = st.columns(3)
     with f1:
         st.selectbox("Filtrar por Empresa", ["Todas las empresas", "Corrugadora Nacional Cransa S.A.", "Hilton Colón Quito", "Essity Ecuador"])
