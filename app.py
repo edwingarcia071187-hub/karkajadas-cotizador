@@ -10,15 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS: TONOS AZULES CORPORATIVOS Y ELEGANTES ---
+# --- ESTILOS CSS: AZUL CORPORATIVO Y ELEGANCIA ---
 st.markdown("""
     <style>
-    /* Fondo principal blanco */
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; }
     
-    /* Botones principales: Azul Corporativo Elegante */
     .stButton>button {
-        background-color: #1E3A8A !important; /* Azul marino corporativo */
+        background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
         border-radius: 6px;
         padding: 0.75rem 1rem;
@@ -29,53 +27,40 @@ st.markdown("""
         transition: all 0.2s ease;
     }
     .stButton>button:hover { 
-        background-color: #1E40AF !important; /* Azul un poco más claro al pasar el mouse */
+        background-color: #1E40AF !important; 
         color: #FFFFFF !important; 
         transform: translateY(-2px); 
         box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3);
     }
     
-    /* Tarjetas de Métricas (KPIs) con toque de color */
     div[data-testid="metric-container"] {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 8px;
         padding: 15px 20px;
-        border-left: 5px solid #3B82F6; /* Borde lateral azul brillante */
+        border-left: 5px solid #3B82F6; 
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
     }
     div[data-testid="metric-container"]:hover {
-        background-color: #F0F9FF !important; /* Fondo celestito al pasar el mouse */
+        background-color: #F0F9FF !important; 
         border-color: #BAE6FD !important;
     }
-    div[data-testid="stMetricLabel"] {
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        color: #64748B !important;
-        text-transform: uppercase;
-    }
-    div[data-testid="stMetricValue"] {
-        font-size: 28px !important;
-        font-weight: 800 !important;
-        color: #0F172A !important;
-    }
+    div[data-testid="stMetricLabel"] { font-size: 14px !important; font-weight: 600 !important; color: #64748B !important; text-transform: uppercase; }
+    div[data-testid="stMetricValue"] { font-size: 28px !important; font-weight: 800 !important; color: #0F172A !important; }
     
-    /* Expander (Añadir servicio) con fondo suave */
     [data-testid="stExpander"] {
         background-color: #F8FAFC !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 8px !important;
     }
 
-    /* Inputs y Selectores */
     div[data-baseweb="select"] > div, input {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
         border: 1px solid #CBD5E1 !important;
     }
     
-    /* HOVER EN LISTAS DESPLEGABLES (Menús) */
     li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
@@ -89,23 +74,20 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* Hover en Tablas nativas */
     table tbody tr:hover { background-color: #EFF6FF !important; }
     
-    /* TOTAL DESTACADO (Tonos Celestes/Azules) */
     .total-box {
         padding: 10px 20px;
         border-radius: 8px;
-        background-color: #EFF6FF; /* Fondo celeste clarito */
-        border-left: 6px solid #1D4ED8; /* Azul corporativo */
+        background-color: #EFF6FF;
+        border-left: 6px solid #1D4ED8;
         font-size: 36px !important; 
         font-weight: 800;
-        color: #1E3A8A; /* Texto azul oscuro */
+        color: #1E3A8A; 
         line-height: 1.2;
         border: 1px solid #BFDBFE;
     }
     .total-label { font-size: 14px; color: #3B82F6; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: -5px; }
-    
     .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -117,20 +99,21 @@ if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = Fal
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {"codigo": "KG-20260928-01", "evento": "Fiesta Fin de Año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
-        {"codigo": "KG-20260929-02", "evento": "Lanzamiento Producto", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-10-15", "estado": "Aprobada", "total": 3450.50},
-        {"codigo": "KG-20260930-01", "evento": "Cena Corporativa", "cliente": "Hilton Colón Quito", "fecha": "2026-11-05", "estado": "Borrador", "total": 850.00},
     ]
 
 # --- BASES DE DATOS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
+
+# Agregamos varios proveedores de "Carpas" en distintas ciudades para probar el buscador
 proveedores_catalogo = [
-    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "precio_base": 300.0, "iva": 0.0},
-    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "precio_base": 150.0, "iva": 0.15},
-    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "precio_base": 40.0, "iva": 0.0},
-    {"servicio": "Papá Noel / Personaje", "proveedor": "Jairto Arciniegas", "precio_base": 180.0, "iva": 0.0},
-    {"servicio": "Parlante y micrófonos", "proveedor": "Karkajadas Group", "precio_base": 45.0, "iva": 0.0},
-    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "precio_base": 125.0, "iva": 0.0}
+    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
+    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15},
+    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0},
+    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15},
+    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15},
+    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Eventos Guayas", "categoria": "Estructuras", "ciudad": "Guayaquil", "precio_base": 60.0, "iva": 0.15},
+    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0}
 ]
 
 # --- MENÚ LATERAL ---
@@ -168,7 +151,6 @@ if menu == "Panel Principal":
         if st.button("👥 Base de Datos (Terceros)", use_container_width=True): st.session_state.nav_menu = "Directorios"; st.rerun()
             
     st.markdown("<hr style='margin: 20px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    
     st.markdown("#### 📅 Cronograma de Próximos Eventos (Aprobados)")
     eventos_aprobados = [cot for cot in cots if cot["estado"] == "Aprobada"]
     
@@ -194,32 +176,65 @@ elif menu == "Nueva Cotización":
         
     st.markdown("---")
     
-    with st.expander("➕ Añadir servicio (con fecha y ciudad específica)", expanded=True):
-        c_cat = st.selectbox("Servicio del Catálogo", [p["servicio"] for p in proveedores_catalogo])
-        item_def = next(p for p in proveedores_catalogo if p["servicio"] == c_cat)
+    # --- REDISEÑO: BUSCADOR INTELIGENTE POR FILTROS EN CASCADA ---
+    with st.expander("🔍 Buscador de Proveedores y Servicios", expanded=True):
+        st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Filtrar Disponibilidad</p>", unsafe_allow_html=True)
+        f1, f2 = st.columns([1, 2])
+        with f1:
+            # Primero la ciudad
+            ciudad_filtro = st.selectbox("1. Ciudad del Servicio", ciudades_lista, index=0)
+        with f2:
+            # Luego la palabra clave
+            palabra_busqueda = st.text_input("2. Búsqueda por palabra clave (Ej. Carpa, Animador)", placeholder="Escribe para buscar...")
         
-        ca, cb, cc, cd, ce, cf = st.columns(6)
-        with ca: cant_add = st.number_input("Cant.", min_value=1, value=1)
-        with cb: costo_add = st.number_input("Costo Unit. Prov ($)", value=item_def["precio_base"])
-        with cc: fecha_item = st.date_input("Fecha", value=fecha_gral) 
-        with cd: ciudad_item = st.selectbox("Ciudad", ciudades_lista, index=0)
-        with ce: 
-            iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_def["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
-        with cf: 
-            fee_add = st.number_input("FEE (%)", value=20.00, step=5.00, format="%.2f")
+        # Filtrar base de datos
+        resultados = []
+        for p in proveedores_catalogo:
+            if p["ciudad"] == ciudad_filtro:
+                # Si la palabra clave está vacía, muestra todos los de la ciudad. Si no, filtra por nombre, proveedor o categoría.
+                if palabra_busqueda == "" or \
+                   palabra_busqueda.lower() in p["servicio"].lower() or \
+                   palabra_busqueda.lower() in p["proveedor"].lower() or \
+                   palabra_busqueda.lower() in p["categoria"].lower():
+                    resultados.append(p)
+        
+        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 2: Selección y Valores</p>", unsafe_allow_html=True)
+        
+        if not resultados:
+            st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
+        else:
+            # Crear lista de opciones formateada para el selectbox
+            opciones_str = [f"{r['servicio']} | {r['proveedor']} | Costo Base: ${r['precio_base']}" for r in resultados]
+            seleccion = st.selectbox("3. Seleccione el Proveedor exacto", opciones_str)
             
-        if st.button("Agregar a la Cotización"):
-            st.session_state.items_cot.append({
-                "servicio": c_cat, "proveedor": item_def["proveedor"], "ciudad": ciudad_item,
-                "fecha": str(fecha_item), "cantidad": cant_add, "costo": costo_add,
-                "iva_prov": iva_add, "fee_pct": fee_add
-            })
-            st.rerun()
+            # Encontrar el diccionario original del proveedor seleccionado
+            item_seleccionado = resultados[opciones_str.index(seleccion)]
+            
+            # Fila de detalles financieros
+            ca, cb, cc, cd, ce = st.columns(5)
+            with ca: fecha_item = st.date_input("Fecha Específica", value=fecha_gral)
+            with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
+            with cc: costo_add = st.number_input("Costo Unit. Prov ($)", value=float(item_seleccionado["precio_base"]))
+            with cd: iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+            with ce: fee_add = st.number_input("FEE (%)", value=20.00, step=5.00, format="%.2f")
+                
+            if st.button("➕ Agregar este ítem a la Cotización"):
+                st.session_state.items_cot.append({
+                    "servicio": item_seleccionado["servicio"], 
+                    "proveedor": item_seleccionado["proveedor"], 
+                    "ciudad": ciudad_filtro,
+                    "fecha": str(fecha_item), 
+                    "cantidad": cant_add, 
+                    "costo": costo_add,
+                    "iva_prov": iva_add, 
+                    "fee_pct": fee_add
+                })
+                st.rerun()
 
     if st.session_state.items_cot:
         st.markdown("#### Ítems Actuales en la Cotización (Vista Interna)")
         
-        # --- AQUÍ AÑADIMOS LOS ENCABEZADOS DE COLUMNA QUE FALTABAN ---
         hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
         hx[0].markdown("**Servicio / Proveedor**")
         hx[1].markdown("**Fecha / Ciudad**")
@@ -230,7 +245,6 @@ elif menu == "Nueva Cotización":
         hx[6].markdown("**Subtotal**")
         hx[7].markdown("**Del**")
         st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
-        # -------------------------------------------------------------
         
         subtotal_prov = 0; total_fee = 0; total_general = 0
         
