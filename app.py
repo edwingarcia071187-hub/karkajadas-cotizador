@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
 from datetime import datetime
 
 # --- CONFIGURACIÓN DE PÁGINA ---
@@ -9,42 +10,33 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILOS CSS AVANZADOS ---
+# --- ESTILOS CSS AVANZADOS Y COLORIMETRÍA SEMÁNTICA ---
 st.markdown("""
     <style>
     /* Tipografía y fondos principales */
     .stApp, .main, header { background-color: #F8FAFC !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
-    /* Contenedores blancos estilo tarjeta (QuickBooks style) */
-    .card-container {
-        background-color: #FFFFFF;
-        padding: 24px;
-        border-radius: 8px;
-        border: 1px solid #E2E8F0;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    
     /* ----------------------------------------------------
-       COLORIMETRÍA SEMÁNTICA DE BOTONES
+       BOTONES: VERDE (Avanzar/Crear), AZUL (Neutro), ROJO (Borrar)
        ---------------------------------------------------- */
-    /* Botones PRIMARIOS = AZUL Corporativo (Acciones neutras / principal visual) */
+    /* Botones PRIMARIOS = VERDE ESMERALDA (Crear, Guardar, Agregar) */
     button[kind="primary"] {
-        background-color: #1E3A8A !important; 
+        background-color: #059669 !important; 
         color: #FFFFFF !important;
         border-radius: 4px;
         padding: 0.5rem 1.2rem;
         font-weight: 600;
         font-size: 14px;
         border: none !important; 
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
         transition: all 0.2s ease;
     }
-    button[kind="primary"]:hover { background-color: #1E40AF !important; }
+    button[kind="primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
 
-    /* Botones SECUNDARIOS = GRIS CLARO (Pestañas, acciones secundarias) */
+    /* Botones SECUNDARIOS = ESTILO QUICKBOOKS (Fondo blanco, borde/texto azul) */
     button[kind="secondary"] {
-        background-color: #F1F5F9 !important; 
-        color: #475569 !important;
+        background-color: #FFFFFF !important; 
+        color: #1E3A8A !important;
         border-radius: 4px;
         padding: 0.5rem 1.2rem;
         font-weight: 600;
@@ -52,37 +44,28 @@ st.markdown("""
         border: 1px solid #CBD5E1 !important; 
         transition: all 0.2s ease;
     }
-    button[kind="secondary"]:hover { background-color: #E2E8F0 !important; color: #0F172A !important; }
+    button[kind="secondary"]:hover { background-color: #F1F5F9 !important; border-color: #1E3A8A !important; }
 
-    /* BOTONES VERDES EJECUTIVOS (Avanzar, Guardar, Agregar) */
-    .btn-action-green button {
-        background-color: #059669 !important; /* Verde Esmeralda Profesional */
-        color: #FFFFFF !important; 
-        border: none !important;
-        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
-    }
-    .btn-action-green button:hover { background-color: #047857 !important; }
-
-    /* BOTONES ROJOS (Eliminar) */
-    .btn-action-red button {
-        background-color: #EF4444 !important; 
-        color: #FFFFFF !important; 
-        border: none !important;
-        padding: 0.2rem 0.5rem !important;
-        font-weight: bold;
-    }
-    .btn-action-red button:hover { background-color: #DC2626 !important; }
-
-    /* Botones de Icono (Flechas) - Estilo Enlace */
-    .btn-icon-link button {
-        background-color: transparent !important;
-        color: #64748B !important;
-        border: none !important;
-        box-shadow: none !important;
+    /* BOTONES DE LA TABLA COMPACTOS */
+    div[data-testid="column"]:nth-child(8) button,
+    div[data-testid="column"]:nth-child(9) button,
+    div[data-testid="column"]:nth-child(10) button {
         padding: 0 !important;
-        font-size: 16px !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px !important;
     }
-    .btn-icon-link button:hover { color: #1E3A8A !important; }
+    
+    /* BOTÓN ROJO (Específico para la columna 10 - Eliminar) */
+    div[data-testid="column"]:nth-child(10) button {
+        background-color: #EF4444 !important; 
+        color: white !important;
+        border: none !important;
+    }
+    div[data-testid="column"]:nth-child(10) button:hover { background-color: #DC2626 !important; }
 
     /* ----------------------------------------------------
        DISEÑO DEL MENÚ LATERAL
@@ -101,6 +84,8 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #F8FAFC !important; }
+    
+    /* Botones Sidebar Transparentes */
     [data-testid="stSidebar"] button[kind="secondary"] {
         background-color: transparent !important;
         border: none !important;
@@ -114,11 +99,11 @@ st.markdown("""
        ---------------------------------------------------- */
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px; }
     
-    .invoice-total-container { float: right; width: 300px; text-align: right; }
-    .invoice-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #475569; }
-    .invoice-final-total { display: flex; justify-content: space-between; border-top: 1px solid #CBD5E1; padding-top: 12px; margin-top: 12px; font-size: 20px; font-weight: 800; color: #0F172A; }
-    .internal-metrics { font-size: 14px; color: #475569; margin-bottom: 5px; }
-    .internal-metrics-value { font-size: 18px; font-weight: 600; color: #0F172A; }
+    .invoice-total-container { float: right; width: 320px; text-align: right; background-color: #FFFFFF; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; }
+    .invoice-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; color: #475569; }
+    .invoice-final-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 15px; margin-top: 15px; font-size: 22px; font-weight: 800; color: #1E3A8A; }
+    .internal-metrics { font-size: 13px; color: #64748B; margin-bottom: 5px; text-transform: uppercase; font-weight: 600;}
+    .internal-metrics-value { font-size: 20px; font-weight: 700; color: #0F172A; }
     .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -130,6 +115,7 @@ if "vista_directorio" not in st.session_state: st.session_state.vista_directorio
 if "filtro_dashboard" not in st.session_state: st.session_state.filtro_dashboard = "Aprobada"
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_activa = None
+if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_recien_creado = None
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
@@ -200,16 +186,13 @@ if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporat
 elif menu == "Panel de inicio":
     st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Panel de inicio</h2>", unsafe_allow_html=True)
     
-    st.markdown("<div class='card-container'>", unsafe_allow_html=True)
     b1, b2, b3 = st.columns(3)
     with b1:
-        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-        if st.button("Crear nueva cotización", use_container_width=True): 
+        if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
             st.session_state.nav_menu = "Nueva cotización"
             st.session_state.cotizacion_activa = None
             st.session_state.items_cot = []
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
     with b2:
         if st.button("Directorio de clientes", use_container_width=True, type="secondary"): 
             st.session_state.nav_menu = "Directorios"
@@ -220,53 +203,67 @@ elif menu == "Panel de inicio":
             st.session_state.nav_menu = "Directorios"
             st.session_state.vista_directorio = "proveedores"
             st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
             
-    st.markdown("<p style='color: #475569; font-size: 14px; font-weight: 600; margin-top: 10px;'>RESUMEN FINANCIERO (Seleccione para filtrar)</p>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 25px 0 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
     
+    # DATOS PARA EL GRÁFICO
     cots = st.session_state.cotizaciones_guardadas
     tot_aprobadas = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
     tot_enviadas = sum(c["total"] for c in cots if c["estado"] == "Enviada")
     tot_borradores = sum(c["total"] for c in cots if c["estado"] == "Borrador")
     tot_canceladas = sum(c["total"] for c in cots if c["estado"] == "Cancelada")
     
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        if st.button(f"Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Aprobada" else "secondary"):
-            st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
-    with m2:
-        if st.button(f"Enviadas\n\n${tot_enviadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Enviada" else "secondary"):
-            st.session_state.filtro_dashboard = "Enviada"; st.rerun()
-    with m3:
-        if st.button(f"Borradores\n\n${tot_borradores:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Borrador" else "secondary"):
-            st.session_state.filtro_dashboard = "Borrador"; st.rerun()
-    with m4:
-        if st.button(f"Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Cancelada" else "secondary"):
-            st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
-            
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #1E3A8A; margin-bottom: 15px;'>Resumen financiero interactivo</h4>", unsafe_allow_html=True)
     
-    st.markdown("<div class='card-container'>", unsafe_allow_html=True)
+    col_chart, col_leyenda = st.columns([1, 1.5])
+    
+    with col_chart:
+        df_chart = pd.DataFrame({
+            "Estado": ["Aprobadas", "Enviadas", "Borradores", "Canceladas"],
+            "Monto": [tot_aprobadas, tot_enviadas, tot_borradores, tot_canceladas]
+        })
+        chart = alt.Chart(df_chart).mark_arc(innerRadius=60).encode(
+            theta=alt.Theta(field="Monto", type="quantitative"),
+            color=alt.Color(field="Estado", type="nominal", 
+                            scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], 
+                                            range=["#059669", "#3B82F6", "#94A3B8", "#EF4444"]),
+                            legend=None),
+            tooltip=["Estado", "Monto"]
+        ).properties(height=280)
+        st.altair_chart(chart, use_container_width=True)
+
+    with col_leyenda:
+        st.markdown("<p style='font-size: 14px; color: #64748B;'>Seleccione una categoría de la leyenda para filtrar el portafolio:</p>", unsafe_allow_html=True)
+        lm1, lm2 = st.columns(2)
+        with lm1:
+            if st.button(f"Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
+            if st.button(f"Borradores\n\n${tot_borradores:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
+        with lm2:
+            if st.button(f"Enviadas\n\n${tot_enviadas:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
+            if st.button(f"Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
+
+    st.markdown("<hr style='margin: 15px 0 10px 0; border-top: 1px solid #CBD5E1;'>", unsafe_allow_html=True)
+    
     col_tit, col_bus = st.columns([2, 1])
     with col_tit:
-        st.markdown(f"<h4 style='color: #1E3A8A; margin: 0;'>Portafolio: {st.session_state.filtro_dashboard}</h4>", unsafe_allow_html=True)
+        st.markdown(f"<h4 style='color: #0F172A; margin: 0;'>Portafolio filtrado: {st.session_state.filtro_dashboard}</h4>", unsafe_allow_html=True)
     with col_bus:
-        busqueda_universal = st.text_input("Buscar...", key="b_univ", label_visibility="collapsed")
+        busqueda_universal = st.text_input("Buscar documento...", key="b_univ", label_visibility="collapsed")
     
     eventos_filtrados = [cot for cot in cots if cot["estado"] == st.session_state.filtro_dashboard]
     if busqueda_universal:
         term = busqueda_universal.lower()
         eventos_filtrados = [c for c in eventos_filtrados if term in c['codigo'].lower() or term in c['evento'].lower() or term in c['cliente'].lower()]
     
-    st.markdown("<hr style='margin: 15px 0 10px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     
     if eventos_filtrados:
         cx = st.columns([1.5, 2, 2.5, 1.5, 1])
-        cx[0].markdown("**Código / Fecha**")
-        cx[1].markdown("**Evento**")
-        cx[2].markdown("**Cliente corporativo**")
-        cx[3].markdown("**Inversión total**")
-        cx[4].markdown("**Acción**")
+        cx[0].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>CÓDIGO / FECHA</span>", unsafe_allow_html=True)
+        cx[1].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>EVENTO</span>", unsafe_allow_html=True)
+        cx[2].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>CLIENTE</span>", unsafe_allow_html=True)
+        cx[3].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>MONTO</span>", unsafe_allow_html=True)
+        cx[4].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>ACCIÓN</span>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 5px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         for cot in eventos_filtrados:
@@ -285,12 +282,11 @@ elif menu == "Panel de inicio":
             st.markdown("<hr style='margin: 5px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
     else:
         st.info("No hay registros en esta categoría.")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
     
-    # Cálculo previo del total para mostrar en la cabecera gerencial (Quickbooks Style)
+    # Cálculo en tiempo real del Total Estimado Superior
     sub_comercial_header = 0
     for item in st.session_state.items_cot:
         c_linea = item["cantidad"] * item["costo"]
@@ -300,11 +296,11 @@ elif menu == "Nueva cotización":
     total_final_header = sub_comercial_header * 1.15
     
     st.markdown(f"""
-        <div style='display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;'>
-            <h3 style='font-weight: 700; color: #1E293B; margin: 0;'>Gestión de cotizaciones</h3>
+        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;'>
+            <h2 style='font-weight: 700; color: #0F172A; margin: 0;'>Gestión de cotizaciones</h2>
             <div style='text-align: right;'>
-                <span style='font-size: 12px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Monto Total Estimado</span>
-                <h2 style='margin: 0; color: #0F172A; font-weight: 800; line-height: 1;'>${total_final_header:,.2f}</h2>
+                <span style='font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;'>Monto Total Estimado</span>
+                <h1 style='margin: 0; color: #1E3A8A; font-weight: 800;'>${total_final_header:,.2f}</h1>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -325,17 +321,15 @@ elif menu == "Nueva cotización":
         
     def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
-    st.markdown("<div class='card-container'>", unsafe_allow_html=True)
     col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
-    with col1: cod_cotizacion = st.text_input("Código de cotización", value=def_cod)
+    with col1: cod_cotizacion = st.text_input("Referencia", value=def_cod)
     with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev)
     with col3: cliente_sel = st.selectbox("Cuenta de cliente", lista_nombres_clientes, index=def_cli_idx)
     with col4: fecha_gral = st.date_input("Fecha del evento", datetime.now()) 
     with col5: estado_cot = st.selectbox("Estado comercial", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
-    st.markdown("</div>", unsafe_allow_html=True)
 
     if cliente_sel == OPCION_NUEVO:
-        st.markdown("<div class='card-container' style='border-top: 3px solid #059669;'>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #FFFFFF; padding: 20px; border-radius: 8px; border: 1px solid #CBD5E1; border-top: 3px solid #059669; margin-top: 10px;'>", unsafe_allow_html=True)
         st.markdown("<h4 style='color: #0F172A; margin-top: 0; font-size: 15px;'>Apertura de nueva cuenta</h4>", unsafe_allow_html=True)
         cc1, cc2, cc3 = st.columns(3)
         with cc1:
@@ -351,8 +345,7 @@ elif menu == "Nueva cotización":
             i_tel = st.text_input("Teléfono directo")
             i_dias = st.number_input("Días de crédito", value=30, step=15)
             
-        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-        if st.button("Guardar y aplicar a cotización"):
+        if st.button("Guardar y aplicar", type="primary"):
             if i_emp.strip() != "" and i_ruc.strip() != "":
                 st.session_state.clientes_catalogo.append({
                     "empresa": i_emp, "ruc": i_ruc, "ciudad": i_ciu, "direccion": i_dir,
@@ -362,106 +355,103 @@ elif menu == "Nueva cotización":
                 st.rerun()
             else:
                 st.error("Razón social y RUC son requeridos.")
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='card-container'>", unsafe_allow_html=True)
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        if st.button("Seleccionar del catálogo", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
-            st.session_state.modo_ingreso = "catalogo"; st.rerun()
-    with col_btn2:
-        if st.button("Ingreso manual", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
-            st.session_state.modo_ingreso = "personalizado"; st.rerun()
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    
-    if st.session_state.modo_ingreso == "catalogo":
-        f1, f2 = st.columns([1, 2])
-        with f1: ciudad_filtro = st.selectbox("Filtrar por ciudad", ciudades_lista, index=0)
-        with f2: palabra_busqueda = st.text_input("Término de búsqueda (opcional)", placeholder="Ej. transporte, animación...")
+    with st.expander("Gestionar servicios e insumos", expanded=True):
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("Seleccionar del catálogo", use_container_width=True, type="secondary" if st.session_state.modo_ingreso == "personalizado" else "primary"):
+                st.session_state.modo_ingreso = "catalogo"; st.rerun()
+        with col_btn2:
+            if st.button("Ingreso manual", use_container_width=True, type="secondary" if st.session_state.modo_ingreso == "catalogo" else "primary"):
+                st.session_state.modo_ingreso = "personalizado"; st.rerun()
         
-        resultados = []
-        for p in st.session_state.proveedores_catalogo:
-            if p["ciudad"] == ciudad_filtro:
-                if palabra_busqueda == "" or \
-                   palabra_busqueda.lower() in p["servicio"].lower() or \
-                   palabra_busqueda.lower() in p["proveedor"].lower():
-                    resultados.append(p)
+        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
-        if not resultados:
-            st.warning("No se encontraron registros en el catálogo actual.")
-        else:
-            opciones_str = []
-            for r in resultados:
-                iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
-                desc = r.get("descripcion", "")
-                opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | {desc}")
+        if st.session_state.modo_ingreso == "catalogo":
+            f1, f2 = st.columns([1, 2])
+            with f1: ciudad_filtro = st.selectbox("Filtrar por ciudad", ciudades_lista, index=0)
+            with f2: palabra_busqueda = st.text_input("Término de búsqueda (opcional)", placeholder="Buscar por proveedor o categoría...")
             
-            seleccion = st.selectbox("Seleccione el proveedor corporativo:", opciones_str)
-            item_seleccionado = resultados[opciones_str.index(seleccion)]
+            resultados = []
+            for p in st.session_state.proveedores_catalogo:
+                if p["ciudad"] == ciudad_filtro:
+                    if palabra_busqueda == "" or \
+                       palabra_busqueda.lower() in p["servicio"].lower() or \
+                       palabra_busqueda.lower() in p["proveedor"].lower():
+                        resultados.append(p)
+            
+            if not resultados:
+                st.warning("No se encontraron registros.")
+            else:
+                opciones_str = []
+                for r in resultados:
+                    iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
+                    desc = r.get("descripcion", "")
+                    opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | {desc}")
+                
+                seleccion = st.selectbox("Seleccione el proveedor corporativo:", opciones_str)
+                item_seleccionado = resultados[opciones_str.index(seleccion)]
+                
+                ca, cb, cc, cd, ce = st.columns(5)
+                with ca: fecha_item = st.date_input("Fecha de ejecución", value=fecha_gral)
+                with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
+                with cc: costo_add = st.number_input("Costo unit. ($)", value=float(item_seleccionado["precio_base"]))
+                with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+                with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
+                
+                if st.button("Agregar a la cotización", type="primary"):
+                    st.session_state.items_cot.append({
+                        "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
+                        "ciudad": ciudad_filtro, "fecha": str(fecha_item), "cantidad": cant_add, 
+                        "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
+                    })
+                    st.rerun()
+
+        elif st.session_state.modo_ingreso == "personalizado":
+            nc1, nc2, nc3, nc4 = st.columns(4)
+            with nc1: nuevo_proveedor = st.text_input("Razón social (Proveedor) *")
+            with nc2: nuevo_servicio = st.text_input("Detalle del servicio *")
+            with nc3: nueva_ciudad = st.selectbox("Ciudad operativa", ciudades_lista)
+            with nc4: nueva_categoria = st.text_input("Categoría de gasto")
             
             ca, cb, cc, cd, ce = st.columns(5)
             with ca: fecha_item = st.date_input("Fecha de ejecución", value=fecha_gral)
             with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
-            with cc: costo_add = st.number_input("Costo unit. ($)", value=float(item_seleccionado["precio_base"]))
-            with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+            with cc: costo_add = st.number_input("Costo unit. ($)", value=0.00, format="%.2f")
+            with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
             with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
             
-            st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-            if st.button("Agregar línea a la cotización"):
-                st.session_state.items_cot.append({
-                    "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
-                    "ciudad": ciudad_filtro, "fecha": str(fecha_item), "cantidad": cant_add, 
-                    "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
-                })
-                st.rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    elif st.session_state.modo_ingreso == "personalizado":
-        nc1, nc2, nc3, nc4 = st.columns(4)
-        with nc1: nuevo_proveedor = st.text_input("Razón social (Proveedor) *")
-        with nc2: nuevo_servicio = st.text_input("Detalle del servicio *")
-        with nc3: nueva_ciudad = st.selectbox("Ciudad operativa", ciudades_lista)
-        with nc4: nueva_categoria = st.text_input("Categoría de gasto")
-        
-        ca, cb, cc, cd, ce = st.columns(5)
-        with ca: fecha_item = st.date_input("Fecha de ejecución", value=fecha_gral)
-        with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
-        with cc: costo_add = st.number_input("Costo unit. ($)", value=0.00, format="%.2f")
-        with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
-        with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
-        
-        guardar_bd = st.checkbox("Registrar proveedor en el directorio corporativo", value=True)
-        
-        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-        if st.button("Registrar y agregar línea"):
-            if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
-                st.error("Razón social y detalle del servicio son requeridos.")
-            else:
-                st.session_state.items_cot.append({
-                    "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, 
-                    "ciudad": nueva_ciudad, "fecha": str(fecha_item), "cantidad": cant_add, 
-                    "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
-                })
-                if guardar_bd:
-                    st.session_state.proveedores_catalogo.append({
-                        "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, "categoria": nueva_categoria if nueva_categoria else "General",
-                        "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add, "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Ingreso manual"
+            guardar_bd = st.checkbox("Registrar proveedor en el directorio corporativo", value=True)
+            
+            if st.button("Registrar y agregar", type="primary"):
+                if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
+                    st.error("Razón social y detalle del servicio son requeridos.")
+                else:
+                    st.session_state.items_cot.append({
+                        "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, 
+                        "ciudad": nueva_ciudad, "fecha": str(fecha_item), "cantidad": cant_add, 
+                        "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
                     })
-                st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+                    if guardar_bd:
+                        st.session_state.proveedores_catalogo.append({
+                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, "categoria": nueva_categoria if nueva_categoria else "General",
+                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add, "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Ingreso manual"
+                        })
+                    st.rerun()
 
     if st.session_state.items_cot:
-        st.markdown("<div class='card-container' style='padding-bottom: 10px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #0F172A; margin-top: 20px;'>Estructura de costos</h4>", unsafe_allow_html=True)
         
-        hx = st.columns([2.5, 1.4, 0.5, 1.0, 0.6, 1.0, 1.0, 0.4, 0.4, 0.4])
+        hx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 1.2, 1.0, 0.4, 0.4, 0.4])
         hx[0].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>PROVEEDOR / SERVICIO</span>", unsafe_allow_html=True)
         hx[1].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>FECHA / ZONA</span>", unsafe_allow_html=True)
         hx[2].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>CANT.</span>", unsafe_allow_html=True)
         hx[3].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>COSTO U.</span>", unsafe_allow_html=True)
         hx[4].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>IVA</span>", unsafe_allow_html=True)
-        hx[5].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>MARGEN</span>", unsafe_allow_html=True)
+        hx[5].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>MARGEN ($)</span>", unsafe_allow_html=True)
         hx[6].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>SUBTOTAL</span>", unsafe_allow_html=True)
         st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 1px solid #CBD5E1;'>", unsafe_allow_html=True)
         
@@ -478,38 +468,32 @@ elif menu == "Nueva cotización":
             total_fee += fee_val
             subtotal_comercial += precio_venta_linea
             
-            cx = st.columns([2.5, 1.4, 0.5, 1.0, 0.6, 1.0, 1.0, 0.4, 0.4, 0.4])
+            cx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 1.2, 1.0, 0.4, 0.4, 0.4])
             cx[0].write(f"**{item['proveedor']}** \n\n<span style='color:#475569;'>{item['servicio']}</span>", unsafe_allow_html=True)
             cx[1].write(f"{item['fecha']} \n\n<span style='color:#475569;'>{item['ciudad']}</span>", unsafe_allow_html=True)
             cx[2].write(f"{item['cantidad']}")
             cx[3].write(f"${item['costo']:.2f}")
             cx[4].write(f"{int(item['iva_prov']*100)}%")
-            # Margen mostrando Porcentaje y Valor exacto
-            cx[5].write(f"{item['fee_pct']:.2f}%<br><span style='font-size:12.5px; color:#059669; font-weight:600;'>+${fee_val:,.2f}</span>", unsafe_allow_html=True)
+            # Diseño unificado de Margen: Porcentaje y Valor Real
+            cx[5].write(f"<span style='color:#64748B;'>{item['fee_pct']:.0f}%</span> <span style='font-weight:600; color:#059669;'>+${fee_val:,.2f}</span>", unsafe_allow_html=True)
             cx[6].write(f"**${precio_venta_linea:,.2f}**")
             
             with cx[7]:
-                st.markdown("<div class='btn-icon-link'>", unsafe_allow_html=True)
-                if st.button("↑", key=f"up_{idx}", disabled=(idx == 0)):
+                if st.button("↑", key=f"up_{idx}", disabled=(idx == 0), type="secondary"):
                     st.session_state.items_cot.insert(idx - 1, st.session_state.items_cot.pop(idx)); st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
             with cx[8]:
-                st.markdown("<div class='btn-icon-link'>", unsafe_allow_html=True)
-                if st.button("↓", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1)):
+                if st.button("↓", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), type="secondary"):
                     st.session_state.items_cot.insert(idx + 1, st.session_state.items_cot.pop(idx)); st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
             with cx[9]:
-                st.markdown("<div class='btn-action-red'>", unsafe_allow_html=True)
                 if st.button("X", key=f"del_{idx}"):
                     st.session_state.items_cot.pop(idx); st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
             
         iva_cliente_final = subtotal_comercial * 0.15
         total_cliente_final = subtotal_comercial + iva_cliente_final
 
         st.markdown("<br>", unsafe_allow_html=True)
-        col_met1, col_met2, col_inv = st.columns([1.0, 1.0, 1.8])
+        col_met1, col_met2, col_inv = st.columns([1.2, 1.2, 1.6])
         
         with col_met1:
             st.markdown(f"<div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${subtotal_prov:,.2f}</div>", unsafe_allow_html=True)
@@ -525,32 +509,29 @@ elif menu == "Nueva cotización":
             <div style="clear:both;"></div>
             """, unsafe_allow_html=True)
         
-        st.markdown("<hr style='border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-top: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
         
-        col_empty, col_save_btn = st.columns([3, 1])
-        with col_save_btn:
-            st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-            if st.button("Guardar documento actual", use_container_width=True):
+        col_espacio, col_guardar = st.columns([3, 1])
+        with col_guardar:
+            if st.button("Guardar cotización", use_container_width=True, type="primary"):
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
                 
                 if cliente_sel == OPCION_NUEVO:
-                    st.error("Registre la cuenta del cliente antes de guardar la cotización.")
+                    st.error("Registre la cuenta del cliente antes de guardar.")
                 else:
                     st.session_state.cotizaciones_guardadas.append({
                         "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
                         "fecha": str(fecha_gral), "estado": estado_cot, "total": total_cliente_final, "items": st.session_state.items_cot.copy()
                     })
-                    st.success("Documento registrado en el historial.")
-                    st.rerun() # Recarga para actualizar el Dashboard
-            st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+                    st.success("Guardado en el historial.")
+                    st.session_state.nav_menu = "Panel de inicio" # Redirige al inicio para no duplicar vistas
+                    st.rerun()
 
 # --- VISTA 4: DIRECTORIOS (CRM) ---
 elif menu == "Directorios":
     st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Gestión de cuentas (CRM)</h2>", unsafe_allow_html=True)
     
-    st.markdown("<div class='card-container'>", unsafe_allow_html=True)
     dir_b1, dir_b2 = st.columns(2)
     with dir_b1:
         if st.button("Directorio de clientes", use_container_width=True, type="primary" if st.session_state.vista_directorio == "clientes" else "secondary"):
@@ -558,10 +539,10 @@ elif menu == "Directorios":
     with dir_b2:
         if st.button("Red de proveedores", use_container_width=True, type="primary" if st.session_state.vista_directorio == "proveedores" else "secondary"):
             st.session_state.vista_directorio = "proveedores"; st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
+            
+    st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
     
     if st.session_state.vista_directorio == "clientes":
-        st.markdown("<div class='card-container'>", unsafe_allow_html=True)
         df_clientes = pd.DataFrame(st.session_state.clientes_catalogo)
         df_clientes = df_clientes.rename(columns={
             "empresa": "Empresa", "ruc": "RUC", "ciudad": "Ciudad", 
@@ -570,37 +551,33 @@ elif menu == "Directorios":
         })
         st.dataframe(df_clientes, use_container_width=True, hide_index=True)
         
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='color: #0F172A; font-size: 16px;'>Apertura de nueva cuenta corporativa</h4>", unsafe_allow_html=True)
-        cc1, cc2, cc3 = st.columns(3)
-        with cc1:
-            n_empresa = st.text_input("Razón social / Empresa *")
-            n_ruc = st.text_input("Registro Único de Contribuyentes (RUC) *")
-            n_ciu = st.selectbox("Ciudad de facturación", ciudades_lista)
-        with cc2:
-            n_dir = st.text_input("Dirección fiscal")
-            n_web = st.text_input("Sitio web corporativo")
-            n_contacto = st.text_input("Contacto autorizado")
-        with cc3:
-            n_correo = st.text_input("Correo electrónico financiero")
-            n_tel = st.text_input("Teléfono directo")
-            n_dias = st.number_input("Días de crédito asignados", value=30, step=15)
-            
-        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-        if st.button("Registrar cuenta en el sistema"):
-            if n_empresa and n_ruc:
-                st.session_state.clientes_catalogo.append({
-                    "empresa": n_empresa, "ruc": n_ruc, "ciudad": n_ciu, "direccion": n_dir,
-                    "web": n_web, "contacto": n_contacto, "email": n_correo, "telefono": n_tel, "dias_credito": n_dias
-                })
-                st.success("Cuenta corporativa registrada correctamente.")
-                st.rerun()
-            else:
-                st.error("Razón social y RUC son requerimientos obligatorios.")
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        with st.expander("Apertura de nueva cuenta corporativa"):
+            cc1, cc2, cc3 = st.columns(3)
+            with cc1:
+                n_empresa = st.text_input("Razón social / Empresa *")
+                n_ruc = st.text_input("Registro Único de Contribuyentes (RUC) *")
+                n_ciu = st.selectbox("Ciudad de facturación", ciudades_lista)
+            with cc2:
+                n_dir = st.text_input("Dirección fiscal")
+                n_web = st.text_input("Sitio web corporativo")
+                n_contacto = st.text_input("Contacto autorizado")
+            with cc3:
+                n_correo = st.text_input("Correo electrónico financiero")
+                n_tel = st.text_input("Teléfono directo")
+                n_dias = st.number_input("Días de crédito asignados", value=30, step=15)
+                
+            if st.button("Registrar cuenta en el sistema", type="primary"):
+                if n_empresa and n_ruc:
+                    st.session_state.clientes_catalogo.append({
+                        "empresa": n_empresa, "ruc": n_ruc, "ciudad": n_ciu, "direccion": n_dir,
+                        "web": n_web, "contacto": n_contacto, "email": n_correo, "telefono": n_tel, "dias_credito": n_dias
+                    })
+                    st.success("Cuenta corporativa registrada correctamente.")
+                    st.rerun()
+                else:
+                    st.error("Razón social y RUC son requerimientos obligatorios.")
 
     elif st.session_state.vista_directorio == "proveedores":
-        st.markdown("<div class='card-container'>", unsafe_allow_html=True)
         df_proveedores = pd.DataFrame(st.session_state.proveedores_catalogo)
         df_proveedores = df_proveedores.rename(columns={
             "servicio": "Servicio", "proveedor": "Proveedor", "categoria": "Categoría",
@@ -611,32 +588,29 @@ elif menu == "Directorios":
         df_proveedores["Costo base ($)"] = df_proveedores["Costo base ($)"].apply(lambda x: f"${x:,.2f}")
         st.dataframe(df_proveedores, use_container_width=True, hide_index=True)
         
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='color: #0F172A; font-size: 16px;'>Registro de nuevo proveedor</h4>", unsafe_allow_html=True)
-        cp1, cp2, cp3 = st.columns(3)
-        with cp1:
-            p_prov = st.text_input("Razón social / Proveedor *")
-            p_serv = st.text_input("Servicio o insumo principal *")
-            p_cat = st.text_input("Categoría de gasto")
-        with cp2:
-            p_ciu = st.selectbox("Sede operativa", ciudades_lista)
-            p_costo = st.number_input("Costo referencial estándar ($)", value=0.00)
-            p_iva = st.selectbox("IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%")
-        with cp3:
-            p_banco = st.text_input("Institución financiera")
-            p_cta = st.text_input("Tipo y número de cuenta")
-            p_desc = st.text_input("Condiciones técnicas cortas")
-        
-        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-        if st.button("Registrar proveedor en el sistema"):
-            if p_prov and p_serv:
-                st.session_state.proveedores_catalogo.append({
-                    "servicio": p_serv, "proveedor": p_prov, "categoria": p_cat,
-                    "ciudad": p_ciu, "precio_base": p_costo, "iva": p_iva,
-                    "banco": p_banco, "cuenta": p_cta, "descripcion": p_desc
-                })
-                st.success("Proveedor registrado correctamente.")
-                st.rerun()
-            else:
-                st.error("Razón social y Servicio principal son campos obligatorios.")
-        st.markdown("</div></div>", unsafe_allow_html=True)
+        with st.expander("Registro de nuevo proveedor"):
+            cp1, cp2, cp3 = st.columns(3)
+            with cp1:
+                p_prov = st.text_input("Razón social / Proveedor *")
+                p_serv = st.text_input("Servicio o insumo principal *")
+                p_cat = st.text_input("Categoría de gasto")
+            with cp2:
+                p_ciu = st.selectbox("Sede operativa", ciudades_lista)
+                p_costo = st.number_input("Costo referencial estándar ($)", value=0.00)
+                p_iva = st.selectbox("IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%")
+            with cp3:
+                p_banco = st.text_input("Institución financiera")
+                p_cta = st.text_input("Tipo y número de cuenta")
+                p_desc = st.text_input("Condiciones técnicas cortas")
+            
+            if st.button("Registrar proveedor en el sistema", type="primary"):
+                if p_prov and p_serv:
+                    st.session_state.proveedores_catalogo.append({
+                        "servicio": p_serv, "proveedor": p_prov, "categoria": p_cat,
+                        "ciudad": p_ciu, "precio_base": p_costo, "iva": p_iva,
+                        "banco": p_banco, "cuenta": p_cta, "descripcion": p_desc
+                    })
+                    st.success("Proveedor registrado correctamente.")
+                    st.rerun()
+                else:
+                    st.error("Razón social y Servicio principal son campos obligatorios.")
