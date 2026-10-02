@@ -9,52 +9,117 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILOS CSS ---
+# --- ESTILOS CSS AVANZADOS ---
 st.markdown("""
     <style>
+    /* Tipografía y fondos principales */
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
-    /* Botones primarios (Azul corporativo) */
+    /* ----------------------------------------------------
+       COLORIMETRÍA DE BOTONES
+       ---------------------------------------------------- */
+    /* Botones primarios por defecto (Azul corporativo) */
     button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
         border-radius: 4px;
-        padding: 0.6rem 1.2rem;
+        padding: 0.5rem 1rem;
         font-weight: 600;
         font-size: 14px;
         border: none !important; 
         box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
-    button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(30, 58, 138, 0.3); }
+    button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
-    /* Botones secundarios (Grises limpios) */
+    /* Botones secundarios (Grises para filtros y opciones) */
     button[kind="secondary"] {
         background-color: #F8FAFC !important; 
         color: #334155 !important;
         border-radius: 4px;
-        padding: 0.6rem 1.2rem;
+        padding: 0.5rem 1rem;
         font-weight: 600;
         font-size: 14px;
         border: 1px solid #CBD5E1 !important; 
-        box-shadow: none;
         transition: all 0.2s ease;
     }
-    button[kind="secondary"]:hover { background-color: #F1F5F9 !important; color: #0F172A !important; border-color: #94A3B8 !important; }
+    button[kind="secondary"]:hover { background-color: #E2E8F0 !important; color: #0F172A !important; }
     
-    [data-testid="stExpander"] { background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important; }
+    /* BOTONES VERDES (Acciones de Avanzar: Crear, Guardar, Agregar) */
+    div[data-testid="element-container"]:has(.btn-verde) + div[data-testid="element-container"] button {
+        background-color: #059669 !important; 
+        color: #FFFFFF !important; 
+        border: none !important;
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
+    }
+    div[data-testid="element-container"]:has(.btn-verde) + div[data-testid="element-container"] button:hover { background-color: #047857 !important; }
+
+    /* Ajuste súper compacto para botones de acción en la tabla (Columnas 8, 9 y 10) */
+    div[data-testid="column"]:nth-child(8) button,
+    div[data-testid="column"]:nth-child(9) button,
+    div[data-testid="column"]:nth-child(10) button {
+        padding: 0.2rem 0.2rem !important;
+        font-size: 11px !important;
+        min-height: 28px !important;
+    }
+    /* BOTÓN ROJO (Eliminar X en columna 10) */
+    div[data-testid="column"]:nth-child(10) button { background-color: #EF4444 !important; color: white !important; border: none !important; }
+    div[data-testid="column"]:nth-child(10) button:hover { background-color: #DC2626 !important; }
+
+    /* ----------------------------------------------------
+       DISEÑO DEL MENÚ LATERAL (Elegante y Corporativo)
+       ---------------------------------------------------- */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important;
+    }
+    /* Logo de la empresa Brillante */
+    .brand-logo {
+        font-size: 22px;
+        font-weight: 900;
+        background: linear-gradient(90deg, #38BDF8, #E0E7FF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 25px;
+        margin-top: 10px;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #F8FAFC !important; }
+    [data-testid="stSidebar"] button {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #FFFFFF !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+    }
+    [data-testid="stSidebar"] button:hover { background-color: rgba(255, 255, 255, 0.15) !important; border-color: #38BDF8 !important; }
+
+    /* ----------------------------------------------------
+       MODULO FINANCIERO TIPO FACTURA
+       ---------------------------------------------------- */
+    .invoice-container {
+        background: #F8FAFC;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        padding: 15px 25px;
+        width: 100%;
+        text-align: right;
+    }
+    .inv-row { display: flex; justify-content: space-between; font-size: 15px; color: #475569; margin-bottom: 6px;}
+    .inv-total { 
+        display: flex; justify-content: space-between; 
+        font-size: 32px !important; /* TOTAL MUCHO MÁS GRANDE */
+        font-weight: 900; color: #1E3A8A; 
+        margin-top: 10px; padding-top: 10px; border-top: 2px solid #CBD5E1;
+    }
+
+    /* ----------------------------------------------------
+       OPTIMIZACIÓN DE ESPACIOS
+       ---------------------------------------------------- */
+    .block-container { padding-top: 1.5rem !important; padding-bottom: 1rem !important; }
+    [data-testid="stExpander"] { background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important; margin-bottom: 10px !important;}
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px; }
-    
-    li[data-baseweb="option"], div[role="option"] { background-color: #FFFFFF !important; color: #1E293B !important; transition: all 0.1s ease; }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover { background-color: #EFF6FF !important; color: #1D4ED8 !important; font-weight: 600 !important; }
     table tbody tr:hover { background-color: #F1F5F9 !important; }
-    
-    .total-box { padding: 12px 20px; border-radius: 6px; background-color: #F8FAFC; border-left: 4px solid #1E3A8A; font-size: 28px !important; font-weight: 700; color: #0F172A; line-height: 1.2; border: 1px solid #E2E8F0; }
-    .total-label { font-size: 12px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
-    
-    /* Buscadores y compactación */
-    .buscador-tabla input { background-color: #F8FAFC !important; font-size: 13px !important; }
-    .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -70,7 +135,7 @@ if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_rec
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# --- GENERACIÓN DE BASE DE DATOS DE PRUEBA (60 SERVICIOS) ---
+# --- GENERACIÓN DE BASE DE DATOS DE PRUEBA ---
 if "proveedores_catalogo" not in st.session_state:
     cat_temp = []
     servicios_base = [
@@ -89,22 +154,17 @@ if "proveedores_catalogo" not in st.session_state:
         prefijo = ciu[:3].upper()
         for serv, cat, precio, iva in servicios_base:
             cat_temp.append({
-                "servicio": serv,
-                "proveedor": f"Pro{cat} {prefijo}",
-                "categoria": cat,
-                "ciudad": ciu,
-                "precio_base": precio,
-                "iva": iva,
-                "banco": "Banco Comercial",
-                "cuenta": f"Cta. {prefijo}-{len(cat_temp)}",
-                "descripcion": f"Servicio estandarizado de {serv.lower()} habilitado para {ciu}."
+                "servicio": serv, "proveedor": f"Pro{cat} {prefijo}", "categoria": cat,
+                "ciudad": ciu, "precio_base": precio, "iva": iva,
+                "banco": "Banco Comercial", "cuenta": f"Cta. {prefijo}-{len(cat_temp)}",
+                "descripcion": f"Servicio estándar operativo en {ciu}."
             })
     st.session_state.proveedores_catalogo = cat_temp
 
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {
-            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 360.00,
+            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00,
             "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]
         },
         {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
@@ -118,9 +178,8 @@ if "clientes_catalogo" not in st.session_state:
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
 
-# --- MENÚ LATERAL (ESTRUCTURA ERP GERENCIAL) ---
-st.sidebar.markdown("<h3 style='color: #0F172A; font-weight: 700;'>Karkajadas Group</h3>", unsafe_allow_html=True)
-st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+# --- MENÚ LATERAL (ESTRUCTURA ERP GERENCIAL CON FONDO ELEGANTE) ---
+st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
 
 if st.sidebar.button("Panel de inicio", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
 if st.sidebar.button("Gestión de cuentas (CRM)", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.rerun()
@@ -128,8 +187,8 @@ if st.sidebar.button("Reportes financieros", use_container_width=True, type="sec
 if st.sidebar.button("Proyecciones de ventas", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Proyecciones de ventas"; st.rerun()
 if st.sidebar.button("Noticias corporativas", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Noticias corporativas"; st.rerun()
 
-st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size: 12px; color: #64748B; font-weight: 600;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<hr style='margin: 10px 0; border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size: 11px; color: #94A3B8; font-weight: 600; letter-spacing: 1px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
 if st.sidebar.button("Centro de ayuda", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Centro de ayuda"; st.rerun()
 if st.sidebar.button("Documentación operativa", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Documentación operativa"; st.rerun()
 
@@ -139,7 +198,7 @@ menu = st.session_state.nav_menu
 if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporativas", "Centro de ayuda", "Documentación operativa"]:
     st.markdown(f"<h2 style='color: #0F172A; font-weight: 700;'>{menu}</h2>", unsafe_allow_html=True)
     st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad próximamente.")
+    st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad.")
 
 # --- VISTA 1: PANEL PRINCIPAL ---
 elif menu == "Panel de inicio":
@@ -147,6 +206,7 @@ elif menu == "Panel de inicio":
     
     b1, b2, b3 = st.columns(3)
     with b1:
+        st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
         if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
             st.session_state.nav_menu = "Nueva cotización"
             st.session_state.cotizacion_activa = None
@@ -158,7 +218,7 @@ elif menu == "Panel de inicio":
             st.session_state.vista_directorio = "clientes"
             st.rerun()
     with b3:
-        if st.button("Red de proveedores", use_container_width=True, type="secondary"): 
+        if st.button("Directorio de proveedores", use_container_width=True, type="secondary"): 
             st.session_state.nav_menu = "Directorios"
             st.session_state.vista_directorio = "proveedores"
             st.rerun()
@@ -189,7 +249,7 @@ elif menu == "Panel de inicio":
     st.markdown("<br>", unsafe_allow_html=True)
     
     with st.container():
-        st.markdown("<div style='background-color: #F8FAFC; padding: 25px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         col_tit, col_bus = st.columns([2, 1])
         with col_tit:
@@ -202,7 +262,7 @@ elif menu == "Panel de inicio":
             term = busqueda_universal.lower()
             eventos_filtrados = [c for c in eventos_filtrados if term in c['codigo'].lower() or term in c['evento'].lower() or term in c['cliente'].lower()]
         
-        st.markdown("<hr style='margin: 15px 0 10px 0; border-top: 2px solid #CBD5E1;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 10px 0; border-top: 2px solid #CBD5E1;'>", unsafe_allow_html=True)
         
         if eventos_filtrados:
             cx = st.columns([1.5, 2, 2.5, 1.5, 1])
@@ -220,7 +280,7 @@ elif menu == "Panel de inicio":
                 cx[2].write(f"{cot['cliente']}")
                 cx[3].write(f"**${cot['total']:,.2f}**")
                 
-                if cx[4].button("Abrir documento", key=f"abrir_{cot['codigo']}", type="secondary"):
+                if cx[4].button("Abrir", key=f"abrir_{cot['codigo']}", type="secondary"):
                     st.session_state.cotizacion_activa = cot
                     st.session_state.items_cot = cot.get("items", [])
                     st.session_state.nav_menu = "Nueva cotización"
@@ -232,7 +292,7 @@ elif menu == "Panel de inicio":
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
-    st.markdown("<h3 style='font-weight: 700; color: #1E293B;'>Gestión de cotizaciones</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-weight: 700; color: #1E293B; margin-bottom: 0px;'>Gestión de cotizaciones</h3>", unsafe_allow_html=True)
     
     c_activa = st.session_state.cotizacion_activa
     lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
@@ -258,8 +318,8 @@ elif menu == "Nueva cotización":
     with col5: estado_cot = st.selectbox("Estado comercial", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
     
     if cliente_sel == OPCION_NUEVO:
-        st.markdown("<div style='background-color: #F8FAFC; padding: 20px; border-radius: 6px; border: 1px solid #CBD5E1; margin-bottom: 20px;'>", unsafe_allow_html=True)
-        st.markdown("<h4 style='color: #0F172A; margin-top: 0; font-size: 16px;'>Apertura de nueva cuenta de cliente</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #F8FAFC; padding: 15px; border-radius: 6px; border: 1px solid #CBD5E1; margin-top: 10px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #0F172A; margin-top: 0; font-size: 15px;'>Apertura de nueva cuenta</h4>", unsafe_allow_html=True)
         cc1, cc2, cc3 = st.columns(3)
         with cc1:
             i_emp = st.text_input("Razón social / Empresa *")
@@ -272,8 +332,9 @@ elif menu == "Nueva cotización":
         with cc3:
             i_mail = st.text_input("Correo electrónico")
             i_tel = st.text_input("Teléfono directo")
-            i_dias = st.number_input("Días de crédito asignados", value=30, step=15)
+            i_dias = st.number_input("Días de crédito", value=30, step=15)
             
+        st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
         if st.button("Guardar y aplicar a cotización", type="primary"):
             if i_emp.strip() != "" and i_ruc.strip() != "":
                 st.session_state.clientes_catalogo.append({
@@ -283,23 +344,19 @@ elif menu == "Nueva cotización":
                 st.session_state.cliente_recien_creado = i_emp
                 st.rerun()
             else:
-                st.error("Razón social y RUC son requeridos para la apertura de cuenta.")
+                st.error("Razón social y RUC son requeridos.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Nota: Espacio eliminado intencionalmente para compactar diseño
-    st.markdown("<br>", unsafe_allow_html=True)
-    
     with st.expander("Gestionar servicios e insumos", expanded=True):
-        st.markdown("<p style='font-size: 13px; font-weight: 600; color: #475569;'>MÉTODO DE INGRESO:</p>", unsafe_allow_html=True)
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("Seleccionar del catálogo", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
                 st.session_state.modo_ingreso = "catalogo"; st.rerun()
         with col_btn2:
-            if st.button("Ingreso manual de servicio", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
+            if st.button("Ingreso manual", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
                 st.session_state.modo_ingreso = "personalizado"; st.rerun()
         
-        st.markdown("<hr style='margin: 15px 0 10px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
         if st.session_state.modo_ingreso == "catalogo":
             f1, f2 = st.columns([1, 2])
@@ -311,8 +368,7 @@ elif menu == "Nueva cotización":
                 if p["ciudad"] == ciudad_filtro:
                     if palabra_busqueda == "" or \
                        palabra_busqueda.lower() in p["servicio"].lower() or \
-                       palabra_busqueda.lower() in p["proveedor"].lower() or \
-                       palabra_busqueda.lower() in p["categoria"].lower():
+                       palabra_busqueda.lower() in p["proveedor"].lower():
                         resultados.append(p)
             
             if not resultados:
@@ -327,14 +383,14 @@ elif menu == "Nueva cotización":
                 seleccion = st.selectbox("Seleccione el proveedor corporativo:", opciones_str)
                 item_seleccionado = resultados[opciones_str.index(seleccion)]
                 
-                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
                 ca, cb, cc, cd, ce = st.columns(5)
                 with ca: fecha_item = st.date_input("Fecha de ejecución", value=fecha_gral)
-                with cb: cant_add = st.number_input("Cantidad requerida", min_value=1, value=1)
-                with cc: costo_add = st.number_input("Costo unitario directo ($)", value=float(item_seleccionado["precio_base"]))
-                with cd: iva_add = st.selectbox("Gravamen IVA", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
-                with ce: fee_add = st.number_input("Margen operativo (%)", value=20.00, step=5.00, format="%.2f")
-                    
+                with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
+                with cc: costo_add = st.number_input("Costo unit. ($)", value=float(item_seleccionado["precio_base"]))
+                with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+                with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
+                
+                st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
                 if st.button("Agregar línea a la cotización", type="primary"):
                     st.session_state.items_cot.append({
                         "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
@@ -350,15 +406,16 @@ elif menu == "Nueva cotización":
             with nc3: nueva_ciudad = st.selectbox("Ciudad operativa", ciudades_lista)
             with nc4: nueva_categoria = st.text_input("Categoría de gasto")
             
-            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
             ca, cb, cc, cd, ce = st.columns(5)
             with ca: fecha_item = st.date_input("Fecha de ejecución", value=fecha_gral)
-            with cb: cant_add = st.number_input("Cantidad requerida", min_value=1, value=1)
-            with cc: costo_add = st.number_input("Costo unitario directo ($)", value=0.00, format="%.2f")
-            with cd: iva_add = st.selectbox("Gravamen IVA", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
-            with ce: fee_add = st.number_input("Margen operativo (%)", value=20.00, step=5.00, format="%.2f")
+            with cb: cant_add = st.number_input("Cantidad", min_value=1, value=1)
+            with cc: costo_add = st.number_input("Costo unit. ($)", value=0.00, format="%.2f")
+            with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
+            with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
             
             guardar_bd = st.checkbox("Registrar proveedor en el directorio corporativo", value=True)
+            
+            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar y agregar línea", type="primary"):
                 if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
                     st.error("Razón social y detalle del servicio son requeridos.")
@@ -370,69 +427,82 @@ elif menu == "Nueva cotización":
                     })
                     if guardar_bd:
                         st.session_state.proveedores_catalogo.append({
-                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, "categoria": nueva_categoria if nueva_categoria else "Sin categorizar",
-                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add, "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Ingreso manual autorizado"
+                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, "categoria": nueva_categoria if nueva_categoria else "General",
+                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add, "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Ingreso manual"
                         })
                     st.rerun()
 
     if st.session_state.items_cot:
-        st.markdown("<h4 style='color: #0F172A; margin-top: 30px;'>Estructura de costos y márgenes (Control interno)</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #0F172A; margin-top: 20px;'>Estructura de costos (Uso interno)</h4>", unsafe_allow_html=True)
         
-        # Ajuste de columnas para incluir botones de subir y bajar
-        hx = st.columns([2.5, 1.2, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+        hx = st.columns([2.5, 1.4, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
         hx[0].markdown("**Proveedor / Servicio**")
         hx[1].markdown("**Fecha / Zona**")
         hx[2].markdown("**Cant.**")
-        hx[3].markdown("**Costo unit.**")
+        hx[3].markdown("**Costo u.**")
         hx[4].markdown("**IVA**")
         hx[5].markdown("**Margen**")
         hx[6].markdown("**Subtotal ($)**")
-        hx[7].markdown("")
-        hx[8].markdown("")
-        hx[9].markdown("")
-        st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 2px 0 8px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
         
-        subtotal_prov = 0; total_fee = 0; total_general = 0
+        subtotal_prov = 0; total_fee = 0; subtotal_comercial = 0
+        
         for idx, item in enumerate(st.session_state.items_cot):
-            sub_costo = item["cantidad"] * item["costo"]
-            sub_con_iva = sub_costo + (sub_costo * item["iva_prov"])
-            fee_val = sub_con_iva * (item["fee_pct"] / 100.0)
-            total_item = sub_con_iva + fee_val
+            costo_linea = item["cantidad"] * item["costo"]
+            iva_prov_val = costo_linea * item["iva_prov"]
+            costo_con_iva = costo_linea + iva_prov_val
+            fee_val = costo_con_iva * (item["fee_pct"] / 100.0)
+            precio_venta_linea = costo_con_iva + fee_val
             
-            subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
+            subtotal_prov += costo_con_iva
+            total_fee += fee_val
+            subtotal_comercial += precio_venta_linea
             
-            cx = st.columns([2.5, 1.2, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+            cx = st.columns([2.5, 1.4, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
             cx[0].write(f"**{item['proveedor']}** \n\n*{item['servicio']}*")
             cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
             cx[3].write(f"${item['costo']:.2f}")
             cx[4].write(f"{int(item['iva_prov']*100)}%")
             cx[5].write(f"{item['fee_pct']:.2f}%")
-            cx[6].write(f"**${total_item:.2f}**")
+            cx[6].write(f"**${precio_venta_linea:.2f}**")
             
-            # Lógica dinámica para reordenar y eliminar
             if cx[7].button("▲", key=f"up_{idx}", disabled=(idx == 0), use_container_width=True):
                 st.session_state.items_cot.insert(idx - 1, st.session_state.items_cot.pop(idx))
                 st.rerun()
             if cx[8].button("▼", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), use_container_width=True):
                 st.session_state.items_cot.insert(idx + 1, st.session_state.items_cot.pop(idx))
                 st.rerun()
-            if cx[9].button("X", key=f"del_{idx}", type="secondary", use_container_width=True):
+            if cx[9].button("X", key=f"del_{idx}", use_container_width=True):
                 st.session_state.items_cot.pop(idx)
                 st.rerun()
-                
             st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
             
+        # CÁLCULOS TIPO FACTURA PARA EL CLIENTE
+        iva_cliente_final = subtotal_comercial * 0.15
+        total_cliente_final = subtotal_comercial + iva_cliente_final
+
         st.markdown("<br>", unsafe_allow_html=True)
-        t1, t2, t3 = st.columns(3)
-        t1.metric("Costos operativos directos", f"${subtotal_prov:.2f}")
-        t2.metric("Rentabilidad proyectada", f"${total_fee:.2f}")
-        t3.markdown(f"<div class='total-box'><span class='total-label'>Valor comercial al cliente</span>${total_general:.2f}</div>", unsafe_allow_html=True)
+        col_met1, col_met2, col_inv = st.columns([1.2, 1.2, 1.6])
+        
+        with col_met1:
+            st.metric("Costos operativos", f"${subtotal_prov:,.2f}")
+        with col_met2:
+            st.metric("Rentabilidad", f"${total_fee:,.2f}")
+        with col_inv:
+            st.markdown(f"""
+            <div class='invoice-container'>
+                <div class='inv-row'><span>Subtotal</span><span>${subtotal_comercial:,.2f}</span></div>
+                <div class='inv-row'><span>IVA 15%</span><span>${iva_cliente_final:,.2f}</span></div>
+                <div class='inv-total'><span>TOTAL INVERSIÓN</span><span>${total_cliente_final:,.2f}</span></div>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         btn1, btn2 = st.columns(2)
         with btn1:
-            if st.button("Guardar documento actual", type="secondary"):
+            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
+            if st.button("Guardar documento actual", type="primary"):
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
                 
@@ -441,34 +511,46 @@ elif menu == "Nueva cotización":
                 else:
                     st.session_state.cotizaciones_guardadas.append({
                         "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
-                        "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general, "items": st.session_state.items_cot.copy()
+                        "fecha": str(fecha_gral), "estado": estado_cot, "total": total_cliente_final, "items": st.session_state.items_cot.copy()
                     })
                     st.success("Documento comercial registrado en el historial.")
         with btn2:
+            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Generar propuesta comercial", type="primary"):
                 st.session_state.vista_cliente = True; st.rerun()
 
     if st.session_state.vista_cliente and st.session_state.items_cot:
         st.markdown("---")
-        st.markdown(f"<h3 style='color: #0F172A;'>Propuesta comercial formal: {nombre_evento}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: #0F172A;'>Propuesta comercial: {nombre_evento}</h3>", unsafe_allow_html=True)
         st.write(f"**Cuenta:** {cliente_sel} | **Referencia:** {cod_cotizacion} | **Fecha de emisión:** {fecha_gral}")
         
         datos_cliente = []
         for item in st.session_state.items_cot:
-            costo_real = item["costo"] * (1 + item["iva_prov"])
-            fee_valor = costo_real * (item["fee_pct"] / 100.0)
-            total_linea = (costo_real + fee_valor) * item["cantidad"]
-            precio_unitario_cliente = total_linea / item["cantidad"]
+            costo_linea = item["cantidad"] * item["costo"]
+            iva_prov_val = costo_linea * item["iva_prov"]
+            costo_con_iva = costo_linea + iva_prov_val
+            fee_val = costo_con_iva * (item["fee_pct"] / 100.0)
+            precio_venta_linea = costo_con_iva + fee_val
+            precio_unitario = precio_venta_linea / item["cantidad"]
+            
             datos_cliente.append({
                 "Detalle de servicio": item["servicio"], "Lugar de ejecución": item["ciudad"], "Fecha": item["fecha"],
-                "Cant.": item["cantidad"], "Valor unitario": f"${precio_unitario_cliente:.2f}", "Valor total": f"${total_linea:.2f}"
+                "Cant.": item["cantidad"], "Valor unitario": f"${precio_unitario:.2f}", "Valor total": f"${precio_venta_linea:.2f}"
             })
         st.table(pd.DataFrame(datos_cliente))
-        st.markdown(f"<h3 style='text-align: right; color: #1E3A8A;'>INVERSIÓN TOTAL: ${total_general:.2f}</h3>", unsafe_allow_html=True)
+        
+        # Resumen financiero en la vista del cliente
+        st.markdown(f"""
+        <div style='text-align: right; margin-top: 10px;'>
+            <p style='font-size: 16px; color: #475569; margin: 0;'>Subtotal: ${subtotal_comercial:,.2f}</p>
+            <p style='font-size: 16px; color: #475569; margin: 0;'>IVA 15%: ${iva_cliente_final:,.2f}</p>
+            <h3 style='color: #1E3A8A; margin-top: 5px;'>TOTAL: ${total_cliente_final:,.2f}</h3>
+        </div>
+        """, unsafe_allow_html=True)
 
 # --- VISTA 4: DIRECTORIOS (CRM) ---
 elif menu == "Directorios":
-    st.markdown("<h2 style='color: #0F172A; font-weight: 700;'>Gestión de cuentas y contactos (CRM)</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0F172A; font-weight: 700;'>Gestión de cuentas (CRM)</h2>", unsafe_allow_html=True)
     
     dir_b1, dir_b2 = st.columns(2)
     with dir_b1:
@@ -504,6 +586,7 @@ elif menu == "Directorios":
                 n_tel = st.text_input("Teléfono directo")
                 n_dias = st.number_input("Días de crédito asignados", value=30, step=15)
                 
+            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar cuenta en el sistema", type="primary"):
                 if n_empresa and n_ruc:
                     st.session_state.clientes_catalogo.append({
@@ -526,7 +609,7 @@ elif menu == "Directorios":
         df_proveedores["Costo base ($)"] = df_proveedores["Costo base ($)"].apply(lambda x: f"${x:,.2f}")
         st.dataframe(df_proveedores, use_container_width=True, hide_index=True)
         
-        with st.expander("Homologación de nuevo proveedor"):
+        with st.expander("Registro de nuevo proveedor"):
             cp1, cp2, cp3 = st.columns(3)
             with cp1:
                 p_prov = st.text_input("Razón social / Proveedor *")
@@ -535,7 +618,7 @@ elif menu == "Directorios":
             with cp2:
                 p_ciu = st.selectbox("Sede operativa", ciudades_lista)
                 p_costo = st.number_input("Costo referencial estándar ($)", value=0.00)
-                p_iva = st.selectbox("Gravamen IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%")
+                p_iva = st.selectbox("IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%")
             with cp3:
                 st.markdown("<p style='font-size: 13px; font-weight: 600; margin-bottom: 5px;'>Información bancaria</p>", unsafe_allow_html=True)
                 p_banco = st.text_input("Institución financiera")
@@ -543,6 +626,7 @@ elif menu == "Directorios":
                 
             p_desc = st.text_area("Condiciones técnicas y observaciones")
             
+            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar proveedor en el sistema", type="primary"):
                 if p_prov and p_serv:
                     st.session_state.proveedores_catalogo.append({
@@ -550,7 +634,7 @@ elif menu == "Directorios":
                         "ciudad": p_ciu, "precio_base": p_costo, "iva": p_iva,
                         "banco": p_banco, "cuenta": p_cta, "descripcion": p_desc
                     })
-                    st.success("Proveedor homologado y registrado correctamente.")
+                    st.success("Proveedor registrado correctamente.")
                     st.rerun()
                 else:
                     st.error("Razón social y Servicio principal son campos obligatorios.")
