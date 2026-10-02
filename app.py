@@ -14,7 +14,6 @@ st.markdown("""
     <style>
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
-    /* Botones primarios (Azul corporativo) */
     button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
@@ -28,7 +27,6 @@ st.markdown("""
     }
     button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(30, 58, 138, 0.3); }
 
-    /* Botones secundarios (Grises limpios) */
     button[kind="secondary"] {
         background-color: #F8FAFC !important; 
         color: #334155 !important;
@@ -57,7 +55,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- INICIALIZACIÓN DE ESTADOS ---
-if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel principal"
+if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel de inicio"
 if "modo_ingreso" not in st.session_state: st.session_state.modo_ingreso = "catalogo"
 if "vista_directorio" not in st.session_state: st.session_state.vista_directorio = "clientes"
 if "filtro_dashboard" not in st.session_state: st.session_state.filtro_dashboard = "Aprobada"
@@ -96,24 +94,29 @@ if "proveedores_catalogo" not in st.session_state:
 st.sidebar.markdown("<h3 style='color: #0F172A; font-weight: 700;'>Karkajadas Group</h3>", unsafe_allow_html=True)
 st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 
-if st.sidebar.button("Panel de control", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel principal"; st.rerun()
+if st.sidebar.button("Panel de inicio", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
 if st.sidebar.button("Gestión de cuentas (CRM)", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.rerun()
-if st.sidebar.button("Reportes financieros", use_container_width=True, type="secondary"): st.warning("Módulo en desarrollo")
-if st.sidebar.button("Proyecciones de ventas", use_container_width=True, type="secondary"): st.warning("Módulo en desarrollo")
-if st.sidebar.button("Noticias corporativas", use_container_width=True, type="secondary"): st.info("No hay comunicaciones recientes.")
+if st.sidebar.button("Reportes financieros", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Reportes financieros"; st.rerun()
+if st.sidebar.button("Proyecciones de ventas", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Proyecciones de ventas"; st.rerun()
+if st.sidebar.button("Noticias corporativas", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Noticias corporativas"; st.rerun()
 
 st.sidebar.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='font-size: 12px; color: #64748B; font-weight: 600;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
-if st.sidebar.button("Centro de ayuda", use_container_width=True, type="secondary"): pass
-if st.sidebar.button("Documentación operativa", use_container_width=True, type="secondary"): pass
+if st.sidebar.button("Centro de ayuda", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Centro de ayuda"; st.rerun()
+if st.sidebar.button("Documentación operativa", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Documentación operativa"; st.rerun()
 
 menu = st.session_state.nav_menu
 
+# --- MÓDULOS EN CONSTRUCCIÓN ---
+if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporativas", "Centro de ayuda", "Documentación operativa"]:
+    st.markdown(f"<h2 style='color: #0F172A; font-weight: 700;'>{menu}</h2>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad próximamente.")
+
 # --- VISTA 1: PANEL PRINCIPAL ---
-if menu == "Panel principal":
-    st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Centro de control operativo</h2>", unsafe_allow_html=True)
+elif menu == "Panel de inicio":
+    st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Panel de inicio</h2>", unsafe_allow_html=True)
     
-    # ACCESOS RÁPIDOS
     b1, b2, b3 = st.columns(3)
     with b1:
         if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
@@ -133,7 +136,7 @@ if menu == "Panel principal":
             st.rerun()
             
     st.markdown("<hr style='margin: 25px 0 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #475569; font-size: 14px; font-weight: 600;'>RESUMEN FINANCIERO (Clic para filtrar el portafolio inferior)</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569; font-size: 14px; font-weight: 600;'>RESUMEN FINANCIERO (Seleccione para filtrar el portafolio inferior)</p>", unsafe_allow_html=True)
     
     cots = st.session_state.cotizaciones_guardadas
     tot_aprobadas = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
@@ -141,7 +144,6 @@ if menu == "Panel principal":
     tot_borradores = sum(c["total"] for c in cots if c["estado"] == "Borrador")
     tot_canceladas = sum(c["total"] for c in cots if c["estado"] == "Cancelada")
     
-    # MÉTRICAS INTERACTIVAS
     m1, m2, m3, m4 = st.columns(4)
     with m1:
         if st.button(f"Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Aprobada" else "secondary"):
@@ -158,7 +160,6 @@ if menu == "Panel principal":
             
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # LISTADO INTERACTIVO CON BUSCADOR UNIFICADO
     with st.container():
         st.markdown("<div style='background-color: #F8FAFC; padding: 25px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
         
@@ -166,7 +167,7 @@ if menu == "Panel principal":
         with col_tit:
             st.markdown(f"<h4 style='color: #1E3A8A; margin: 0;'>Portafolio de cotizaciones: {st.session_state.filtro_dashboard}</h4>", unsafe_allow_html=True)
         with col_bus:
-            busqueda_universal = st.text_input("Buscar código, evento o cliente...", key="b_univ", label_visibility="collapsed")
+            busqueda_universal = st.text_input("Buscar por código, evento o cliente...", key="b_univ", label_visibility="collapsed")
         
         eventos_filtrados = [cot for cot in cots if cot["estado"] == st.session_state.filtro_dashboard]
         if busqueda_universal:
@@ -191,7 +192,7 @@ if menu == "Panel principal":
                 cx[2].write(f"{cot['cliente']}")
                 cx[3].write(f"**${cot['total']:,.2f}**")
                 
-                if cx[4].button("Abrir", key=f"abrir_{cot['codigo']}", type="secondary"):
+                if cx[4].button("Abrir documento", key=f"abrir_{cot['codigo']}", type="secondary"):
                     st.session_state.cotizacion_activa = cot
                     st.session_state.items_cot = cot.get("items", [])
                     st.session_state.nav_menu = "Nueva cotización"
@@ -207,7 +208,7 @@ elif menu == "Nueva cotización":
     
     c_activa = st.session_state.cotizacion_activa
     lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
-    OPCION_NUEVO = "+ Crear nuevo cliente..."
+    OPCION_NUEVO = "+ Registrar nuevo cliente..."
     lista_nombres_clientes.append(OPCION_NUEVO)
     
     def_cod = c_activa["codigo"] if c_activa else f"KG-{datetime.now().strftime('%Y%m%d')}-00{len(st.session_state.cotizaciones_guardadas)+1}"
@@ -245,7 +246,7 @@ elif menu == "Nueva cotización":
             i_tel = st.text_input("Teléfono directo")
             i_dias = st.number_input("Días de crédito asignados", value=30, step=15)
             
-        if st.button("Registrar cuenta y seleccionar", type="primary"):
+        if st.button("Guardar y aplicar a cotización", type="primary"):
             if i_emp.strip() != "" and i_ruc.strip() != "":
                 st.session_state.clientes_catalogo.append({
                     "empresa": i_emp, "ruc": i_ruc, "ciudad": i_ciu, "direccion": i_dir,
@@ -260,7 +261,7 @@ elif menu == "Nueva cotización":
     st.markdown("---")
     
     with st.expander("Gestionar servicios e insumos", expanded=True):
-        st.markdown("<p style='font-size: 13px; font-weight: 600; color: #475569;'>SELECCIONE EL MÉTODO DE INGRESO:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 13px; font-weight: 600; color: #475569;'>MÉTODO DE INGRESO:</p>", unsafe_allow_html=True)
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("Seleccionar del catálogo", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
@@ -291,7 +292,7 @@ elif menu == "Nueva cotización":
                 for r in resultados:
                     iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
                     desc = r.get("descripcion", "Sin información técnica")
-                    opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | {desc}")
+                    opciones_str.append(f"{r['proveedor']} | {r['servicio']} | {iva_str} | {desc}")
                 
                 seleccion = st.selectbox("Seleccione el proveedor corporativo:", opciones_str)
                 item_seleccionado = resultados[opciones_str.index(seleccion)]
@@ -330,7 +331,7 @@ elif menu == "Nueva cotización":
             guardar_bd = st.checkbox("Registrar proveedor en el directorio corporativo", value=True)
             if st.button("Registrar y agregar línea", type="primary"):
                 if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
-                    st.error("Razón social y detalle del servicio son campos requeridos.")
+                    st.error("Razón social y detalle del servicio son requeridos.")
                 else:
                     st.session_state.items_cot.append({
                         "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, 
@@ -353,8 +354,8 @@ elif menu == "Nueva cotización":
         hx[3].markdown("**Costo unit.**")
         hx[4].markdown("**IVA**")
         hx[5].markdown("**Margen**")
-        hx[6].markdown("**Subtotal**")
-        hx[7].markdown("**Del**")
+        hx[6].markdown("**Subtotal ($)**")
+        hx[7].markdown("**Eliminar**")
         st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         subtotal_prov = 0; total_fee = 0; total_general = 0
@@ -387,7 +388,7 @@ elif menu == "Nueva cotización":
         st.markdown("<br>", unsafe_allow_html=True)
         btn1, btn2 = st.columns(2)
         with btn1:
-            if st.button("Guardar cotización actual", type="secondary"):
+            if st.button("Guardar documento actual", type="secondary"):
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
                 
@@ -436,7 +437,14 @@ elif menu == "Directorios":
     st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
     
     if st.session_state.vista_directorio == "clientes":
-        st.dataframe(pd.DataFrame(st.session_state.clientes_catalogo), use_container_width=True)
+        # Formato de columnas corregido para visualización limpia
+        df_clientes = pd.DataFrame(st.session_state.clientes_catalogo)
+        df_clientes = df_clientes.rename(columns={
+            "empresa": "Empresa", "ruc": "RUC", "ciudad": "Ciudad", 
+            "direccion": "Dirección", "web": "Sitio web", "contacto": "Contacto", 
+            "email": "Correo electrónico", "telefono": "Teléfono", "dias_credito": "Días de crédito"
+        })
+        st.dataframe(df_clientes, use_container_width=True, hide_index=True)
         
         with st.expander("Apertura de nueva cuenta corporativa"):
             cc1, cc2, cc3 = st.columns(3)
@@ -465,7 +473,16 @@ elif menu == "Directorios":
                     st.error("Razón social y RUC son requerimientos obligatorios.")
 
     elif st.session_state.vista_directorio == "proveedores":
-        st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
+        # Formato de columnas corregido para visualización limpia
+        df_proveedores = pd.DataFrame(st.session_state.proveedores_catalogo)
+        df_proveedores = df_proveedores.rename(columns={
+            "servicio": "Servicio", "proveedor": "Proveedor", "categoria": "Categoría",
+            "ciudad": "Ciudad", "precio_base": "Costo base ($)", "iva": "IVA",
+            "banco": "Banco", "cuenta": "Cuenta", "descripcion": "Descripción"
+        })
+        df_proveedores["IVA"] = df_proveedores["IVA"].apply(lambda x: f"{int(x*100)}%")
+        df_proveedores["Costo base ($)"] = df_proveedores["Costo base ($)"].apply(lambda x: f"${x:,.2f}")
+        st.dataframe(df_proveedores, use_container_width=True, hide_index=True)
         
         with st.expander("Homologación de nuevo proveedor"):
             cp1, cp2, cp3 = st.columns(3)
