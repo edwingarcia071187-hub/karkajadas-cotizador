@@ -10,12 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS: AZUL CORPORATIVO Y ELEGANCIA ---
+# --- ESTILOS CSS: BOTONES DINÁMICOS Y AZUL CORPORATIVO ---
 st.markdown("""
     <style>
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; }
     
-    .stButton>button {
+    /* Botones PRIMARIOS (Activos o de Acción Principal) */
+    button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
         border-radius: 6px;
@@ -26,11 +27,29 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
-    .stButton>button:hover { 
+    button[kind="primary"]:hover { 
         background-color: #1E40AF !important; 
         color: #FFFFFF !important; 
         transform: translateY(-2px); 
         box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3);
+    }
+
+    /* Botones SECUNDARIOS (Inactivos o Alternativos) */
+    button[kind="secondary"] {
+        background-color: #F8FAFC !important; 
+        color: #475569 !important;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        font-size: 15px;
+        border: 1px solid #CBD5E1 !important; 
+        box-shadow: none;
+        transition: all 0.2s ease;
+    }
+    button[kind="secondary"]:hover { 
+        background-color: #E2E8F0 !important; 
+        color: #1E293B !important;
+        border-color: #94A3B8 !important;
     }
     
     div[data-testid="metric-container"] {
@@ -61,7 +80,7 @@ st.markdown("""
         border: 1px solid #CBD5E1 !important;
     }
     
-    li[data-baseweb="option"], div[role="option"], label[data-baseweb="radio"] {
+    li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
         transition: all 0.2s ease;
@@ -92,6 +111,7 @@ st.markdown("""
 
 # --- INICIALIZACIÓN DE ESTADOS Y BASES DE DATOS VIVAS ---
 if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel Principal"
+if "modo_ingreso" not in st.session_state: st.session_state.modo_ingreso = "catalogo"  # Estado para los botones
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 if "cotizaciones_guardadas" not in st.session_state:
@@ -102,7 +122,6 @@ if "cotizaciones_guardadas" not in st.session_state:
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
-# Transformamos el catálogo en una variable de sesión para que pueda crecer
 if "proveedores_catalogo" not in st.session_state:
     st.session_state.proveedores_catalogo = [
         {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Cabina ilimitada por 2 horas con fotos impresas."},
@@ -115,14 +134,14 @@ if "proveedores_catalogo" not in st.session_state:
 
 # --- MENÚ LATERAL ---
 st.sidebar.markdown("### Karkajadas Group")
-if st.sidebar.button("🏠 Panel Principal", use_container_width=True): st.session_state.nav_menu = "Panel Principal"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("✨ Nueva Cotización", use_container_width=True): st.session_state.nav_menu = "Nueva Cotización"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("📂 Consultar Cotizaciones", use_container_width=True): st.session_state.nav_menu = "Consultar Cotizaciones"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("👥 Clientes y Proveedores", use_container_width=True): st.session_state.nav_menu = "Directorios"; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("🏠 Panel Principal", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel Principal"; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("✨ Nueva Cotización", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Nueva Cotización"; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("📂 Consultar Cotizaciones", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Consultar Cotizaciones"; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("👥 Clientes y Proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_cliente = False; st.rerun()
 
 menu = st.session_state.nav_menu
 
-# --- VISTA 1: PANEL PRINCIPAL (HOME PRO) ---
+# --- VISTA 1: PANEL PRINCIPAL ---
 if menu == "Panel Principal":
     st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - ERP Workspace</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Resumen Ejecutivo y Gestión Operativa</p>", unsafe_allow_html=True)
@@ -141,11 +160,11 @@ if menu == "Panel Principal":
     st.markdown("#### 🚀 Accesos Rápidos")
     b1, b2, b3 = st.columns(3)
     with b1:
-        if st.button("➕ Crear Nueva Cotización", use_container_width=True): st.session_state.nav_menu = "Nueva Cotización"; st.rerun()
+        if st.button("➕ Crear Nueva Cotización", use_container_width=True, type="primary"): st.session_state.nav_menu = "Nueva Cotización"; st.rerun()
     with b2:
-        if st.button("📂 Consultar Archivo Histórico", use_container_width=True): st.session_state.nav_menu = "Consultar Cotizaciones"; st.rerun()
+        if st.button("📂 Consultar Archivo Histórico", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Consultar Cotizaciones"; st.rerun()
     with b3:
-        if st.button("👥 Base de Datos (Terceros)", use_container_width=True): st.session_state.nav_menu = "Directorios"; st.rerun()
+        if st.button("👥 Base de Datos (Terceros)", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.rerun()
             
     st.markdown("<hr style='margin: 20px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
     st.markdown("#### 📅 Cronograma de Próximos Eventos (Aprobados)")
@@ -173,13 +192,25 @@ elif menu == "Nueva Cotización":
         
     st.markdown("---")
     
-    # --- BUSCADOR HÍBRIDO (CATÁLOGO VS PERSONALIZADO) ---
     with st.expander("🔍 Añadir Proveedores y Servicios", expanded=True):
-        # Interruptor de Modo
-        modo_ingreso = st.radio("Método de Ingreso:", ["📋 Buscar en Catálogo Existente", "✨ Crear Servicio Personalizado"], horizontal=True)
+        st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Seleccione el Método de Ingreso:</p>", unsafe_allow_html=True)
+        
+        # --- NUEVOS BOTONES DE ESTADO (REEMPLAZAN A LAS VIÑETAS/RADIO BUTTONS) ---
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            # Si el modo actual es "catalogo", el botón se pinta de Azul Primario. Si no, Gris Secundario.
+            if st.button("📋 Buscar en Catálogo Existente", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
+                st.session_state.modo_ingreso = "catalogo"
+                st.rerun()
+        with col_btn2:
+            if st.button("✨ Crear Servicio Personalizado", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
+                st.session_state.modo_ingreso = "personalizado"
+                st.rerun()
+        # -------------------------------------------------------------------------
+        
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
-        if modo_ingreso == "📋 Buscar en Catálogo Existente":
+        if st.session_state.modo_ingreso == "catalogo":
             st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Buscar Disponibilidad</p>", unsafe_allow_html=True)
             f1, f2 = st.columns([1, 2])
             with f1: ciudad_filtro = st.selectbox("Ciudad del Servicio", ciudades_lista, index=0)
@@ -218,7 +249,7 @@ elif menu == "Nueva Cotización":
                 with cd: iva_add = st.selectbox("Aplica IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
                 with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
                     
-                if st.button("➕ Agregar este ítem a la Cotización"):
+                if st.button("➕ Agregar este ítem a la Cotización", type="primary"):
                     st.session_state.items_cot.append({
                         "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
                         "ciudad": ciudad_filtro, "fecha": str(fecha_item), "cantidad": cant_add, 
@@ -226,7 +257,7 @@ elif menu == "Nueva Cotización":
                     })
                     st.rerun()
 
-        elif modo_ingreso == "✨ Crear Servicio Personalizado":
+        elif st.session_state.modo_ingreso == "personalizado":
             st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Ingresar Datos del Nuevo Servicio/Proveedor</p>", unsafe_allow_html=True)
             nc1, nc2, nc3, nc4 = st.columns(4)
             with nc1: nuevo_proveedor = st.text_input("Nombre del Proveedor *")
@@ -248,17 +279,15 @@ elif menu == "Nueva Cotización":
             st.markdown("<br>", unsafe_allow_html=True)
             guardar_bd = st.checkbox("💾 Guardar este nuevo proveedor permanentemente en el Catálogo Maestro", value=True)
             
-            if st.button("➕ Crear y Agregar a la Cotización"):
+            if st.button("➕ Crear y Agregar a la Cotización", type="primary"):
                 if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
                     st.error("⚠️ El Nombre del Proveedor y el Servicio son obligatorios.")
                 else:
-                    # 1. Agregar a la cotización
                     st.session_state.items_cot.append({
                         "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, 
                         "ciudad": nueva_ciudad, "fecha": str(fecha_item), "cantidad": cant_add, 
                         "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
                     })
-                    # 2. Guardar en Base de Datos Viva si el usuario lo desea
                     if guardar_bd:
                         st.session_state.proveedores_catalogo.append({
                             "servicio": nuevo_servicio, "proveedor": nuevo_proveedor,
@@ -299,7 +328,7 @@ elif menu == "Nueva Cotización":
             cx[4].write(f"{int(item['iva_prov']*100)}%")
             cx[5].write(f"{item['fee_pct']:.2f}%")
             cx[6].write(f"**${total_item:.2f}**")
-            if cx[7].button("X", key=f"del_{idx}"):
+            if cx[7].button("X", key=f"del_{idx}", type="secondary"):
                 st.session_state.items_cot.pop(idx); st.rerun()
             st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
             
@@ -312,7 +341,7 @@ elif menu == "Nueva Cotización":
         st.markdown("<br>", unsafe_allow_html=True)
         btn1, btn2 = st.columns(2)
         with btn1:
-            if st.button("💾 Guardar Cotización Interna"):
+            if st.button("💾 Guardar Cotización Interna", type="secondary"):
                 st.session_state.cotizaciones_guardadas.append({
                     "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
                     "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general
@@ -320,7 +349,7 @@ elif menu == "Nueva Cotización":
                 st.session_state.items_cot = [] 
                 st.success("Cotización guardada exitosamente.")
         with btn2:
-            if st.button("📄 Generar Vista Cliente (Limpia)"):
+            if st.button("📄 Generar Vista Cliente (Limpia)", type="primary"):
                 st.session_state.vista_cliente = True
                 st.rerun()
 
@@ -357,6 +386,4 @@ elif menu == "Directorios":
     st.markdown("<h3>Base de Datos Oficial</h3>", unsafe_allow_html=True)
     t1, t2 = st.tabs(["Clientes", "Proveedores"])
     with t1: st.dataframe(pd.DataFrame({"Cliente": clientes_lista}), use_container_width=True)
-    with t2: 
-        # La tabla muestra los proveedores fijos MÁS los que hayas agregado manualmente
-        st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
+    with t2: st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
