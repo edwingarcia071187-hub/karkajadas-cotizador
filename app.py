@@ -10,12 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- ESTILOS CSS: AZUL CORPORATIVO Y ELEGANCIA ---
+# --- ESTILOS CSS ---
 st.markdown("""
     <style>
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; }
     
-    .stButton>button {
+    /* Botones primarios (Azul corporativo) */
+    button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
         border-radius: 6px;
@@ -26,13 +27,13 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
-    .stButton>button:hover { 
+    button[kind="primary"]:hover { 
         background-color: #1E40AF !important; 
-        color: #FFFFFF !important; 
         transform: translateY(-2px); 
         box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3);
     }
 
+    /* Botones secundarios (Grises limpios) */
     button[kind="secondary"] {
         background-color: #F8FAFC !important; 
         color: #475569 !important;
@@ -48,49 +49,18 @@ st.markdown("""
         background-color: #E2E8F0 !important; 
         color: #1E293B !important;
         border-color: #94A3B8 !important;
+        transform: translateY(-1px);
     }
     
-    div[data-testid="metric-container"] {
-        background-color: #FFFFFF;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 15px 20px;
-        border-left: 5px solid #3B82F6; 
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.2s ease;
-    }
-    div[data-testid="metric-container"]:hover {
-        background-color: #F0F9FF !important; 
-        border-color: #BAE6FD !important;
-    }
-    div[data-testid="stMetricLabel"] { font-size: 14px !important; font-weight: 600 !important; color: #64748B !important; text-transform: uppercase; }
-    div[data-testid="stMetricValue"] { font-size: 28px !important; font-weight: 800 !important; color: #0F172A !important; }
+    /* Estilo para los inputs y expanders */
+    [data-testid="stExpander"] { background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-radius: 8px !important; }
+    div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; }
     
-    [data-testid="stExpander"] {
-        background-color: #F8FAFC !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 8px !important;
-    }
+    /* Efecto Hover en Listas Desplegables */
+    li[data-baseweb="option"], div[role="option"] { background-color: #FFFFFF !important; color: #1E293B !important; transition: all 0.2s ease; }
+    li[data-baseweb="option"]:hover, div[role="option"]:hover { background-color: #EFF6FF !important; color: #1D4ED8 !important; font-weight: bold !important; }
 
-    div[data-baseweb="select"] > div, input, textarea {
-        background-color: #FFFFFF !important;
-        color: #1E293B !important;
-        border: 1px solid #CBD5E1 !important;
-    }
-    
-    li[data-baseweb="option"], div[role="option"] {
-        background-color: #FFFFFF !important;
-        color: #1E293B !important;
-        transition: all 0.2s ease;
-    }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover {
-        background-color: #EFF6FF !important; 
-        color: #1D4ED8 !important; 
-        font-weight: bold !important;
-    }
-
-    table tbody tr:hover { background-color: #EFF6FF !important; }
-    
+    /* Total Destacado */
     .total-box {
         padding: 10px 20px;
         border-radius: 8px;
@@ -107,97 +77,157 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE ESTADOS Y BASES DE DATOS VIVAS ---
+# --- INICIALIZACIÓN DE ESTADOS ---
 if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel principal"
 if "modo_ingreso" not in st.session_state: st.session_state.modo_ingreso = "catalogo"
+if "vista_directorio" not in st.session_state: st.session_state.vista_directorio = "clientes"
+if "filtro_dashboard" not in st.session_state: st.session_state.filtro_dashboard = "Aprobada"
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
+if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_activa = None
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
-        {"codigo": "KG-20261002-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
+        {"codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 1250.00, "items": []},
+        {"codigo": "KG-20261002-002", "evento": "Lanzamiento marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
+        {"codigo": "KG-20261003-003", "evento": "Cena directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 850.00, "items": []},
     ]
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# BASE DE DATOS CRM: CLIENTES (Ahora es un diccionario rico en datos)
+# BASE DE DATOS CRM: CLIENTES (Con nuevos campos)
 if "clientes_catalogo" not in st.session_state:
     st.session_state.clientes_catalogo = [
-        {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
-        {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
-        {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
+        {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "ciudad": "Quito", "direccion": "Av. Galo Plaza", "web": "www.cransa.com", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
+        {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "ciudad": "Quito", "direccion": "Av. República", "web": "www.siemens.ec", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
+        {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
 
-# BASE DE DATOS CRM: PROVEEDORES (Ahora con datos bancarios)
 if "proveedores_catalogo" not in st.session_state:
     st.session_state.proveedores_catalogo = [
         {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "banco": "Pichincha", "cuenta": "Ahorros 2209666553", "descripcion": "Cabina ilimitada por 2 horas."},
-        {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "banco": "Guayaquil", "cuenta": "Corriente 1234567", "descripcion": "Dinámicas empresariales por 3 horas."},
-        {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "banco": "Interno", "cuenta": "N/A", "descripcion": "Transporte urbano."},
         {"servicio": "Carpa 6x6 blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "banco": "Produbanco", "cuenta": "Ahorros 987654321", "descripcion": "Incluye montaje."},
     ]
 
 # --- MENÚ LATERAL ---
 st.sidebar.markdown("### Karkajadas Group")
-if st.sidebar.button("🏠 Panel principal", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel principal"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("✨ Nueva cotización", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Nueva cotización"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("📂 Consultar cotizaciones", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Consultar cotizaciones"; st.session_state.vista_cliente = False; st.rerun()
-if st.sidebar.button("👥 Clientes y proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("🏠 Panel principal", use_container_width=True, type="secondary"): 
+    st.session_state.nav_menu = "Panel principal"; st.rerun()
+if st.sidebar.button("✨ Nueva cotización", use_container_width=True, type="secondary"): 
+    st.session_state.nav_menu = "Nueva cotización"
+    st.session_state.cotizacion_activa = None # Limpia el lienzo
+    st.session_state.items_cot = []
+    st.session_state.vista_cliente = False
+    st.rerun()
+if st.sidebar.button("👥 Base de datos y CRM", use_container_width=True, type="secondary"): 
+    st.session_state.nav_menu = "Directorios"; st.rerun()
 
 menu = st.session_state.nav_menu
 
 # --- VISTA 1: PANEL PRINCIPAL ---
 if menu == "Panel principal":
     st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - Espacio de trabajo ERP</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Resumen ejecutivo y gestión operativa</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Haz clic en las tarjetas para filtrar los proyectos</p>", unsafe_allow_html=True)
     
     cots = st.session_state.cotizaciones_guardadas
-    ingresos_aprobados = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
-    num_aprobadas = len([c for c in cots if c["estado"] == "Aprobada"])
-    num_pendientes = len([c for c in cots if c["estado"] in ["Borrador", "Enviada"]])
+    tot_aprobadas = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
+    tot_enviadas = sum(c["total"] for c in cots if c["estado"] == "Enviada")
+    tot_borradores = sum(c["total"] for c in cots if c["estado"] == "Borrador")
+    tot_canceladas = sum(c["total"] for c in cots if c["estado"] == "Cancelada")
     
-    m1, m2, m3 = st.columns(3)
-    m1.metric("💰 Ingresos confirmados", f"${ingresos_aprobados:,.2f}")
-    m2.metric("✅ Eventos aprobados", f"{num_aprobadas} eventos")
-    m3.metric("⏳ Cotizaciones pendientes", f"{num_pendientes} en gestión")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("#### 🚀 Accesos rápidos")
-    b1, b2, b3 = st.columns(3)
-    with b1:
-        if st.button("➕ Crear nueva cotización", use_container_width=True, type="primary"): st.session_state.nav_menu = "Nueva cotización"; st.rerun()
-    with b2:
-        if st.button("📂 Consultar archivo histórico", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Consultar cotizaciones"; st.rerun()
-    with b3:
-        if st.button("👥 Base de datos (terceros)", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.rerun()
+    # 1. BOTONES MÉTRICOS INTERACTIVOS
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        if st.button(f"✅ Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Aprobada" else "secondary"):
+            st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
+    with m2:
+        if st.button(f"⏳ Enviadas\n\n${tot_enviadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Enviada" else "secondary"):
+            st.session_state.filtro_dashboard = "Enviada"; st.rerun()
+    with m3:
+        if st.button(f"📝 Borradores\n\n${tot_borradores:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Borrador" else "secondary"):
+            st.session_state.filtro_dashboard = "Borrador"; st.rerun()
+    with m4:
+        if st.button(f"❌ Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Cancelada" else "secondary"):
+            st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
             
-    st.markdown("<hr style='margin: 20px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    st.markdown("#### 📅 Cronograma de próximos eventos (aprobados)")
-    eventos_aprobados = [cot for cot in cots if cot["estado"] == "Aprobada"]
+    st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    st.markdown(f"#### 📅 Detalle de cotizaciones: {st.session_state.filtro_dashboard}s")
     
-    if eventos_aprobados:
-        df_eventos = pd.DataFrame(eventos_aprobados)[["fecha", "evento", "cliente", "codigo", "total"]]
-        df_eventos.columns = ["Fecha confirmada", "Nombre del evento", "Cliente corporativo", "Cód. cotización", "Monto total ($)"]
-        df_eventos["Monto total ($)"] = df_eventos["Monto total ($)"].apply(lambda x: f"${x:,.2f}")
-        st.dataframe(df_eventos, use_container_width=True)
+    # 2. LISTA FILTRADA CON BOTÓN DE DRILL-DOWN (ABRIR)
+    eventos_filtrados = [cot for cot in cots if cot["estado"] == st.session_state.filtro_dashboard]
+    
+    if eventos_filtrados:
+        cx = st.columns([1.5, 2, 2.5, 1.5, 1])
+        cx[0].markdown("**Código**")
+        cx[1].markdown("**Evento**")
+        cx[2].markdown("**Cliente**")
+        cx[3].markdown("**Total**")
+        cx[4].markdown("**Acción**")
+        st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
+        
+        for cot in eventos_filtrados:
+            cx = st.columns([1.5, 2, 2.5, 1.5, 1])
+            cx[0].write(f"**{cot['codigo']}**\n\n{cot['fecha']}")
+            cx[1].write(f"{cot['evento']}")
+            cx[2].write(f"{cot['cliente']}")
+            cx[3].write(f"**${cot['total']:,.2f}**")
+            if cx[4].button("Abrir", key=f"abrir_{cot['codigo']}", type="secondary"):
+                st.session_state.cotizacion_activa = cot
+                st.session_state.items_cot = cot.get("items", [])
+                st.session_state.nav_menu = "Nueva cotización"
+                st.rerun()
+            st.markdown("<hr style='margin: 4px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
     else:
-        st.info("No hay eventos confirmados para mostrar en este momento.")
+        st.info(f"No hay cotizaciones en estado {st.session_state.filtro_dashboard}.")
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
-    st.markdown("<h3>Generador de cotizaciones</h3>", unsafe_allow_html=True)
-    codigo_sugerido = f"KG-{datetime.now().strftime('%Y%m%d')}-00{len(st.session_state.cotizaciones_guardadas)+1}"
+    st.markdown("<h3>Generador y editor de cotizaciones</h3>", unsafe_allow_html=True)
+    
+    # Lógica de carga: Si venimos del botón "Abrir", cargamos datos. Si no, variables vacías/por defecto.
+    c_activa = st.session_state.cotizacion_activa
+    lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
+    
+    def_cod = c_activa["codigo"] if c_activa else f"KG-{datetime.now().strftime('%Y%m%d')}-00{len(st.session_state.cotizaciones_guardadas)+1}"
+    def_ev = c_activa["evento"] if c_activa else ""
+    # Evitar error si el cliente guardado ya no existe
+    def_cli_idx = lista_nombres_clientes.index(c_activa["cliente"]) if c_activa and c_activa["cliente"] in lista_nombres_clientes else 0
+    def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
     col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
-    with col1: cod_cotizacion = st.text_input("Código de cotización", value=codigo_sugerido)
-    with col2: nombre_evento = st.text_input("Nombre del evento", placeholder="Ej. Fiesta de integración")
-    with col3: 
-        # Extraemos los nombres de las empresas del nuevo catálogo CRM
-        lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
-        cliente_sel = st.selectbox("Cliente", lista_nombres_clientes)
+    with col1: cod_cotizacion = st.text_input("Código de cotización", value=def_cod)
+    with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev, placeholder="Ej. Fiesta de integración")
+    with col3: cliente_sel = st.selectbox("Cliente", lista_nombres_clientes, index=def_cli_idx)
     with col4: fecha_gral = st.date_input("Fecha general", datetime.now()) 
-    with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"])
-        
+    with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
+    
+    # 3. CREACIÓN RÁPIDA DE CLIENTE (IN-LINE)
+    with st.expander("➕ Crear nuevo cliente rápidamente (Se guardará en el CRM)"):
+        cc1, cc2, cc3 = st.columns(3)
+        with cc1:
+            i_emp = st.text_input("Razón social / Empresa *", key="i_emp")
+            i_ruc = st.text_input("RUC *", key="i_ruc")
+            i_ciu = st.selectbox("Ciudad principal", ciudades_lista, key="i_ciu")
+        with cc2:
+            i_dir = st.text_input("Dirección", key="i_dir")
+            i_web = st.text_input("Página web", key="i_web")
+            i_cont = st.text_input("Persona contacto", key="i_cont")
+        with cc3:
+            i_mail = st.text_input("Correo electrónico", key="i_mail")
+            i_tel = st.text_input("Teléfono", key="i_tel")
+            i_dias = st.number_input("Días de crédito", value=30, key="i_dias")
+            
+        if st.button("Guardar cliente y seleccionar", type="primary"):
+            if i_emp.strip() != "" and i_ruc.strip() != "":
+                st.session_state.clientes_catalogo.append({
+                    "empresa": i_emp, "ruc": i_ruc, "ciudad": i_ciu, "direccion": i_dir,
+                    "web": i_web, "contacto": i_cont, "email": i_mail, "telefono": i_tel, "dias_credito": i_dias
+                })
+                st.success("¡Cliente guardado en el CRM! Refresca la página o selecciona arriba.")
+                st.rerun()
+            else:
+                st.error("Razón social y RUC son obligatorios.")
+
     st.markdown("---")
     
     with st.expander("🔍 Añadir proveedores y servicios", expanded=True):
@@ -213,7 +243,6 @@ elif menu == "Nueva cotización":
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
         if st.session_state.modo_ingreso == "catalogo":
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Paso 1: Buscar disponibilidad</p>", unsafe_allow_html=True)
             f1, f2 = st.columns([1, 2])
             with f1: ciudad_filtro = st.selectbox("Ciudad del servicio", ciudades_lista, index=0)
             with f2: palabra_busqueda = st.text_input("Palabra clave (opcional)", placeholder="Ej. carpa, animador...")
@@ -223,16 +252,12 @@ elif menu == "Nueva cotización":
                 if p["ciudad"] == ciudad_filtro:
                     if palabra_busqueda == "" or \
                        palabra_busqueda.lower() in p["servicio"].lower() or \
-                       palabra_busqueda.lower() in p["proveedor"].lower() or \
-                       palabra_busqueda.lower() in p["categoria"].lower() or \
-                       palabra_busqueda.lower() in p.get("descripcion", "").lower():
+                       palabra_busqueda.lower() in p["proveedor"].lower():
                         resultados.append(p)
             
-            st.markdown("<br>", unsafe_allow_html=True)
             if not resultados:
                 st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
             else:
-                st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Paso 2: Seleccionar proveedor encontrado</p>", unsafe_allow_html=True)
                 opciones_str = []
                 for r in resultados:
                     iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
@@ -243,7 +268,6 @@ elif menu == "Nueva cotización":
                 item_seleccionado = resultados[opciones_str.index(seleccion)]
                 
                 st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-                st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Paso 3: Definir cantidades y valores finales</p>", unsafe_allow_html=True)
                 ca, cb, cc, cd, ce = st.columns(5)
                 with ca: fecha_item = st.date_input("Fecha específica", value=fecha_gral)
                 with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
@@ -260,7 +284,6 @@ elif menu == "Nueva cotización":
                     st.rerun()
 
         elif st.session_state.modo_ingreso == "personalizado":
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Ingresar datos rápidos (Si quieres agregar datos bancarios, usa el módulo 'Directorios')</p>", unsafe_allow_html=True)
             nc1, nc2, nc3, nc4 = st.columns(4)
             with nc1: nuevo_proveedor = st.text_input("Nombre del proveedor *")
             with nc2: nuevo_servicio = st.text_input("Servicio ofrecido *")
@@ -287,14 +310,11 @@ elif menu == "Nueva cotización":
                     })
                     if guardar_bd:
                         st.session_state.proveedores_catalogo.append({
-                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor,
-                            "categoria": nueva_categoria if nueva_categoria else "Otros",
-                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add,
-                            "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Agregado rápidamente"
+                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, "categoria": nueva_categoria if nueva_categoria else "Otros",
+                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add, "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Agregado rápidamente"
                         })
                     st.rerun()
 
-    # --- TABLA INTERNA Y TOTALES ---
     if st.session_state.items_cot:
         st.markdown("#### Ítems actuales en la cotización (vista interna)")
         hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
@@ -337,13 +357,16 @@ elif menu == "Nueva cotización":
         st.markdown("<br>", unsafe_allow_html=True)
         btn1, btn2 = st.columns(2)
         with btn1:
-            if st.button("💾 Guardar cotización interna", type="secondary"):
+            if st.button("💾 Guardar / Actualizar cotización", type="secondary"):
+                # Si estamos editando una existente, la removemos primero para reemplazarla
+                if c_activa:
+                    st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
+                
                 st.session_state.cotizaciones_guardadas.append({
                     "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
-                    "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general
+                    "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general, "items": st.session_state.items_cot.copy()
                 })
-                st.session_state.items_cot = [] 
-                st.success("Cotización guardada exitosamente.")
+                st.success("¡Cotización guardada exitosamente en el sistema!")
         with btn2:
             if st.button("📄 Generar vista cliente (limpia)", type="primary"):
                 st.session_state.vista_cliente = True; st.rerun()
@@ -359,7 +382,6 @@ elif menu == "Nueva cotización":
             fee_valor = costo_real * (item["fee_pct"] / 100.0)
             total_linea = (costo_real + fee_valor) * item["cantidad"]
             precio_unitario_cliente = total_linea / item["cantidad"]
-            
             datos_cliente.append({
                 "Servicio": item["servicio"], "Ciudad": item["ciudad"], "Fecha": item["fecha"],
                 "Cant.": item["cantidad"], "V. unitario": f"${precio_unitario_cliente:.2f}", "V. total": f"${total_linea:.2f}"
@@ -367,54 +389,55 @@ elif menu == "Nueva cotización":
         st.table(pd.DataFrame(datos_cliente))
         st.markdown(f"<h3 style='text-align: right;'>TOTAL: ${total_general:.2f}</h3>", unsafe_allow_html=True)
 
-# --- VISTA 3: CONSULTAR COTIZACIONES ---
-elif menu == "Consultar cotizaciones":
-    st.markdown("<h3>Registro de cotizaciones</h3>", unsafe_allow_html=True)
-    if st.session_state.cotizaciones_guardadas:
-        st.dataframe(pd.DataFrame(st.session_state.cotizaciones_guardadas), use_container_width=True)
-    else:
-        st.write("No hay cotizaciones registradas aún.")
-
 # --- VISTA 4: DIRECTORIOS (CRM COMPLETO) ---
 elif menu == "Directorios":
     st.markdown("<h3>Módulo CRM: Clientes y proveedores</h3>", unsafe_allow_html=True)
     
-    t1, t2 = st.tabs(["👥 Base de clientes", "🏭 Base de proveedores"])
+    # 4. BOTONES EN LUGAR DE PESTAÑAS (TABS) PARA DIRECTORIOS
+    dir_b1, dir_b2 = st.columns(2)
+    with dir_b1:
+        if st.button("👥 Base de clientes", use_container_width=True, type="primary" if st.session_state.vista_directorio == "clientes" else "secondary"):
+            st.session_state.vista_directorio = "clientes"; st.rerun()
+    with dir_b2:
+        if st.button("🏭 Base de proveedores", use_container_width=True, type="primary" if st.session_state.vista_directorio == "proveedores" else "secondary"):
+            st.session_state.vista_directorio = "proveedores"; st.rerun()
+            
+    st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
     
-    with t1:
+    if st.session_state.vista_directorio == "clientes":
         st.markdown("#### Directorio corporativo de clientes")
-        # Visualizar clientes en formato tabla
         st.dataframe(pd.DataFrame(st.session_state.clientes_catalogo), use_container_width=True)
         
-        # Formulario para agregar nuevo cliente con datos ricos
         with st.expander("➕ Añadir nuevo cliente corporativo"):
-            cc1, cc2 = st.columns(2)
+            cc1, cc2, cc3 = st.columns(3)
             with cc1:
                 n_empresa = st.text_input("Razón social / Empresa *")
                 n_ruc = st.text_input("RUC *")
-                n_dias = st.number_input("Días de crédito permitidos", value=30, step=15)
+                n_ciu = st.selectbox("Ciudad principal", ciudades_lista)
             with cc2:
-                n_contacto = st.text_input("Persona de contacto (Ej. Dpto. Compras)")
+                n_dir = st.text_input("Dirección matriz")
+                n_web = st.text_input("Página web")
+                n_contacto = st.text_input("Persona de contacto")
+            with cc3:
                 n_correo = st.text_input("Correo electrónico")
                 n_tel = st.text_input("Teléfono")
+                n_dias = st.number_input("Días de crédito permitidos", value=30, step=15)
                 
             if st.button("Guardar cliente en el CRM", type="primary"):
                 if n_empresa and n_ruc:
                     st.session_state.clientes_catalogo.append({
-                        "empresa": n_empresa, "ruc": n_ruc, "contacto": n_contacto,
-                        "email": n_correo, "telefono": n_tel, "dias_credito": n_dias
+                        "empresa": n_empresa, "ruc": n_ruc, "ciudad": n_ciu, "direccion": n_dir,
+                        "web": n_web, "contacto": n_contacto, "email": n_correo, "telefono": n_tel, "dias_credito": n_dias
                     })
                     st.success("¡Cliente agregado al catálogo!")
                     st.rerun()
                 else:
                     st.error("⚠️ La empresa y el RUC son obligatorios.")
 
-    with t2:
+    elif st.session_state.vista_directorio == "proveedores":
         st.markdown("#### Catálogo maestro de proveedores y servicios")
-        # Visualizar proveedores en formato tabla
         st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
         
-        # Formulario para agregar nuevo proveedor con datos bancarios
         with st.expander("➕ Añadir nuevo proveedor al catálogo"):
             cp1, cp2, cp3 = st.columns(3)
             with cp1:
