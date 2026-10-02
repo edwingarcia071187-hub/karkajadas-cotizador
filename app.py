@@ -16,10 +16,24 @@ st.markdown("""
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
     /* ----------------------------------------------------
-       COLORIMETRÍA DE BOTONES
+       COLORIMETRÍA SEMÁNTICA DE BOTONES
        ---------------------------------------------------- */
-    /* Botones primarios por defecto (Azul corporativo) */
+    /* Botones PRIMARIOS = VERDE (Acciones de avanzar, crear, guardar, agregar) */
     button[kind="primary"] {
+        background-color: #059669 !important; 
+        color: #FFFFFF !important;
+        border-radius: 4px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        font-size: 14px;
+        border: none !important; 
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+        transition: all 0.2s ease;
+    }
+    button[kind="primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
+
+    /* Botones SECUNDARIOS = AZUL (Navegación, filtros, acciones neutrales) */
+    button[kind="secondary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
         border-radius: 4px;
@@ -30,88 +44,52 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
-    button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
-
-    /* Botones secundarios (Grises para filtros y opciones) */
-    button[kind="secondary"] {
-        background-color: #F8FAFC !important; 
-        color: #334155 !important;
-        border-radius: 4px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        font-size: 14px;
-        border: 1px solid #CBD5E1 !important; 
-        transition: all 0.2s ease;
-    }
-    button[kind="secondary"]:hover { background-color: #E2E8F0 !important; color: #0F172A !important; }
+    button[kind="secondary"]:hover { background-color: #1E40AF !important; }
     
-    /* BOTONES VERDES (Acciones de Avanzar: Crear, Guardar, Agregar) */
-    div[data-testid="element-container"]:has(.btn-verde) + div[data-testid="element-container"] button {
-        background-color: #059669 !important; 
-        color: #FFFFFF !important; 
-        border: none !important;
-        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
-    }
-    div[data-testid="element-container"]:has(.btn-verde) + div[data-testid="element-container"] button:hover { background-color: #047857 !important; }
-
-    /* Ajuste súper compacto para botones de acción en la tabla (Columnas 8, 9 y 10) */
+    /* Botones de acción en tablas: Forzar tamaño compacto para que no se corten los textos */
     div[data-testid="column"]:nth-child(8) button,
     div[data-testid="column"]:nth-child(9) button,
     div[data-testid="column"]:nth-child(10) button {
-        padding: 0.2rem 0.2rem !important;
-        font-size: 11px !important;
-        min-height: 28px !important;
+        padding: 0 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    /* BOTÓN ROJO (Eliminar X en columna 10) */
-    div[data-testid="column"]:nth-child(10) button { background-color: #EF4444 !important; color: white !important; border: none !important; }
+    
+    /* BOTÓN ROJO = ELIMINAR (Específico para la columna 10 de la tabla) */
+    div[data-testid="column"]:nth-child(10) button {
+        background-color: #EF4444 !important; 
+        color: white !important;
+    }
     div[data-testid="column"]:nth-child(10) button:hover { background-color: #DC2626 !important; }
 
     /* ----------------------------------------------------
-       DISEÑO DEL MENÚ LATERAL (Elegante y Corporativo)
+       DISEÑO DEL MENÚ LATERAL Y CONTENEDORES
        ---------------------------------------------------- */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important;
     }
-    /* Logo de la empresa Brillante */
     .brand-logo {
         font-size: 22px;
         font-weight: 900;
-        background: linear-gradient(90deg, #38BDF8, #E0E7FF);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #F8FAFC;
         margin-bottom: 25px;
         margin-top: 10px;
         text-align: center;
         letter-spacing: 0.5px;
     }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] span { color: #F8FAFC !important; }
-    [data-testid="stSidebar"] button {
+    
+    /* Botones del menú lateral (Transparencia para que luzcan como menú) */
+    [data-testid="stSidebar"] button[kind="secondary"] {
         background-color: rgba(255, 255, 255, 0.05) !important;
-        color: #FFFFFF !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         text-align: left !important;
         justify-content: flex-start !important;
     }
-    [data-testid="stSidebar"] button:hover { background-color: rgba(255, 255, 255, 0.15) !important; border-color: #38BDF8 !important; }
-
-    /* ----------------------------------------------------
-       MODULO FINANCIERO TIPO FACTURA
-       ---------------------------------------------------- */
-    .invoice-container {
-        background: #F8FAFC;
-        border: 1px solid #CBD5E1;
-        border-radius: 8px;
-        padding: 15px 25px;
-        width: 100%;
-        text-align: right;
-    }
-    .inv-row { display: flex; justify-content: space-between; font-size: 15px; color: #475569; margin-bottom: 6px;}
-    .inv-total { 
-        display: flex; justify-content: space-between; 
-        font-size: 32px !important; /* TOTAL MUCHO MÁS GRANDE */
-        font-weight: 900; color: #1E3A8A; 
-        margin-top: 10px; padding-top: 10px; border-top: 2px solid #CBD5E1;
-    }
+    [data-testid="stSidebar"] button[kind="secondary"]:hover { background-color: rgba(255, 255, 255, 0.15) !important; }
 
     /* ----------------------------------------------------
        OPTIMIZACIÓN DE ESPACIOS
@@ -120,6 +98,10 @@ st.markdown("""
     [data-testid="stExpander"] { background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-radius: 6px !important; margin-bottom: 10px !important;}
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px; }
     table tbody tr:hover { background-color: #F1F5F9 !important; }
+    
+    /* Cajas de totales */
+    .total-box { padding: 12px 20px; border-radius: 6px; background-color: #F8FAFC; border-left: 4px solid #1E3A8A; font-size: 24px !important; font-weight: 700; color: #0F172A; border: 1px solid #E2E8F0; }
+    .total-label { font-size: 12px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -146,9 +128,9 @@ if "proveedores_catalogo" not in st.session_state:
         ("Sonido y amplificación profesional", "Audiovisual", 180.0, 0.15),
         ("Iluminación perimetral y robótica", "Audiovisual", 120.0, 0.15),
         ("Transporte y logística pesada", "Logística", 80.0, 0.0),
-        ("Alquiler sillas y mesas (x100)", "Mobiliario", 150.0, 0.15),
+        ("Alquiler sillas y mesas", "Mobiliario", 150.0, 0.15),
         ("Decoración floral corporativa", "Decoración", 350.0, 0.15),
-        ("Maestro de ceremonias bilingüe", "Talento", 250.0, 0.15)
+        ("Maestro de ceremonias", "Talento", 250.0, 0.15)
     ]
     for ciu in ciudades_lista:
         prefijo = ciu[:3].upper()
@@ -157,14 +139,14 @@ if "proveedores_catalogo" not in st.session_state:
                 "servicio": serv, "proveedor": f"Pro{cat} {prefijo}", "categoria": cat,
                 "ciudad": ciu, "precio_base": precio, "iva": iva,
                 "banco": "Banco Comercial", "cuenta": f"Cta. {prefijo}-{len(cat_temp)}",
-                "descripcion": f"Servicio estándar operativo en {ciu}."
+                "descripcion": f"Servicio estandarizado operativo en {ciu}."
             })
     st.session_state.proveedores_catalogo = cat_temp
 
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {
-            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00,
+            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 360.00,
             "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]
         },
         {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
@@ -178,7 +160,7 @@ if "clientes_catalogo" not in st.session_state:
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
 
-# --- MENÚ LATERAL (ESTRUCTURA ERP GERENCIAL CON FONDO ELEGANTE) ---
+# --- MENÚ LATERAL ---
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
 
 if st.sidebar.button("Panel de inicio", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
@@ -206,7 +188,6 @@ elif menu == "Panel de inicio":
     
     b1, b2, b3 = st.columns(3)
     with b1:
-        st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
         if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
             st.session_state.nav_menu = "Nueva cotización"
             st.session_state.cotizacion_activa = None
@@ -218,7 +199,7 @@ elif menu == "Panel de inicio":
             st.session_state.vista_directorio = "clientes"
             st.rerun()
     with b3:
-        if st.button("Directorio de proveedores", use_container_width=True, type="secondary"): 
+        if st.button("Red de proveedores", use_container_width=True, type="secondary"): 
             st.session_state.nav_menu = "Directorios"
             st.session_state.vista_directorio = "proveedores"
             st.rerun()
@@ -234,22 +215,22 @@ elif menu == "Panel de inicio":
     
     m1, m2, m3, m4 = st.columns(4)
     with m1:
-        if st.button(f"Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Aprobada" else "secondary"):
+        if st.button(f"Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="secondary"):
             st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
     with m2:
-        if st.button(f"Enviadas\n\n${tot_enviadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Enviada" else "secondary"):
+        if st.button(f"Enviadas\n\n${tot_enviadas:,.2f}", use_container_width=True, type="secondary"):
             st.session_state.filtro_dashboard = "Enviada"; st.rerun()
     with m3:
-        if st.button(f"Borradores\n\n${tot_borradores:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Borrador" else "secondary"):
+        if st.button(f"Borradores\n\n${tot_borradores:,.2f}", use_container_width=True, type="secondary"):
             st.session_state.filtro_dashboard = "Borrador"; st.rerun()
     with m4:
-        if st.button(f"Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Cancelada" else "secondary"):
+        if st.button(f"Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="secondary"):
             st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
             
     st.markdown("<br>", unsafe_allow_html=True)
     
     with st.container():
-        st.markdown("<div style='background-color: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: #F8FAFC; padding: 25px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         col_tit, col_bus = st.columns([2, 1])
         with col_tit:
@@ -262,7 +243,7 @@ elif menu == "Panel de inicio":
             term = busqueda_universal.lower()
             eventos_filtrados = [c for c in eventos_filtrados if term in c['codigo'].lower() or term in c['evento'].lower() or term in c['cliente'].lower()]
         
-        st.markdown("<hr style='margin: 10px 0; border-top: 2px solid #CBD5E1;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 15px 0 10px 0; border-top: 2px solid #CBD5E1;'>", unsafe_allow_html=True)
         
         if eventos_filtrados:
             cx = st.columns([1.5, 2, 2.5, 1.5, 1])
@@ -292,7 +273,7 @@ elif menu == "Panel de inicio":
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
-    st.markdown("<h3 style='font-weight: 700; color: #1E293B; margin-bottom: 0px;'>Gestión de cotizaciones</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='font-weight: 700; color: #1E293B; margin-bottom: 10px;'>Gestión de cotizaciones</h3>", unsafe_allow_html=True)
     
     c_activa = st.session_state.cotizacion_activa
     lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
@@ -334,7 +315,6 @@ elif menu == "Nueva cotización":
             i_tel = st.text_input("Teléfono directo")
             i_dias = st.number_input("Días de crédito", value=30, step=15)
             
-        st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
         if st.button("Guardar y aplicar a cotización", type="primary"):
             if i_emp.strip() != "" and i_ruc.strip() != "":
                 st.session_state.clientes_catalogo.append({
@@ -350,10 +330,10 @@ elif menu == "Nueva cotización":
     with st.expander("Gestionar servicios e insumos", expanded=True):
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("Seleccionar del catálogo", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
+            if st.button("Seleccionar del catálogo", use_container_width=True, type="secondary"):
                 st.session_state.modo_ingreso = "catalogo"; st.rerun()
         with col_btn2:
-            if st.button("Ingreso manual", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
+            if st.button("Ingreso manual", use_container_width=True, type="secondary"):
                 st.session_state.modo_ingreso = "personalizado"; st.rerun()
         
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
@@ -390,7 +370,6 @@ elif menu == "Nueva cotización":
                 with cd: iva_add = st.selectbox("IVA", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
                 with ce: fee_add = st.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
                 
-                st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
                 if st.button("Agregar línea a la cotización", type="primary"):
                     st.session_state.items_cot.append({
                         "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
@@ -415,7 +394,6 @@ elif menu == "Nueva cotización":
             
             guardar_bd = st.checkbox("Registrar proveedor en el directorio corporativo", value=True)
             
-            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar y agregar línea", type="primary"):
                 if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
                     st.error("Razón social y detalle del servicio son requeridos.")
@@ -435,11 +413,11 @@ elif menu == "Nueva cotización":
     if st.session_state.items_cot:
         st.markdown("<h4 style='color: #0F172A; margin-top: 20px;'>Estructura de costos (Uso interno)</h4>", unsafe_allow_html=True)
         
-        hx = st.columns([2.5, 1.4, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+        hx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
         hx[0].markdown("**Proveedor / Servicio**")
         hx[1].markdown("**Fecha / Zona**")
         hx[2].markdown("**Cant.**")
-        hx[3].markdown("**Costo u.**")
+        hx[3].markdown("**Costo unit.**")
         hx[4].markdown("**IVA**")
         hx[5].markdown("**Margen**")
         hx[6].markdown("**Subtotal ($)**")
@@ -458,7 +436,7 @@ elif menu == "Nueva cotización":
             total_fee += fee_val
             subtotal_comercial += precio_venta_linea
             
-            cx = st.columns([2.5, 1.4, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+            cx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
             cx[0].write(f"**{item['proveedor']}** \n\n*{item['servicio']}*")
             cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
@@ -467,13 +445,13 @@ elif menu == "Nueva cotización":
             cx[5].write(f"{item['fee_pct']:.2f}%")
             cx[6].write(f"**${precio_venta_linea:.2f}**")
             
-            if cx[7].button("▲", key=f"up_{idx}", disabled=(idx == 0), use_container_width=True):
+            if cx[7].button("▲", key=f"up_{idx}", disabled=(idx == 0), type="secondary"):
                 st.session_state.items_cot.insert(idx - 1, st.session_state.items_cot.pop(idx))
                 st.rerun()
-            if cx[8].button("▼", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), use_container_width=True):
+            if cx[8].button("▼", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), type="secondary"):
                 st.session_state.items_cot.insert(idx + 1, st.session_state.items_cot.pop(idx))
                 st.rerun()
-            if cx[9].button("X", key=f"del_{idx}", use_container_width=True):
+            if cx[9].button("X", key=f"del_{idx}", type="secondary"):
                 st.session_state.items_cot.pop(idx)
                 st.rerun()
             st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
@@ -491,17 +469,25 @@ elif menu == "Nueva cotización":
             st.metric("Rentabilidad", f"${total_fee:,.2f}")
         with col_inv:
             st.markdown(f"""
-            <div class='invoice-container'>
-                <div class='inv-row'><span>Subtotal</span><span>${subtotal_comercial:,.2f}</span></div>
-                <div class='inv-row'><span>IVA 15%</span><span>${iva_cliente_final:,.2f}</span></div>
-                <div class='inv-total'><span>TOTAL INVERSIÓN</span><span>${total_cliente_final:,.2f}</span></div>
+            <div style="background-color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 6px; padding: 15px 20px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #475569; margin-bottom: 6px;">
+                    <span>Subtotal</span>
+                    <span>${subtotal_comercial:,.2f}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; color: #475569; margin-bottom: 12px;">
+                    <span>IVA 15%</span>
+                    <span>${iva_cliente_final:,.2f}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #CBD5E1; padding-top: 12px; font-weight: bold; font-size: 18px; color: #1E3A8A;">
+                    <span>TOTAL</span>
+                    <span>${total_cliente_final:,.2f}</span>
+                </div>
             </div>
             """, unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
         btn1, btn2 = st.columns(2)
         with btn1:
-            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Guardar documento actual", type="primary"):
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
@@ -515,13 +501,12 @@ elif menu == "Nueva cotización":
                     })
                     st.success("Documento comercial registrado en el historial.")
         with btn2:
-            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Generar propuesta comercial", type="primary"):
                 st.session_state.vista_cliente = True; st.rerun()
 
     if st.session_state.vista_cliente and st.session_state.items_cot:
         st.markdown("---")
-        st.markdown(f"<h3 style='color: #0F172A;'>Propuesta comercial: {nombre_evento}</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='color: #0F172A;'>Propuesta comercial formal: {nombre_evento}</h3>", unsafe_allow_html=True)
         st.write(f"**Cuenta:** {cliente_sel} | **Referencia:** {cod_cotizacion} | **Fecha de emisión:** {fecha_gral}")
         
         datos_cliente = []
@@ -539,12 +524,12 @@ elif menu == "Nueva cotización":
             })
         st.table(pd.DataFrame(datos_cliente))
         
-        # Resumen financiero en la vista del cliente
+        # Resumen financiero alineado a la derecha
         st.markdown(f"""
         <div style='text-align: right; margin-top: 10px;'>
-            <p style='font-size: 16px; color: #475569; margin: 0;'>Subtotal: ${subtotal_comercial:,.2f}</p>
-            <p style='font-size: 16px; color: #475569; margin: 0;'>IVA 15%: ${iva_cliente_final:,.2f}</p>
-            <h3 style='color: #1E3A8A; margin-top: 5px;'>TOTAL: ${total_cliente_final:,.2f}</h3>
+            <p style='font-size: 15px; color: #475569; margin: 0;'>Subtotal: ${subtotal_comercial:,.2f}</p>
+            <p style='font-size: 15px; color: #475569; margin: 0;'>IVA 15%: ${iva_cliente_final:,.2f}</p>
+            <h3 style='color: #1E3A8A; margin-top: 8px;'>TOTAL: ${total_cliente_final:,.2f}</h3>
         </div>
         """, unsafe_allow_html=True)
 
@@ -554,10 +539,10 @@ elif menu == "Directorios":
     
     dir_b1, dir_b2 = st.columns(2)
     with dir_b1:
-        if st.button("Directorio de clientes", use_container_width=True, type="primary" if st.session_state.vista_directorio == "clientes" else "secondary"):
+        if st.button("Directorio de clientes", use_container_width=True, type="secondary"):
             st.session_state.vista_directorio = "clientes"; st.rerun()
     with dir_b2:
-        if st.button("Red de proveedores", use_container_width=True, type="primary" if st.session_state.vista_directorio == "proveedores" else "secondary"):
+        if st.button("Red de proveedores", use_container_width=True, type="secondary"):
             st.session_state.vista_directorio = "proveedores"; st.rerun()
             
     st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
@@ -586,7 +571,6 @@ elif menu == "Directorios":
                 n_tel = st.text_input("Teléfono directo")
                 n_dias = st.number_input("Días de crédito asignados", value=30, step=15)
                 
-            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar cuenta en el sistema", type="primary"):
                 if n_empresa and n_ruc:
                     st.session_state.clientes_catalogo.append({
@@ -626,7 +610,6 @@ elif menu == "Directorios":
                 
             p_desc = st.text_area("Condiciones técnicas y observaciones")
             
-            st.markdown('<span class="btn-verde" style="display:none;"></span>', unsafe_allow_html=True)
             if st.button("Registrar proveedor en el sistema", type="primary"):
                 if p_prov and p_serv:
                     st.session_state.proveedores_catalogo.append({
