@@ -14,6 +14,7 @@ st.markdown("""
     <style>
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
+    /* Botones primarios (Azul corporativo) */
     button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
@@ -27,6 +28,7 @@ st.markdown("""
     }
     button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(30, 58, 138, 0.3); }
 
+    /* Botones secundarios (Grises limpios) */
     button[kind="secondary"] {
         background-color: #F8FAFC !important; 
         color: #334155 !important;
@@ -50,6 +52,8 @@ st.markdown("""
     .total-box { padding: 12px 20px; border-radius: 6px; background-color: #F8FAFC; border-left: 4px solid #1E3A8A; font-size: 28px !important; font-weight: 700; color: #0F172A; line-height: 1.2; border: 1px solid #E2E8F0; }
     .total-label { font-size: 12px; color: #64748B; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
     
+    /* Buscadores y compactación */
+    .buscador-tabla input { background-color: #F8FAFC !important; font-size: 13px !important; }
     .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -64,30 +68,54 @@ if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_acti
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_recien_creado = None
 
-# Datos base de prueba 
+ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
+
+# --- GENERACIÓN DE BASE DE DATOS DE PRUEBA (60 SERVICIOS) ---
+if "proveedores_catalogo" not in st.session_state:
+    cat_temp = []
+    servicios_base = [
+        ("Cabina fotográfica 360", "Entretenimiento", 300.0, 0.0),
+        ("Carpa estructural 6x6 blanca", "Estructuras", 50.0, 0.15),
+        ("Animador corporativo master", "Animación", 150.0, 0.15),
+        ("Catering premium por persona", "Alimentos", 25.0, 0.15),
+        ("Sonido y amplificación profesional", "Audiovisual", 180.0, 0.15),
+        ("Iluminación perimetral y robótica", "Audiovisual", 120.0, 0.15),
+        ("Transporte y logística pesada", "Logística", 80.0, 0.0),
+        ("Alquiler sillas y mesas (x100)", "Mobiliario", 150.0, 0.15),
+        ("Decoración floral corporativa", "Decoración", 350.0, 0.15),
+        ("Maestro de ceremonias bilingüe", "Talento", 250.0, 0.15)
+    ]
+    for ciu in ciudades_lista:
+        prefijo = ciu[:3].upper()
+        for serv, cat, precio, iva in servicios_base:
+            cat_temp.append({
+                "servicio": serv,
+                "proveedor": f"Pro{cat} {prefijo}",
+                "categoria": cat,
+                "ciudad": ciu,
+                "precio_base": precio,
+                "iva": iva,
+                "banco": "Banco Comercial",
+                "cuenta": f"Cta. {prefijo}-{len(cat_temp)}",
+                "descripcion": f"Servicio estandarizado de {serv.lower()} habilitado para {ciu}."
+            })
+    st.session_state.proveedores_catalogo = cat_temp
+
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {
-            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00,
-            "items": [{"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0, "subtotal": 360.0}]
+            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 360.00,
+            "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]
         },
         {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
         {"codigo": "KG-20261003-003", "evento": "Cena de directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 850.00, "items": []},
     ]
-
-ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
 if "clientes_catalogo" not in st.session_state:
     st.session_state.clientes_catalogo = [
         {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "ciudad": "Quito", "direccion": "Av. Galo Plaza", "web": "www.cransa.com", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
         {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "ciudad": "Quito", "direccion": "Av. República", "web": "www.siemens.ec", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
-    ]
-
-if "proveedores_catalogo" not in st.session_state:
-    st.session_state.proveedores_catalogo = [
-        {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "banco": "Pichincha", "cuenta": "Ahorros 2209666553", "descripcion": "Cabina ilimitada por 2 horas."},
-        {"servicio": "Carpa 6x6 blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "banco": "Produbanco", "cuenta": "Ahorros 987654321", "descripcion": "Incluye montaje."},
     ]
 
 # --- MENÚ LATERAL (ESTRUCTURA ERP GERENCIAL) ---
@@ -258,7 +286,8 @@ elif menu == "Nueva cotización":
                 st.error("Razón social y RUC son requeridos para la apertura de cuenta.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
+    # Nota: Espacio eliminado intencionalmente para compactar diseño
+    st.markdown("<br>", unsafe_allow_html=True)
     
     with st.expander("Gestionar servicios e insumos", expanded=True):
         st.markdown("<p style='font-size: 13px; font-weight: 600; color: #475569;'>MÉTODO DE INGRESO:</p>", unsafe_allow_html=True)
@@ -282,7 +311,8 @@ elif menu == "Nueva cotización":
                 if p["ciudad"] == ciudad_filtro:
                     if palabra_busqueda == "" or \
                        palabra_busqueda.lower() in p["servicio"].lower() or \
-                       palabra_busqueda.lower() in p["proveedor"].lower():
+                       palabra_busqueda.lower() in p["proveedor"].lower() or \
+                       palabra_busqueda.lower() in p["categoria"].lower():
                         resultados.append(p)
             
             if not resultados:
@@ -292,7 +322,7 @@ elif menu == "Nueva cotización":
                 for r in resultados:
                     iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
                     desc = r.get("descripcion", "Sin información técnica")
-                    opciones_str.append(f"{r['proveedor']} | {r['servicio']} | {iva_str} | {desc}")
+                    opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | {desc}")
                 
                 seleccion = st.selectbox("Seleccione el proveedor corporativo:", opciones_str)
                 item_seleccionado = resultados[opciones_str.index(seleccion)]
@@ -347,7 +377,9 @@ elif menu == "Nueva cotización":
 
     if st.session_state.items_cot:
         st.markdown("<h4 style='color: #0F172A; margin-top: 30px;'>Estructura de costos y márgenes (Control interno)</h4>", unsafe_allow_html=True)
-        hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
+        
+        # Ajuste de columnas para incluir botones de subir y bajar
+        hx = st.columns([2.5, 1.2, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
         hx[0].markdown("**Proveedor / Servicio**")
         hx[1].markdown("**Fecha / Zona**")
         hx[2].markdown("**Cant.**")
@@ -355,7 +387,9 @@ elif menu == "Nueva cotización":
         hx[4].markdown("**IVA**")
         hx[5].markdown("**Margen**")
         hx[6].markdown("**Subtotal ($)**")
-        hx[7].markdown("**Eliminar**")
+        hx[7].markdown("")
+        hx[8].markdown("")
+        hx[9].markdown("")
         st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         subtotal_prov = 0; total_fee = 0; total_general = 0
@@ -367,7 +401,7 @@ elif menu == "Nueva cotización":
             
             subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
             
-            cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
+            cx = st.columns([2.5, 1.2, 0.5, 0.9, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
             cx[0].write(f"**{item['proveedor']}** \n\n*{item['servicio']}*")
             cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
@@ -375,8 +409,18 @@ elif menu == "Nueva cotización":
             cx[4].write(f"{int(item['iva_prov']*100)}%")
             cx[5].write(f"{item['fee_pct']:.2f}%")
             cx[6].write(f"**${total_item:.2f}**")
-            if cx[7].button("X", key=f"del_{idx}", type="secondary"):
-                st.session_state.items_cot.pop(idx); st.rerun()
+            
+            # Lógica dinámica para reordenar y eliminar
+            if cx[7].button("▲", key=f"up_{idx}", disabled=(idx == 0), use_container_width=True):
+                st.session_state.items_cot.insert(idx - 1, st.session_state.items_cot.pop(idx))
+                st.rerun()
+            if cx[8].button("▼", key=f"down_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), use_container_width=True):
+                st.session_state.items_cot.insert(idx + 1, st.session_state.items_cot.pop(idx))
+                st.rerun()
+            if cx[9].button("X", key=f"del_{idx}", type="secondary", use_container_width=True):
+                st.session_state.items_cot.pop(idx)
+                st.rerun()
+                
             st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
             
         st.markdown("<br>", unsafe_allow_html=True)
@@ -437,7 +481,6 @@ elif menu == "Directorios":
     st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
     
     if st.session_state.vista_directorio == "clientes":
-        # Formato de columnas corregido para visualización limpia
         df_clientes = pd.DataFrame(st.session_state.clientes_catalogo)
         df_clientes = df_clientes.rename(columns={
             "empresa": "Empresa", "ruc": "RUC", "ciudad": "Ciudad", 
@@ -473,7 +516,6 @@ elif menu == "Directorios":
                     st.error("Razón social y RUC son requerimientos obligatorios.")
 
     elif st.session_state.vista_directorio == "proveedores":
-        # Formato de columnas corregido para visualización limpia
         df_proveedores = pd.DataFrame(st.session_state.proveedores_catalogo)
         df_proveedores = df_proveedores.rename(columns={
             "servicio": "Servicio", "proveedor": "Proveedor", "categoria": "Categoría",
