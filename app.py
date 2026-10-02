@@ -28,7 +28,7 @@ st.markdown("""
     /* ----------------------------------------------------
        COLORIMETRÍA SEMÁNTICA DE BOTONES
        ---------------------------------------------------- */
-    /* Botones PRIMARIOS = AZUL Corporativo (Acciones principales neutras) */
+    /* Botones PRIMARIOS = AZUL Corporativo (Acciones neutras / principal visual) */
     button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
@@ -41,7 +41,7 @@ st.markdown("""
     }
     button[kind="primary"]:hover { background-color: #1E40AF !important; }
 
-    /* Botones SECUNDARIOS = GRIS CLARO (Pestañas inactivas, acciones secundarias) */
+    /* Botones SECUNDARIOS = GRIS CLARO (Pestañas, acciones secundarias) */
     button[kind="secondary"] {
         background-color: #F1F5F9 !important; 
         color: #475569 !important;
@@ -54,11 +54,12 @@ st.markdown("""
     }
     button[kind="secondary"]:hover { background-color: #E2E8F0 !important; color: #0F172A !important; }
 
-    /* BOTONES VERDES (Avanzar, Guardar, Agregar) */
+    /* BOTONES VERDES EJECUTIVOS (Avanzar, Guardar, Agregar) */
     .btn-action-green button {
-        background-color: #059669 !important; 
+        background-color: #059669 !important; /* Verde Esmeralda Profesional */
         color: #FFFFFF !important; 
         border: none !important;
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
     }
     .btn-action-green button:hover { background-color: #047857 !important; }
 
@@ -67,12 +68,12 @@ st.markdown("""
         background-color: #EF4444 !important; 
         color: #FFFFFF !important; 
         border: none !important;
-        padding: 0.2rem 0.5rem !important; /* Más compacto */
+        padding: 0.2rem 0.5rem !important;
         font-weight: bold;
     }
     .btn-action-red button:hover { background-color: #DC2626 !important; }
 
-    /* Botones de Icono (Flechas) - Estilo Enlace para no ocupar espacio visual */
+    /* Botones de Icono (Flechas) - Estilo Enlace */
     .btn-icon-link button {
         background-color: transparent !important;
         color: #64748B !important;
@@ -109,48 +110,15 @@ st.markdown("""
     [data-testid="stSidebar"] button[kind="secondary"]:hover { background-color: rgba(255, 255, 255, 0.1) !important; color: #FFFFFF !important;}
 
     /* ----------------------------------------------------
-       TABLAS Y FORMULARIOS
+       TABLAS, FORMULARIOS Y TOTALES
        ---------------------------------------------------- */
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; font-size: 12px; color: #64748B; text-transform: uppercase; }
-    td { padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
     
-    /* ----------------------------------------------------
-       MÓDULO FINANCIERO (ESTILO QUICKBOOKS)
-       ---------------------------------------------------- */
-    .invoice-total-container {
-        float: right;
-        width: 300px;
-        text-align: right;
-    }
-    .invoice-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: #475569;
-    }
-    .invoice-final-total {
-        display: flex;
-        justify-content: space-between;
-        border-top: 1px solid #CBD5E1;
-        padding-top: 12px;
-        margin-top: 12px;
-        font-size: 20px;
-        font-weight: 800;
-        color: #0F172A;
-    }
-    .internal-metrics {
-        font-size: 14px;
-        color: #475569;
-        margin-bottom: 5px;
-    }
-    .internal-metrics-value {
-        font-size: 18px;
-        font-weight: 600;
-        color: #0F172A;
-    }
+    .invoice-total-container { float: right; width: 300px; text-align: right; }
+    .invoice-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #475569; }
+    .invoice-final-total { display: flex; justify-content: space-between; border-top: 1px solid #CBD5E1; padding-top: 12px; margin-top: 12px; font-size: 20px; font-weight: 800; color: #0F172A; }
+    .internal-metrics { font-size: 14px; color: #475569; margin-bottom: 5px; }
+    .internal-metrics-value { font-size: 18px; font-weight: 600; color: #0F172A; }
     .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -162,7 +130,6 @@ if "vista_directorio" not in st.session_state: st.session_state.vista_directorio
 if "filtro_dashboard" not in st.session_state: st.session_state.filtro_dashboard = "Aprobada"
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_activa = None
-if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_recien_creado = None
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
@@ -195,10 +162,7 @@ if "proveedores_catalogo" not in st.session_state:
 
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
-        {
-            "codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00,
-            "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]
-        },
+        {"codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00, "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]},
         {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
         {"codigo": "KG-20261003-003", "evento": "Cena de directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 850.00, "items": []},
     ]
@@ -239,11 +203,13 @@ elif menu == "Panel de inicio":
     st.markdown("<div class='card-container'>", unsafe_allow_html=True)
     b1, b2, b3 = st.columns(3)
     with b1:
-        if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
+        st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
+        if st.button("Crear nueva cotización", use_container_width=True): 
             st.session_state.nav_menu = "Nueva cotización"
             st.session_state.cotizacion_activa = None
             st.session_state.items_cot = []
             st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
     with b2:
         if st.button("Directorio de clientes", use_container_width=True, type="secondary"): 
             st.session_state.nav_menu = "Directorios"
@@ -311,13 +277,11 @@ elif menu == "Panel de inicio":
             cx[3].write(f"**${cot['total']:,.2f}**")
             
             with cx[4]:
-                st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-                if st.button("Abrir", key=f"abrir_{cot['codigo']}", use_container_width=True):
+                if st.button("Abrir", key=f"abrir_{cot['codigo']}", type="secondary", use_container_width=True):
                     st.session_state.cotizacion_activa = cot
                     st.session_state.items_cot = cot.get("items", [])
                     st.session_state.nav_menu = "Nueva cotización"
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("<hr style='margin: 5px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
     else:
         st.info("No hay registros en esta categoría.")
@@ -325,7 +289,25 @@ elif menu == "Panel de inicio":
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
-    st.markdown("<h3 style='font-weight: 700; color: #1E293B; margin-bottom: 10px;'>Gestión de cotizaciones</h3>", unsafe_allow_html=True)
+    
+    # Cálculo previo del total para mostrar en la cabecera gerencial (Quickbooks Style)
+    sub_comercial_header = 0
+    for item in st.session_state.items_cot:
+        c_linea = item["cantidad"] * item["costo"]
+        c_con_iva = c_linea + (c_linea * item["iva_prov"])
+        f_val = c_con_iva * (item["fee_pct"] / 100.0)
+        sub_comercial_header += (c_con_iva + f_val)
+    total_final_header = sub_comercial_header * 1.15
+    
+    st.markdown(f"""
+        <div style='display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px;'>
+            <h3 style='font-weight: 700; color: #1E293B; margin: 0;'>Gestión de cotizaciones</h3>
+            <div style='text-align: right;'>
+                <span style='font-size: 12px; color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;'>Monto Total Estimado</span>
+                <h2 style='margin: 0; color: #0F172A; font-weight: 800; line-height: 1;'>${total_final_header:,.2f}</h2>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     c_activa = st.session_state.cotizacion_activa
     lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
@@ -353,7 +335,7 @@ elif menu == "Nueva cotización":
     st.markdown("</div>", unsafe_allow_html=True)
 
     if cliente_sel == OPCION_NUEVO:
-        st.markdown("<div class='card-container' style='border-top: 3px solid #1E3A8A;'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-container' style='border-top: 3px solid #059669;'>", unsafe_allow_html=True)
         st.markdown("<h4 style='color: #0F172A; margin-top: 0; font-size: 15px;'>Apertura de nueva cuenta</h4>", unsafe_allow_html=True)
         cc1, cc2, cc3 = st.columns(3)
         with cc1:
@@ -473,7 +455,7 @@ elif menu == "Nueva cotización":
     if st.session_state.items_cot:
         st.markdown("<div class='card-container' style='padding-bottom: 10px;'>", unsafe_allow_html=True)
         
-        hx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+        hx = st.columns([2.5, 1.4, 0.5, 1.0, 0.6, 1.0, 1.0, 0.4, 0.4, 0.4])
         hx[0].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>PROVEEDOR / SERVICIO</span>", unsafe_allow_html=True)
         hx[1].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>FECHA / ZONA</span>", unsafe_allow_html=True)
         hx[2].markdown("<span style='font-size:12px; font-weight:600; color:#64748B;'>CANT.</span>", unsafe_allow_html=True)
@@ -496,14 +478,15 @@ elif menu == "Nueva cotización":
             total_fee += fee_val
             subtotal_comercial += precio_venta_linea
             
-            cx = st.columns([2.5, 1.4, 0.6, 1.0, 0.6, 0.8, 1.0, 0.4, 0.4, 0.4])
+            cx = st.columns([2.5, 1.4, 0.5, 1.0, 0.6, 1.0, 1.0, 0.4, 0.4, 0.4])
             cx[0].write(f"**{item['proveedor']}** \n\n<span style='color:#475569;'>{item['servicio']}</span>", unsafe_allow_html=True)
             cx[1].write(f"{item['fecha']} \n\n<span style='color:#475569;'>{item['ciudad']}</span>", unsafe_allow_html=True)
             cx[2].write(f"{item['cantidad']}")
             cx[3].write(f"${item['costo']:.2f}")
             cx[4].write(f"{int(item['iva_prov']*100)}%")
-            cx[5].write(f"{item['fee_pct']:.2f}%")
-            cx[6].write(f"**${precio_venta_linea:.2f}**")
+            # Margen mostrando Porcentaje y Valor exacto
+            cx[5].write(f"{item['fee_pct']:.2f}%<br><span style='font-size:12.5px; color:#059669; font-weight:600;'>+${fee_val:,.2f}</span>", unsafe_allow_html=True)
+            cx[6].write(f"**${precio_venta_linea:,.2f}**")
             
             with cx[7]:
                 st.markdown("<div class='btn-icon-link'>", unsafe_allow_html=True)
@@ -543,10 +526,11 @@ elif menu == "Nueva cotización":
             """, unsafe_allow_html=True)
         
         st.markdown("<hr style='border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-        btn1, btn2 = st.columns(2)
-        with btn1:
+        
+        col_empty, col_save_btn = st.columns([3, 1])
+        with col_save_btn:
             st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-            if st.button("Guardar documento actual"):
+            if st.button("Guardar documento actual", use_container_width=True):
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
                 
@@ -557,45 +541,10 @@ elif menu == "Nueva cotización":
                         "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
                         "fecha": str(fecha_gral), "estado": estado_cot, "total": total_cliente_final, "items": st.session_state.items_cot.copy()
                     })
-                    st.success("Documento comercial registrado en el historial.")
-            st.markdown("</div>", unsafe_allow_html=True)
-        with btn2:
-            st.markdown("<div class='btn-action-green'>", unsafe_allow_html=True)
-            if st.button("Generar propuesta comercial"):
-                st.session_state.vista_cliente = True; st.rerun()
+                    st.success("Documento registrado en el historial.")
+                    st.rerun() # Recarga para actualizar el Dashboard
             st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
-    if st.session_state.vista_cliente and st.session_state.items_cot:
-        st.markdown("<div class='card-container'>", unsafe_allow_html=True)
-        st.markdown(f"<h3 style='color: #0F172A; margin-top:0;'>Propuesta comercial formal: {nombre_evento}</h3>", unsafe_allow_html=True)
-        st.write(f"**Cuenta:** {cliente_sel} | **Referencia:** {cod_cotizacion} | **Fecha de emisión:** {fecha_gral}")
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        datos_cliente = []
-        for item in st.session_state.items_cot:
-            costo_linea = item["cantidad"] * item["costo"]
-            iva_prov_val = costo_linea * item["iva_prov"]
-            costo_con_iva = costo_linea + iva_prov_val
-            fee_val = costo_con_iva * (item["fee_pct"] / 100.0)
-            precio_venta_linea = costo_con_iva + fee_val
-            precio_unitario = precio_venta_linea / item["cantidad"]
-            
-            datos_cliente.append({
-                "Detalle de servicio": item["servicio"], "Lugar de ejecución": item["ciudad"], "Fecha": item["fecha"],
-                "Cant.": item["cantidad"], "Valor unitario": f"${precio_unitario:.2f}", "Valor total": f"${precio_venta_linea:.2f}"
-            })
-        st.table(pd.DataFrame(datos_cliente))
-        
-        st.markdown(f"""
-        <div class='invoice-total-container' style='margin-top: 20px;'>
-            <div class='invoice-row'><span>Subtotal</span><span>${subtotal_comercial:,.2f}</span></div>
-            <div class='invoice-row'><span>IVA 15%</span><span>${iva_cliente_final:,.2f}</span></div>
-            <div class='invoice-final-total'><span>TOTAL INVERSIÓN</span><span>${total_cliente_final:,.2f}</span></div>
-        </div>
-        <div style="clear:both;"></div>
-        """, unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- VISTA 4: DIRECTORIOS (CRM) ---
 elif menu == "Directorios":
