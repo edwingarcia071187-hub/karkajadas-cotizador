@@ -15,7 +15,6 @@ st.markdown("""
     <style>
     .stApp, .main, header { background-color: #FFFFFF !important; color: #1E293B !important; }
     
-    /* Botones primarios (Azul corporativo) */
     button[kind="primary"] {
         background-color: #1E3A8A !important; 
         color: #FFFFFF !important;
@@ -27,13 +26,8 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.2);
         transition: all 0.2s ease;
     }
-    button[kind="primary"]:hover { 
-        background-color: #1E40AF !important; 
-        transform: translateY(-2px); 
-        box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3);
-    }
+    button[kind="primary"]:hover { background-color: #1E40AF !important; transform: translateY(-2px); box-shadow: 0 6px 8px -1px rgba(30, 58, 138, 0.3); }
 
-    /* Botones secundarios (Grises limpios) */
     button[kind="secondary"] {
         background-color: #F8FAFC !important; 
         color: #475569 !important;
@@ -45,34 +39,20 @@ st.markdown("""
         box-shadow: none;
         transition: all 0.2s ease;
     }
-    button[kind="secondary"]:hover { 
-        background-color: #E2E8F0 !important; 
-        color: #1E293B !important;
-        border-color: #94A3B8 !important;
-        transform: translateY(-1px);
-    }
+    button[kind="secondary"]:hover { background-color: #E2E8F0 !important; color: #1E293B !important; border-color: #94A3B8 !important; transform: translateY(-1px); }
     
-    /* Estilo para los inputs y expanders */
     [data-testid="stExpander"] { background-color: #F8FAFC !important; border: 1px solid #E2E8F0 !important; border-radius: 8px !important; }
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; }
     
-    /* Efecto Hover en Listas Desplegables */
     li[data-baseweb="option"], div[role="option"] { background-color: #FFFFFF !important; color: #1E293B !important; transition: all 0.2s ease; }
     li[data-baseweb="option"]:hover, div[role="option"]:hover { background-color: #EFF6FF !important; color: #1D4ED8 !important; font-weight: bold !important; }
-
-    /* Total Destacado */
-    .total-box {
-        padding: 10px 20px;
-        border-radius: 8px;
-        background-color: #EFF6FF;
-        border-left: 6px solid #1D4ED8;
-        font-size: 36px !important; 
-        font-weight: 800;
-        color: #1E3A8A; 
-        line-height: 1.2;
-        border: 1px solid #BFDBFE;
-    }
+    table tbody tr:hover { background-color: #EFF6FF !important; }
+    
+    .total-box { padding: 10px 20px; border-radius: 8px; background-color: #EFF6FF; border-left: 6px solid #1D4ED8; font-size: 36px !important; font-weight: 800; color: #1E3A8A; line-height: 1.2; border: 1px solid #BFDBFE; }
     .total-label { font-size: 14px; color: #3B82F6; display: block; font-weight: 600; text-transform: uppercase; margin-bottom: -5px; }
+    
+    /* Buscadores de tabla más sutiles */
+    .buscador-tabla input { background-color: #F8FAFC !important; font-size: 13px !important; }
     .block-container { padding-top: 2rem !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -85,6 +65,7 @@ if "filtro_dashboard" not in st.session_state: st.session_state.filtro_dashboard
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_activa = None
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
+if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_recien_creado = None
 
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
@@ -95,7 +76,6 @@ if "cotizaciones_guardadas" not in st.session_state:
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# BASE DE DATOS CRM: CLIENTES (Con nuevos campos)
 if "clientes_catalogo" not in st.session_state:
     st.session_state.clientes_catalogo = [
         {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "ciudad": "Quito", "direccion": "Av. Galo Plaza", "web": "www.cransa.com", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
@@ -111,23 +91,31 @@ if "proveedores_catalogo" not in st.session_state:
 
 # --- MENÚ LATERAL ---
 st.sidebar.markdown("### Karkajadas Group")
-if st.sidebar.button("🏠 Panel principal", use_container_width=True, type="secondary"): 
-    st.session_state.nav_menu = "Panel principal"; st.rerun()
+if st.sidebar.button("🏠 Panel principal", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Panel principal"; st.rerun()
 if st.sidebar.button("✨ Nueva cotización", use_container_width=True, type="secondary"): 
-    st.session_state.nav_menu = "Nueva cotización"
-    st.session_state.cotizacion_activa = None # Limpia el lienzo
-    st.session_state.items_cot = []
-    st.session_state.vista_cliente = False
-    st.rerun()
-if st.sidebar.button("👥 Base de datos y CRM", use_container_width=True, type="secondary"): 
-    st.session_state.nav_menu = "Directorios"; st.rerun()
+    st.session_state.nav_menu = "Nueva cotización"; st.session_state.cotizacion_activa = None; st.session_state.items_cot = []; st.session_state.vista_cliente = False; st.rerun()
+if st.sidebar.button("👥 Base de datos y CRM", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.rerun()
 
 menu = st.session_state.nav_menu
 
 # --- VISTA 1: PANEL PRINCIPAL ---
 if menu == "Panel principal":
-    st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - Espacio de trabajo ERP</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Haz clic en las tarjetas para filtrar los proyectos</p>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - Centro de control</h2>", unsafe_allow_html=True)
+    
+    # 1. ACCESOS RÁPIDOS EN LA PARTE SUPERIOR
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button("➕ Crear nueva cotización", use_container_width=True, type="primary"): 
+            st.session_state.nav_menu = "Nueva cotización"; st.session_state.cotizacion_activa = None; st.session_state.items_cot = []; st.rerun()
+    with b2:
+        if st.button("👥 Base de clientes", use_container_width=True, type="secondary"): 
+            st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "clientes"; st.rerun()
+    with b3:
+        if st.button("🏭 Base de proveedores", use_container_width=True, type="secondary"): 
+            st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "proveedores"; st.rerun()
+            
+    st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #64748B; font-size: 14px; margin-top: -10px; font-weight: 600;'>RESUMEN FINANCIERO (Haz clic para filtrar detalles)</p>", unsafe_allow_html=True)
     
     cots = st.session_state.cotizaciones_guardadas
     tot_aprobadas = sum(c["total"] for c in cots if c["estado"] == "Aprobada")
@@ -135,7 +123,7 @@ if menu == "Panel principal":
     tot_borradores = sum(c["total"] for c in cots if c["estado"] == "Borrador")
     tot_canceladas = sum(c["total"] for c in cots if c["estado"] == "Cancelada")
     
-    # 1. BOTONES MÉTRICOS INTERACTIVOS
+    # 2. MÉTRICAS INTERACTIVAS
     m1, m2, m3, m4 = st.columns(4)
     with m1:
         if st.button(f"✅ Aprobadas\n\n${tot_aprobadas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Aprobada" else "secondary"):
@@ -150,48 +138,69 @@ if menu == "Panel principal":
         if st.button(f"❌ Canceladas\n\n${tot_canceladas:,.2f}", use_container_width=True, type="primary" if st.session_state.filtro_dashboard == "Cancelada" else "secondary"):
             st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
             
-    st.markdown("<hr style='margin: 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-    st.markdown(f"#### 📅 Detalle de cotizaciones: {st.session_state.filtro_dashboard}s")
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    # 2. LISTA FILTRADA CON BOTÓN DE DRILL-DOWN (ABRIR)
-    eventos_filtrados = [cot for cot in cots if cot["estado"] == st.session_state.filtro_dashboard]
-    
-    if eventos_filtrados:
-        cx = st.columns([1.5, 2, 2.5, 1.5, 1])
-        cx[0].markdown("**Código**")
-        cx[1].markdown("**Evento**")
-        cx[2].markdown("**Cliente**")
-        cx[3].markdown("**Total**")
-        cx[4].markdown("**Acción**")
-        st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
+    # 3. LISTADO INTERACTIVO CON BUSCADORES POR COLUMNA
+    with st.container():
+        st.markdown(f"<div style='background-color: #F8FAFC; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.markdown(f"<h4 style='color: #1E3A8A; margin-top: 0;'>📋 Directorio de cotizaciones: {st.session_state.filtro_dashboard}s</h4>", unsafe_allow_html=True)
         
-        for cot in eventos_filtrados:
-            cx = st.columns([1.5, 2, 2.5, 1.5, 1])
-            cx[0].write(f"**{cot['codigo']}**\n\n{cot['fecha']}")
-            cx[1].write(f"{cot['evento']}")
-            cx[2].write(f"{cot['cliente']}")
-            cx[3].write(f"**${cot['total']:,.2f}**")
-            if cx[4].button("Abrir", key=f"abrir_{cot['codigo']}", type="secondary"):
-                st.session_state.cotizacion_activa = cot
-                st.session_state.items_cot = cot.get("items", [])
-                st.session_state.nav_menu = "Nueva cotización"
-                st.rerun()
-            st.markdown("<hr style='margin: 4px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
-    else:
-        st.info(f"No hay cotizaciones en estado {st.session_state.filtro_dashboard}.")
+        # Fila de buscadores
+        sf1, sf2, sf3, sf4, sf5 = st.columns([1.5, 2, 2.5, 1.5, 1])
+        st.markdown("<div class='buscador-tabla'>", unsafe_allow_html=True)
+        b_cod = sf1.text_input("🔍 Buscar código", key="b_cod")
+        b_eve = sf2.text_input("🔍 Buscar evento", key="b_eve")
+        b_cli = sf3.text_input("🔍 Buscar cliente", key="b_cli")
+        b_fec = sf4.text_input("🔍 Buscar fecha", key="b_fec")
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Filtro lógico
+        eventos_filtrados = [cot for cot in cots if cot["estado"] == st.session_state.filtro_dashboard]
+        if b_cod: eventos_filtrados = [c for c in eventos_filtrados if b_cod.lower() in c['codigo'].lower()]
+        if b_eve: eventos_filtrados = [c for c in eventos_filtrados if b_eve.lower() in c['evento'].lower()]
+        if b_cli: eventos_filtrados = [c for c in eventos_filtrados if b_cli.lower() in c['cliente'].lower()]
+        if b_fec: eventos_filtrados = [c for c in eventos_filtrados if b_fec.lower() in c['fecha'].lower()]
+        
+        st.markdown("<hr style='margin: 10px 0; border-top: 2px solid #CBD5E1;'>", unsafe_allow_html=True)
+        
+        if eventos_filtrados:
+            for cot in eventos_filtrados:
+                cx = st.columns([1.5, 2, 2.5, 1.5, 1])
+                cx[0].write(f"**{cot['codigo']}**")
+                cx[1].write(f"{cot['evento']}")
+                cx[2].write(f"{cot['cliente']}")
+                cx[3].write(f"📅 {cot['fecha']}\n\n**${cot['total']:,.2f}**")
+                if cx[4].button("Abrir 📂", key=f"abrir_{cot['codigo']}", type="secondary"):
+                    st.session_state.cotizacion_activa = cot
+                    st.session_state.items_cot = cot.get("items", [])
+                    st.session_state.nav_menu = "Nueva cotización"
+                    st.rerun()
+                st.markdown("<hr style='margin: 4px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        else:
+            st.info("No hay resultados que coincidan con la búsqueda.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
     st.markdown("<h3>Generador y editor de cotizaciones</h3>", unsafe_allow_html=True)
     
-    # Lógica de carga: Si venimos del botón "Abrir", cargamos datos. Si no, variables vacías/por defecto.
     c_activa = st.session_state.cotizacion_activa
     lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
     
+    # Añadimos la opción de crear nuevo al final de la lista
+    OPCION_NUEVO = "+ Crear nuevo cliente..."
+    lista_nombres_clientes.append(OPCION_NUEVO)
+    
     def_cod = c_activa["codigo"] if c_activa else f"KG-{datetime.now().strftime('%Y%m%d')}-00{len(st.session_state.cotizaciones_guardadas)+1}"
     def_ev = c_activa["evento"] if c_activa else ""
-    # Evitar error si el cliente guardado ya no existe
-    def_cli_idx = lista_nombres_clientes.index(c_activa["cliente"]) if c_activa and c_activa["cliente"] in lista_nombres_clientes else 0
+    
+    # Lógica para autoseleccionar el cliente recién creado
+    if st.session_state.cliente_recien_creado:
+        def_cli_idx = lista_nombres_clientes.index(st.session_state.cliente_recien_creado)
+        st.session_state.cliente_recien_creado = None # Limpiar estado
+    else:
+        def_cli_idx = lista_nombres_clientes.index(c_activa["cliente"]) if c_activa and c_activa["cliente"] in lista_nombres_clientes else 0
+        
     def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
     col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
@@ -201,32 +210,35 @@ elif menu == "Nueva cotización":
     with col4: fecha_gral = st.date_input("Fecha general", datetime.now()) 
     with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
     
-    # 3. CREACIÓN RÁPIDA DE CLIENTE (IN-LINE)
-    with st.expander("➕ Crear nuevo cliente rápidamente (Se guardará en el CRM)"):
+    # 4. FORMULARIO EN LÍNEA: Aparece SOLO si seleccionas "+ Crear nuevo cliente..."
+    if cliente_sel == OPCION_NUEVO:
+        st.markdown("<div style='background-color: #F8FAFC; padding: 20px; border-radius: 8px; border: 2px dashed #3B82F6; margin-bottom: 20px;'>", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #1E3A8A; margin-top: 0;'>✨ Registrar nuevo cliente en el sistema</h4>", unsafe_allow_html=True)
         cc1, cc2, cc3 = st.columns(3)
         with cc1:
-            i_emp = st.text_input("Razón social / Empresa *", key="i_emp")
-            i_ruc = st.text_input("RUC *", key="i_ruc")
-            i_ciu = st.selectbox("Ciudad principal", ciudades_lista, key="i_ciu")
+            i_emp = st.text_input("Razón social / Empresa *")
+            i_ruc = st.text_input("RUC *")
+            i_ciu = st.selectbox("Ciudad principal", ciudades_lista)
         with cc2:
-            i_dir = st.text_input("Dirección", key="i_dir")
-            i_web = st.text_input("Página web", key="i_web")
-            i_cont = st.text_input("Persona contacto", key="i_cont")
+            i_dir = st.text_input("Dirección matriz")
+            i_web = st.text_input("Página web")
+            i_cont = st.text_input("Persona contacto")
         with cc3:
-            i_mail = st.text_input("Correo electrónico", key="i_mail")
-            i_tel = st.text_input("Teléfono", key="i_tel")
-            i_dias = st.number_input("Días de crédito", value=30, key="i_dias")
+            i_mail = st.text_input("Correo electrónico")
+            i_tel = st.text_input("Teléfono")
+            i_dias = st.number_input("Días de crédito", value=30, step=15)
             
-        if st.button("Guardar cliente y seleccionar", type="primary"):
+        if st.button("💾 Guardar y autoseleccionar", type="primary"):
             if i_emp.strip() != "" and i_ruc.strip() != "":
                 st.session_state.clientes_catalogo.append({
                     "empresa": i_emp, "ruc": i_ruc, "ciudad": i_ciu, "direccion": i_dir,
                     "web": i_web, "contacto": i_cont, "email": i_mail, "telefono": i_tel, "dias_credito": i_dias
                 })
-                st.success("¡Cliente guardado en el CRM! Refresca la página o selecciona arriba.")
+                st.session_state.cliente_recien_creado = i_emp
                 st.rerun()
             else:
                 st.error("Razón social y RUC son obligatorios.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
     
@@ -358,15 +370,18 @@ elif menu == "Nueva cotización":
         btn1, btn2 = st.columns(2)
         with btn1:
             if st.button("💾 Guardar / Actualizar cotización", type="secondary"):
-                # Si estamos editando una existente, la removemos primero para reemplazarla
                 if c_activa:
                     st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
                 
-                st.session_state.cotizaciones_guardadas.append({
-                    "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
-                    "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general, "items": st.session_state.items_cot.copy()
-                })
-                st.success("¡Cotización guardada exitosamente en el sistema!")
+                # Si guardas pero no tenías cliente válido (ej. estabas creando), no permitas crasheos
+                if cliente_sel == OPCION_NUEVO:
+                    st.error("Por favor guarda el cliente nuevo primero dando clic en 'Guardar y autoseleccionar'.")
+                else:
+                    st.session_state.cotizaciones_guardadas.append({
+                        "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
+                        "fecha": str(fecha_gral), "estado": estado_cot, "total": total_general, "items": st.session_state.items_cot.copy()
+                    })
+                    st.success("¡Cotización guardada exitosamente en el sistema!")
         with btn2:
             if st.button("📄 Generar vista cliente (limpia)", type="primary"):
                 st.session_state.vista_cliente = True; st.rerun()
@@ -393,7 +408,6 @@ elif menu == "Nueva cotización":
 elif menu == "Directorios":
     st.markdown("<h3>Módulo CRM: Clientes y proveedores</h3>", unsafe_allow_html=True)
     
-    # 4. BOTONES EN LUGAR DE PESTAÑAS (TABS) PARA DIRECTORIOS
     dir_b1, dir_b2 = st.columns(2)
     with dir_b1:
         if st.button("👥 Base de clientes", use_container_width=True, type="primary" if st.session_state.vista_directorio == "clientes" else "secondary"):
