@@ -55,20 +55,18 @@ st.markdown("""
         border-radius: 8px !important;
     }
 
-    div[data-baseweb="select"] > div, input {
+    div[data-baseweb="select"] > div, input, textarea {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
         border: 1px solid #CBD5E1 !important;
     }
     
-    li[data-baseweb="option"], div[role="option"] {
+    li[data-baseweb="option"], div[role="option"], label[data-baseweb="radio"] {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
+        transition: all 0.2s ease;
     }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
+    li[data-baseweb="option"]:hover, div[role="option"]:hover {
         background-color: #EFF6FF !important; 
         color: #1D4ED8 !important; 
         font-weight: bold !important;
@@ -92,7 +90,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- INICIALIZACIÓN DE ESTADOS ---
+# --- INICIALIZACIÓN DE ESTADOS Y BASES DE DATOS VIVAS ---
 if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel Principal"
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
@@ -101,19 +99,19 @@ if "cotizaciones_guardadas" not in st.session_state:
         {"codigo": "KG-20261002-001", "evento": "Fiesta Fin de Año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
     ]
 
-# --- BASES DE DATOS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
-proveedores_catalogo = [
-    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Cabina ilimitada por 2 horas con fotos impresas."},
-    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas empresariales por 3 horas."},
-    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "descripcion": "Transporte de equipos y personal dentro del perímetro urbano."},
-    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros con montaje."},
-    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa totalmente transparente para eventos nocturnos."},
-    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Eventos Guayas", "categoria": "Estructuras", "ciudad": "Guayaquil", "precio_base": 60.0, "iva": 0.15, "descripcion": "Carpa estándar para clima cálido."},
-    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años."}
-]
+# Transformamos el catálogo en una variable de sesión para que pueda crecer
+if "proveedores_catalogo" not in st.session_state:
+    st.session_state.proveedores_catalogo = [
+        {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Cabina ilimitada por 2 horas con fotos impresas."},
+        {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas empresariales por 3 horas."},
+        {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "descripcion": "Transporte de equipos y personal dentro del perímetro urbano."},
+        {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros con montaje."},
+        {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa totalmente transparente para eventos nocturnos."},
+        {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años."}
+    ]
 
 # --- MENÚ LATERAL ---
 st.sidebar.markdown("### Karkajadas Group")
@@ -175,69 +173,103 @@ elif menu == "Nueva Cotización":
         
     st.markdown("---")
     
-    with st.expander("🔍 Buscador de Proveedores y Servicios", expanded=True):
-        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 1: Buscar Disponibilidad</p>", unsafe_allow_html=True)
-        f1, f2 = st.columns([1, 2])
-        with f1:
-            ciudad_filtro = st.selectbox("Ciudad del Servicio", ciudades_lista, index=0)
-        with f2:
-            palabra_busqueda = st.text_input("Palabra clave (Opcional)", placeholder="Ej. Carpa, Animador...")
-        
-        resultados = []
-        for p in proveedores_catalogo:
-            if p["ciudad"] == ciudad_filtro:
-                if palabra_busqueda == "" or \
-                   palabra_busqueda.lower() in p["servicio"].lower() or \
-                   palabra_busqueda.lower() in p["proveedor"].lower() or \
-                   palabra_busqueda.lower() in p["categoria"].lower() or \
-                   palabra_busqueda.lower() in p.get("descripcion", "").lower():
-                    resultados.append(p)
-        
+    # --- BUSCADOR HÍBRIDO (CATÁLOGO VS PERSONALIZADO) ---
+    with st.expander("🔍 Añadir Proveedores y Servicios", expanded=True):
+        # Interruptor de Modo
+        modo_ingreso = st.radio("Método de Ingreso:", ["📋 Buscar en Catálogo Existente", "✨ Crear Servicio Personalizado"], horizontal=True)
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
-        if not resultados:
-            st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
-        else:
-            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Seleccionar Proveedor Encontrado</p>", unsafe_allow_html=True)
+        if modo_ingreso == "📋 Buscar en Catálogo Existente":
+            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Buscar Disponibilidad</p>", unsafe_allow_html=True)
+            f1, f2 = st.columns([1, 2])
+            with f1: ciudad_filtro = st.selectbox("Ciudad del Servicio", ciudades_lista, index=0)
+            with f2: palabra_busqueda = st.text_input("Palabra clave (Opcional)", placeholder="Ej. Carpa, Animador...")
             
-            # --- NUEVO SELECTOR LIMPIO (REEMPLAZA LOS RADIO BUTTONS) ---
-            opciones_str = []
-            for r in resultados:
-                iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
-                desc = r.get("descripcion", "Sin descripción")
-                # El PROVEEDOR va primero, seguido de la flecha y el servicio
-                opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | 📝 {desc}")
+            resultados = []
+            for p in st.session_state.proveedores_catalogo:
+                if p["ciudad"] == ciudad_filtro:
+                    if palabra_busqueda == "" or \
+                       palabra_busqueda.lower() in p["servicio"].lower() or \
+                       palabra_busqueda.lower() in p["proveedor"].lower() or \
+                       palabra_busqueda.lower() in p["categoria"].lower() or \
+                       palabra_busqueda.lower() in p.get("descripcion", "").lower():
+                        resultados.append(p)
             
-            seleccion = st.selectbox("Despliega para ver las opciones y elegir:", opciones_str)
-            item_seleccionado = resultados[opciones_str.index(seleccion)]
-            # -------------------------------------------------------------
+            st.markdown("<br>", unsafe_allow_html=True)
+            if not resultados:
+                st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
+            else:
+                st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 2: Seleccionar Proveedor Encontrado</p>", unsafe_allow_html=True)
+                opciones_str = []
+                for r in resultados:
+                    iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
+                    desc = r.get("descripcion", "Sin descripción")
+                    opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | 📝 {desc}")
+                
+                seleccion = st.selectbox("Despliega para ver las opciones y elegir:", opciones_str)
+                item_seleccionado = resultados[opciones_str.index(seleccion)]
+                
+                st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 3: Definir Cantidades y Valores Finales</p>", unsafe_allow_html=True)
+                ca, cb, cc, cd, ce = st.columns(5)
+                with ca: fecha_item = st.date_input("Fecha Específica", value=fecha_gral)
+                with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
+                with cc: costo_add = st.number_input("Costo Unit. Negociado ($)", value=float(item_seleccionado["precio_base"]))
+                with cd: iva_add = st.selectbox("Aplica IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+                with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
+                    
+                if st.button("➕ Agregar este ítem a la Cotización"):
+                    st.session_state.items_cot.append({
+                        "servicio": item_seleccionado["servicio"], "proveedor": item_seleccionado["proveedor"], 
+                        "ciudad": ciudad_filtro, "fecha": str(fecha_item), "cantidad": cant_add, 
+                        "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
+                    })
+                    st.rerun()
 
-            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 3: Definir Cantidades y Valores Finales</p>", unsafe_allow_html=True)
+        elif modo_ingreso == "✨ Crear Servicio Personalizado":
+            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 1: Ingresar Datos del Nuevo Servicio/Proveedor</p>", unsafe_allow_html=True)
+            nc1, nc2, nc3, nc4 = st.columns(4)
+            with nc1: nuevo_proveedor = st.text_input("Nombre del Proveedor *")
+            with nc2: nuevo_servicio = st.text_input("Servicio Ofrecido *")
+            with nc3: nueva_ciudad = st.selectbox("Ciudad del Proveedor", ciudades_lista)
+            with nc4: nueva_categoria = st.text_input("Categoría (Ej. Alimentos, Audiovisual)")
             
+            nueva_descripcion = st.text_area("Breve Descripción / Detalles Técnicos (Opcional)", height=68)
+            
+            st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>PASO 2: Definir Valores para esta Cotización</p>", unsafe_allow_html=True)
             ca, cb, cc, cd, ce = st.columns(5)
             with ca: fecha_item = st.date_input("Fecha Específica", value=fecha_gral)
             with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
-            with cc: costo_add = st.number_input("Costo Unit. Negociado ($)", value=float(item_seleccionado["precio_base"]))
-            with cd: iva_add = st.selectbox("Aplica IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+            with cc: costo_add = st.number_input("Costo Unit. Negociado ($)", value=0.00, format="%.2f")
+            with cd: iva_add = st.selectbox("Aplica IVA Prov.", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
             with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
-                
-            if st.button("➕ Agregar este ítem a la Cotización"):
-                st.session_state.items_cot.append({
-                    "servicio": item_seleccionado["servicio"], 
-                    "proveedor": item_seleccionado["proveedor"], 
-                    "ciudad": ciudad_filtro,
-                    "fecha": str(fecha_item), 
-                    "cantidad": cant_add, 
-                    "costo": costo_add,
-                    "iva_prov": iva_add, 
-                    "fee_pct": fee_add
-                })
-                st.rerun()
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            guardar_bd = st.checkbox("💾 Guardar este nuevo proveedor permanentemente en el Catálogo Maestro", value=True)
+            
+            if st.button("➕ Crear y Agregar a la Cotización"):
+                if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
+                    st.error("⚠️ El Nombre del Proveedor y el Servicio son obligatorios.")
+                else:
+                    # 1. Agregar a la cotización
+                    st.session_state.items_cot.append({
+                        "servicio": nuevo_servicio, "proveedor": nuevo_proveedor, 
+                        "ciudad": nueva_ciudad, "fecha": str(fecha_item), "cantidad": cant_add, 
+                        "costo": costo_add, "iva_prov": iva_add, "fee_pct": fee_add
+                    })
+                    # 2. Guardar en Base de Datos Viva si el usuario lo desea
+                    if guardar_bd:
+                        st.session_state.proveedores_catalogo.append({
+                            "servicio": nuevo_servicio, "proveedor": nuevo_proveedor,
+                            "categoria": nueva_categoria if nueva_categoria else "Otros",
+                            "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add,
+                            "descripcion": nueva_descripcion if nueva_descripcion else "Sin descripción"
+                        })
+                    st.rerun()
 
     if st.session_state.items_cot:
         st.markdown("#### Ítems Actuales en la Cotización (Vista Interna)")
-        
         hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
         hx[0].markdown("**Proveedor / Servicio**")
         hx[1].markdown("**Fecha / Ciudad**")
@@ -260,7 +292,6 @@ elif menu == "Nueva Cotización":
             subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
             
             cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
-            # Actualizamos también la vista de la tabla para que el proveedor resalte primero
             cx[0].write(f"**{item['proveedor']}** \n\n*{item['servicio']}*")
             cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
@@ -323,7 +354,9 @@ elif menu == "Consultar Cotizaciones":
 
 # --- VISTA 4: DIRECTORIOS ---
 elif menu == "Directorios":
-    st.markdown("<h3>Base de Datos</h3>", unsafe_allow_html=True)
+    st.markdown("<h3>Base de Datos Oficial</h3>", unsafe_allow_html=True)
     t1, t2 = st.tabs(["Clientes", "Proveedores"])
     with t1: st.dataframe(pd.DataFrame({"Cliente": clientes_lista}), use_container_width=True)
-    with t2: st.dataframe(pd.DataFrame(proveedores_catalogo), use_container_width=True)
+    with t2: 
+        # La tabla muestra los proveedores fijos MÁS los que hayas agregado manualmente
+        st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
