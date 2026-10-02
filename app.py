@@ -112,22 +112,29 @@ if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel princi
 if "modo_ingreso" not in st.session_state: st.session_state.modo_ingreso = "catalogo"
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
+
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {"codigo": "KG-20261002-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
     ]
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
-clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
+# BASE DE DATOS CRM: CLIENTES (Ahora es un diccionario rico en datos)
+if "clientes_catalogo" not in st.session_state:
+    st.session_state.clientes_catalogo = [
+        {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
+        {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
+        {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
+    ]
+
+# BASE DE DATOS CRM: PROVEEDORES (Ahora con datos bancarios)
 if "proveedores_catalogo" not in st.session_state:
     st.session_state.proveedores_catalogo = [
-        {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Cabina ilimitada por 2 horas con fotos impresas."},
-        {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas empresariales por 3 horas."},
-        {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "descripcion": "Transporte de equipos y personal dentro del perímetro urbano."},
-        {"servicio": "Carpa 6x6 blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros con montaje."},
-        {"servicio": "Carpa 6x6 transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa totalmente transparente para eventos nocturnos."},
-        {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años."}
+        {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "banco": "Pichincha", "cuenta": "Ahorros 2209666553", "descripcion": "Cabina ilimitada por 2 horas."},
+        {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "banco": "Guayaquil", "cuenta": "Corriente 1234567", "descripcion": "Dinámicas empresariales por 3 horas."},
+        {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "banco": "Interno", "cuenta": "N/A", "descripcion": "Transporte urbano."},
+        {"servicio": "Carpa 6x6 blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "banco": "Produbanco", "cuenta": "Ahorros 987654321", "descripcion": "Incluye montaje."},
     ]
 
 # --- MENÚ LATERAL ---
@@ -184,7 +191,10 @@ elif menu == "Nueva cotización":
     col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
     with col1: cod_cotizacion = st.text_input("Código de cotización", value=codigo_sugerido)
     with col2: nombre_evento = st.text_input("Nombre del evento", placeholder="Ej. Fiesta de integración")
-    with col3: cliente_sel = st.selectbox("Cliente", clientes_lista)
+    with col3: 
+        # Extraemos los nombres de las empresas del nuevo catálogo CRM
+        lista_nombres_clientes = [c["empresa"] for c in st.session_state.clientes_catalogo]
+        cliente_sel = st.selectbox("Cliente", lista_nombres_clientes)
     with col4: fecha_gral = st.date_input("Fecha general", datetime.now()) 
     with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"])
         
@@ -192,16 +202,13 @@ elif menu == "Nueva cotización":
     
     with st.expander("🔍 Añadir proveedores y servicios", expanded=True):
         st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Seleccione el método de ingreso:</p>", unsafe_allow_html=True)
-        
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("📋 Buscar en catálogo existente", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "catalogo" else "secondary"):
-                st.session_state.modo_ingreso = "catalogo"
-                st.rerun()
+                st.session_state.modo_ingreso = "catalogo"; st.rerun()
         with col_btn2:
-            if st.button("✨ Crear servicio personalizado", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
-                st.session_state.modo_ingreso = "personalizado"
-                st.rerun()
+            if st.button("✨ Crear servicio personalizado (Rápido)", use_container_width=True, type="primary" if st.session_state.modo_ingreso == "personalizado" else "secondary"):
+                st.session_state.modo_ingreso = "personalizado"; st.rerun()
         
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
         
@@ -253,17 +260,14 @@ elif menu == "Nueva cotización":
                     st.rerun()
 
         elif st.session_state.modo_ingreso == "personalizado":
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Paso 1: Ingresar datos del nuevo servicio/proveedor</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Ingresar datos rápidos (Si quieres agregar datos bancarios, usa el módulo 'Directorios')</p>", unsafe_allow_html=True)
             nc1, nc2, nc3, nc4 = st.columns(4)
             with nc1: nuevo_proveedor = st.text_input("Nombre del proveedor *")
             with nc2: nuevo_servicio = st.text_input("Servicio ofrecido *")
             with nc3: nueva_ciudad = st.selectbox("Ciudad del proveedor", ciudades_lista)
-            with nc4: nueva_categoria = st.text_input("Categoría (ej. alimentos, audiovisual)")
-            
-            nueva_descripcion = st.text_area("Breve descripción / detalles técnicos (opcional)", height=68)
+            with nc4: nueva_categoria = st.text_input("Categoría (ej. alimentos)")
             
             st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-            st.markdown("<p style='font-size: 14px; font-weight: bold; color: #1E40AF;'>Paso 2: Definir valores para esta cotización</p>", unsafe_allow_html=True)
             ca, cb, cc, cd, ce = st.columns(5)
             with ca: fecha_item = st.date_input("Fecha específica", value=fecha_gral)
             with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
@@ -271,9 +275,7 @@ elif menu == "Nueva cotización":
             with cd: iva_add = st.selectbox("Aplica IVA prov.", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x * 100)}%")
             with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
             
-            st.markdown("<br>", unsafe_allow_html=True)
-            guardar_bd = st.checkbox("💾 Guardar este nuevo proveedor permanentemente en el catálogo maestro", value=True)
-            
+            guardar_bd = st.checkbox("💾 Guardar en catálogo maestro", value=True)
             if st.button("➕ Crear y agregar a la cotización", type="primary"):
                 if nuevo_proveedor.strip() == "" or nuevo_servicio.strip() == "":
                     st.error("⚠️ El nombre del proveedor y el servicio son obligatorios.")
@@ -288,10 +290,11 @@ elif menu == "Nueva cotización":
                             "servicio": nuevo_servicio, "proveedor": nuevo_proveedor,
                             "categoria": nueva_categoria if nueva_categoria else "Otros",
                             "ciudad": nueva_ciudad, "precio_base": costo_add, "iva": iva_add,
-                            "descripcion": nueva_descripcion if nueva_descripcion else "Sin descripción"
+                            "banco": "Pendiente", "cuenta": "Pendiente", "descripcion": "Agregado rápidamente"
                         })
                     st.rerun()
 
+    # --- TABLA INTERNA Y TOTALES ---
     if st.session_state.items_cot:
         st.markdown("#### Ítems actuales en la cotización (vista interna)")
         hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
@@ -306,13 +309,11 @@ elif menu == "Nueva cotización":
         st.markdown("<hr style='margin: 4px 0 10px 0; border-top: 2px solid #E2E8F0;'>", unsafe_allow_html=True)
         
         subtotal_prov = 0; total_fee = 0; total_general = 0
-        
         for idx, item in enumerate(st.session_state.items_cot):
             sub_costo = item["cantidad"] * item["costo"]
             sub_con_iva = sub_costo + (sub_costo * item["iva_prov"])
             fee_val = sub_con_iva * (item["fee_pct"] / 100.0)
             total_item = sub_con_iva + fee_val
-            
             subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
             
             cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
@@ -345,8 +346,7 @@ elif menu == "Nueva cotización":
                 st.success("Cotización guardada exitosamente.")
         with btn2:
             if st.button("📄 Generar vista cliente (limpia)", type="primary"):
-                st.session_state.vista_cliente = True
-                st.rerun()
+                st.session_state.vista_cliente = True; st.rerun()
 
     if st.session_state.vista_cliente and st.session_state.items_cot:
         st.markdown("---")
@@ -364,7 +364,6 @@ elif menu == "Nueva cotización":
                 "Servicio": item["servicio"], "Ciudad": item["ciudad"], "Fecha": item["fecha"],
                 "Cant.": item["cantidad"], "V. unitario": f"${precio_unitario_cliente:.2f}", "V. total": f"${total_linea:.2f}"
             })
-            
         st.table(pd.DataFrame(datos_cliente))
         st.markdown(f"<h3 style='text-align: right;'>TOTAL: ${total_general:.2f}</h3>", unsafe_allow_html=True)
 
@@ -376,9 +375,71 @@ elif menu == "Consultar cotizaciones":
     else:
         st.write("No hay cotizaciones registradas aún.")
 
-# --- VISTA 4: DIRECTORIOS ---
+# --- VISTA 4: DIRECTORIOS (CRM COMPLETO) ---
 elif menu == "Directorios":
-    st.markdown("<h3>Base de datos oficial</h3>", unsafe_allow_html=True)
-    t1, t2 = st.tabs(["Clientes", "Proveedores"])
-    with t1: st.dataframe(pd.DataFrame({"Cliente": clientes_lista}), use_container_width=True)
-    with t2: st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
+    st.markdown("<h3>Módulo CRM: Clientes y proveedores</h3>", unsafe_allow_html=True)
+    
+    t1, t2 = st.tabs(["👥 Base de clientes", "🏭 Base de proveedores"])
+    
+    with t1:
+        st.markdown("#### Directorio corporativo de clientes")
+        # Visualizar clientes en formato tabla
+        st.dataframe(pd.DataFrame(st.session_state.clientes_catalogo), use_container_width=True)
+        
+        # Formulario para agregar nuevo cliente con datos ricos
+        with st.expander("➕ Añadir nuevo cliente corporativo"):
+            cc1, cc2 = st.columns(2)
+            with cc1:
+                n_empresa = st.text_input("Razón social / Empresa *")
+                n_ruc = st.text_input("RUC *")
+                n_dias = st.number_input("Días de crédito permitidos", value=30, step=15)
+            with cc2:
+                n_contacto = st.text_input("Persona de contacto (Ej. Dpto. Compras)")
+                n_correo = st.text_input("Correo electrónico")
+                n_tel = st.text_input("Teléfono")
+                
+            if st.button("Guardar cliente en el CRM", type="primary"):
+                if n_empresa and n_ruc:
+                    st.session_state.clientes_catalogo.append({
+                        "empresa": n_empresa, "ruc": n_ruc, "contacto": n_contacto,
+                        "email": n_correo, "telefono": n_tel, "dias_credito": n_dias
+                    })
+                    st.success("¡Cliente agregado al catálogo!")
+                    st.rerun()
+                else:
+                    st.error("⚠️ La empresa y el RUC son obligatorios.")
+
+    with t2:
+        st.markdown("#### Catálogo maestro de proveedores y servicios")
+        # Visualizar proveedores en formato tabla
+        st.dataframe(pd.DataFrame(st.session_state.proveedores_catalogo), use_container_width=True)
+        
+        # Formulario para agregar nuevo proveedor con datos bancarios
+        with st.expander("➕ Añadir nuevo proveedor al catálogo"):
+            cp1, cp2, cp3 = st.columns(3)
+            with cp1:
+                p_prov = st.text_input("Nombre del proveedor o empresa *")
+                p_serv = st.text_input("Servicio estrella que ofrece *")
+                p_cat = st.text_input("Categoría")
+            with cp2:
+                p_ciu = st.selectbox("Ciudad base", ciudades_lista)
+                p_costo = st.number_input("Costo base estándar ($)", value=0.00)
+                p_iva = st.selectbox("Graba IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%")
+            with cp3:
+                st.markdown("**Datos bancarios (Módulo de pagos)**")
+                p_banco = st.text_input("Banco")
+                p_cta = st.text_input("Tipo y N° de cuenta")
+                
+            p_desc = st.text_area("Descripción y detalles del servicio")
+            
+            if st.button("Guardar proveedor en catálogo", type="primary"):
+                if p_prov and p_serv:
+                    st.session_state.proveedores_catalogo.append({
+                        "servicio": p_serv, "proveedor": p_prov, "categoria": p_cat,
+                        "ciudad": p_ciu, "precio_base": p_costo, "iva": p_iva,
+                        "banco": p_banco, "cuenta": p_cta, "descripcion": p_desc
+                    })
+                    st.success("¡Proveedor agregado al catálogo maestro!")
+                    st.rerun()
+                else:
+                    st.error("⚠️ El proveedor y el servicio son obligatorios.")
