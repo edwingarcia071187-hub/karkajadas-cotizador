@@ -61,17 +61,15 @@ st.markdown("""
         border: 1px solid #CBD5E1 !important;
     }
     
-    li[data-baseweb="option"], div[role="option"] {
+    /* HOVER ATRACTIVO EN LISTAS Y RADIOS */
+    li[data-baseweb="option"], div[role="option"], label[data-baseweb="radio"] {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
-        padding-top: 10px !important;
-        padding-bottom: 10px !important;
+        transition: all 0.2s ease;
     }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover, 
-    li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
+    li[data-baseweb="option"]:hover, div[role="option"]:hover, label[data-baseweb="radio"]:hover {
         background-color: #EFF6FF !important; 
         color: #1D4ED8 !important; 
-        font-weight: bold !important;
     }
 
     table tbody tr:hover { background-color: #EFF6FF !important; }
@@ -105,14 +103,15 @@ if "cotizaciones_guardadas" not in st.session_state:
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
+# Base de datos ampliada con el campo "descripcion"
 proveedores_catalogo = [
-    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0},
-    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15},
-    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0},
-    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15},
-    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15},
-    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Eventos Guayas", "categoria": "Estructuras", "ciudad": "Guayaquil", "precio_base": 60.0, "iva": 0.15},
-    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0}
+    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Servicio de cabina ilimitada por 2 horas, incluye props y fotos impresas."},
+    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas de integración empresarial por 3 horas."},
+    {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "descripcion": "Transporte de equipos y personal dentro del perímetro urbano."},
+    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros, incluye montaje y desmontaje."},
+    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa elegante totalmente transparente, ideal para eventos nocturnos."},
+    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Eventos Guayas", "categoria": "Estructuras", "ciudad": "Guayaquil", "precio_base": 60.0, "iva": 0.15, "descripcion": "Carpa estándar para clima cálido."},
+    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años con estimulación temprana."}
 ]
 
 # --- MENÚ LATERAL ---
@@ -124,7 +123,7 @@ if st.sidebar.button("👥 Clientes y Proveedores", use_container_width=True): s
 
 menu = st.session_state.nav_menu
 
-# --- VISTA 1: PANEL PRINCIPAL ---
+# --- VISTA 1: PANEL PRINCIPAL (HOME PRO) ---
 if menu == "Panel Principal":
     st.markdown("<h2 style='color: #0F172A; font-weight: 800;'>Karkajadas Group - ERP Workspace</h2>", unsafe_allow_html=True)
     st.markdown("<p style='color: #64748B; font-size: 16px; margin-top: -10px;'>Resumen Ejecutivo y Gestión Operativa</p>", unsafe_allow_html=True)
@@ -175,16 +174,15 @@ elif menu == "Nueva Cotización":
         
     st.markdown("---")
     
-    # --- REDISEÑO 3 PASOS: BÚSQUEDA INTELIGENTE, COMPARATIVA Y SELECCIÓN ---
-    with st.expander("🔍 Buscador y Comparador de Servicios", expanded=True):
-        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 1: Filtrar Disponibilidad</p>", unsafe_allow_html=True)
+    with st.expander("🔍 Buscador de Proveedores y Servicios", expanded=True):
+        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 1: Buscar Disponibilidad</p>", unsafe_allow_html=True)
         f1, f2 = st.columns([1, 2])
         with f1:
-            ciudad_filtro = st.selectbox("1. Ciudad del Servicio", ciudades_lista, index=0)
+            ciudad_filtro = st.selectbox("Ciudad del Servicio", ciudades_lista, index=0)
         with f2:
-            palabra_busqueda = st.text_input("2. Búsqueda por palabra clave (Ej. Carpa, Animador, Parlante)", placeholder="Escribe para buscar...")
+            palabra_busqueda = st.text_input("Palabra clave (Ej. Carpa, Animador)", placeholder="Escribe para filtrar los resultados...")
         
-        # Filtro en cascada
+        # Filtro Dinámico
         resultados = []
         for p in proveedores_catalogo:
             if p["ciudad"] == ciudad_filtro:
@@ -195,20 +193,21 @@ elif menu == "Nueva Cotización":
                     resultados.append(p)
         
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Comparar y Elegir Proveedor</p>", unsafe_allow_html=True)
         
         if not resultados:
             st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
         else:
-            # 1. MOSTRAR TABLA DE RESULTADOS PARA COMPARAR PRECIOS
-            df_resultados = pd.DataFrame(resultados)[["servicio", "proveedor", "precio_base", "iva"]]
-            df_resultados.columns = ["Servicio Ofrecido", "Nombre del Proveedor", "Costo Base Unitario ($)", "Aplica IVA"]
-            df_resultados["Aplica IVA"] = df_resultados["Aplica IVA"].apply(lambda x: f"{int(x*100)}%")
-            st.dataframe(df_resultados, use_container_width=True)
+            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Proveedores Encontrados</p>", unsafe_allow_html=True)
             
-            # 2. SELECTOR VISUAL (RADIO BUTTON) PARA ELEGIR EL GANADOR
-            opciones_str = [f"{r['servicio']} | {r['proveedor']} | Costo: ${r['precio_base']}" for r in resultados]
-            seleccion = st.radio("Seleccione el proveedor ganador para añadir a la cotización:", opciones_str)
+            # Formato de la lista (Sin precio base, con IVA y Descripción)
+            opciones_str = []
+            for r in resultados:
+                iva_str = f"IVA: {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA: 0%"
+                desc = r.get("descripcion", "Descripción pendiente de agregar a la base de datos.")
+                opciones_str.append(f"🔹 {r['servicio']} | {r['proveedor']} | {iva_str} | 📝 {desc}")
+            
+            # Lista de selección dinámica y limpia
+            seleccion = st.radio("Seleccione el servicio exacto:", opciones_str, label_visibility="collapsed")
             item_seleccionado = resultados[opciones_str.index(seleccion)]
             
             st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
@@ -218,7 +217,7 @@ elif menu == "Nueva Cotización":
             with ca: fecha_item = st.date_input("Fecha Específica", value=fecha_gral)
             with cb: cant_add = st.number_input("Cantidad a contratar", min_value=1, value=1)
             with cc: costo_add = st.number_input("Costo Unit. Negociado ($)", value=float(item_seleccionado["precio_base"]))
-            with cd: iva_add = st.selectbox("IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
+            with cd: iva_add = st.selectbox("Aplica IVA Prov.", [0.0, 0.15], index=1 if item_seleccionado["iva"] > 0 else 0, format_func=lambda x: f"{int(x * 100)}%")
             with ce: fee_add = st.number_input("Margen / FEE (%)", value=20.00, step=5.00, format="%.2f")
                 
             if st.button("➕ Agregar este ítem a la Cotización"):
