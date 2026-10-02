@@ -61,15 +61,17 @@ st.markdown("""
         border: 1px solid #CBD5E1 !important;
     }
     
-    /* HOVER ATRACTIVO EN LISTAS Y RADIOS */
-    li[data-baseweb="option"], div[role="option"], label[data-baseweb="radio"] {
+    li[data-baseweb="option"], div[role="option"] {
         background-color: #FFFFFF !important;
         color: #1E293B !important;
-        transition: all 0.2s ease;
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
     }
-    li[data-baseweb="option"]:hover, div[role="option"]:hover, label[data-baseweb="radio"]:hover {
+    li[data-baseweb="option"]:hover, div[role="option"]:hover, 
+    li[data-baseweb="option"][aria-selected="true"], div[role="option"][aria-selected="true"] {
         background-color: #EFF6FF !important; 
         color: #1D4ED8 !important; 
+        font-weight: bold !important;
     }
 
     table tbody tr:hover { background-color: #EFF6FF !important; }
@@ -96,22 +98,21 @@ if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "vista_cliente" not in st.session_state: st.session_state.vista_cliente = False
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
-        {"codigo": "KG-20260928-01", "evento": "Fiesta Fin de Año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
+        {"codigo": "KG-20261002-001", "evento": "Fiesta Fin de Año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-10-02", "estado": "Aprobada", "total": 1250.00},
     ]
 
 # --- BASES DE DATOS ---
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias Ciudades"]
 clientes_lista = ["Corrugadora Nacional Cransa S.A. (1791179382001)", "Siemens Ecuador S.A.", "Hilton Colón Quito", "Bebidas Arcacontinental", "Essity Ecuador", "Intaco Ecuador", "Levapan del Ecuador", "Industrias Lácteas Toni S.A."]
 
-# Base de datos ampliada con el campo "descripcion"
 proveedores_catalogo = [
-    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Servicio de cabina ilimitada por 2 horas, incluye props y fotos impresas."},
-    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas de integración empresarial por 3 horas."},
+    {"servicio": "Cabina fotográfica", "proveedor": "SuperDuper Photobooth", "categoria": "Entretenimiento", "ciudad": "Quito", "precio_base": 300.0, "iva": 0.0, "descripcion": "Cabina ilimitada por 2 horas con fotos impresas."},
+    {"servicio": "Animador corporativo", "proveedor": "Victor Ramírez", "categoria": "Animación", "ciudad": "Quito", "precio_base": 150.0, "iva": 0.15, "descripcion": "Animación profesional, dinámicas empresariales por 3 horas."},
     {"servicio": "Logística y transporte", "proveedor": "Karkajadas Group", "categoria": "Logística", "ciudad": "Quito", "precio_base": 40.0, "iva": 0.0, "descripcion": "Transporte de equipos y personal dentro del perímetro urbano."},
-    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros, incluye montaje y desmontaje."},
-    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa elegante totalmente transparente, ideal para eventos nocturnos."},
+    {"servicio": "Carpa 6x6 Blanca", "proveedor": "Carpas Pichincha", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 50.0, "iva": 0.15, "descripcion": "Carpa estructural blanca de 6x6 metros con montaje."},
+    {"servicio": "Carpa 6x6 Transparente", "proveedor": "Eventos VIP UIO", "categoria": "Estructuras", "ciudad": "Quito", "precio_base": 80.0, "iva": 0.15, "descripcion": "Carpa totalmente transparente para eventos nocturnos."},
     {"servicio": "Carpa 6x6 Blanca", "proveedor": "Eventos Guayas", "categoria": "Estructuras", "ciudad": "Guayaquil", "precio_base": 60.0, "iva": 0.15, "descripcion": "Carpa estándar para clima cálido."},
-    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años con estimulación temprana."}
+    {"servicio": "Baby Park", "proveedor": "Karkajadas Group", "categoria": "Infantil", "ciudad": "Quito", "precio_base": 125.0, "iva": 0.0, "descripcion": "Parque infantil seguro para niños de 1 a 4 años."}
 ]
 
 # --- MENÚ LATERAL ---
@@ -180,16 +181,16 @@ elif menu == "Nueva Cotización":
         with f1:
             ciudad_filtro = st.selectbox("Ciudad del Servicio", ciudades_lista, index=0)
         with f2:
-            palabra_busqueda = st.text_input("Palabra clave (Ej. Carpa, Animador)", placeholder="Escribe para filtrar los resultados...")
+            palabra_busqueda = st.text_input("Palabra clave (Opcional)", placeholder="Ej. Carpa, Animador...")
         
-        # Filtro Dinámico
         resultados = []
         for p in proveedores_catalogo:
             if p["ciudad"] == ciudad_filtro:
                 if palabra_busqueda == "" or \
                    palabra_busqueda.lower() in p["servicio"].lower() or \
                    palabra_busqueda.lower() in p["proveedor"].lower() or \
-                   palabra_busqueda.lower() in p["categoria"].lower():
+                   palabra_busqueda.lower() in p["categoria"].lower() or \
+                   palabra_busqueda.lower() in p.get("descripcion", "").lower():
                     resultados.append(p)
         
         st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
@@ -197,19 +198,20 @@ elif menu == "Nueva Cotización":
         if not resultados:
             st.warning(f"No se encontraron proveedores para '{palabra_busqueda}' en {ciudad_filtro}.")
         else:
-            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Proveedores Encontrados</p>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 2: Seleccionar Proveedor Encontrado</p>", unsafe_allow_html=True)
             
-            # Formato de la lista (Sin precio base, con IVA y Descripción)
+            # --- NUEVO SELECTOR LIMPIO (REEMPLAZA LOS RADIO BUTTONS) ---
             opciones_str = []
             for r in resultados:
-                iva_str = f"IVA: {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA: 0%"
-                desc = r.get("descripcion", "Descripción pendiente de agregar a la base de datos.")
-                opciones_str.append(f"🔹 {r['servicio']} | {r['proveedor']} | {iva_str} | 📝 {desc}")
+                iva_str = f"IVA {int(r['iva']*100)}%" if r['iva'] > 0 else "IVA 0%"
+                desc = r.get("descripcion", "Sin descripción")
+                # El PROVEEDOR va primero, seguido de la flecha y el servicio
+                opciones_str.append(f"{r['proveedor']} ➔ {r['servicio']} | {iva_str} | 📝 {desc}")
             
-            # Lista de selección dinámica y limpia
-            seleccion = st.radio("Seleccione el servicio exacto:", opciones_str, label_visibility="collapsed")
+            seleccion = st.selectbox("Despliega para ver las opciones y elegir:", opciones_str)
             item_seleccionado = resultados[opciones_str.index(seleccion)]
-            
+            # -------------------------------------------------------------
+
             st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
             st.markdown("<p style='font-size: 15px; font-weight: bold; color: #1E40AF;'>PASO 3: Definir Cantidades y Valores Finales</p>", unsafe_allow_html=True)
             
@@ -237,7 +239,7 @@ elif menu == "Nueva Cotización":
         st.markdown("#### Ítems Actuales en la Cotización (Vista Interna)")
         
         hx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
-        hx[0].markdown("**Servicio / Proveedor**")
+        hx[0].markdown("**Proveedor / Servicio**")
         hx[1].markdown("**Fecha / Ciudad**")
         hx[2].markdown("**Cant.**")
         hx[3].markdown("**Costo U.**")
@@ -258,7 +260,8 @@ elif menu == "Nueva Cotización":
             subtotal_prov += sub_con_iva; total_fee += fee_val; total_general += total_item
             
             cx = st.columns([2.5, 1.5, 0.5, 1, 1, 1, 1, 0.5])
-            cx[0].write(f"**{item['servicio']}** \n\n*{item['proveedor']}*")
+            # Actualizamos también la vista de la tabla para que el proveedor resalte primero
+            cx[0].write(f"**{item['proveedor']}** \n\n*{item['servicio']}*")
             cx[1].write(f"{item['fecha']} \n\n{item['ciudad']}")
             cx[2].write(f"x{item['cantidad']}")
             cx[3].write(f"${item['costo']:.2f}")
