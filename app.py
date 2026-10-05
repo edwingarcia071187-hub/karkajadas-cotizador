@@ -75,7 +75,7 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important;
     }
-    .brand-logo { font-size: 24px; font-weight: 900; color: #FFFFFF; margin-bottom: 25px; margin-top: 10px; padding-left: 5px; letter-spacing: 0.5px;}
+    .brand-logo { font-size: 24px; font-weight: 900; color: #FFFFFF; margin-bottom: 25px; margin-top: 10px; text-align: left; padding-left: 5px; letter-spacing: 0.5px;}
     
     /* Configuración SIMÉTRICA de los botones del sidebar */
     [data-testid="stSidebar"] button {
@@ -162,26 +162,25 @@ if "clientes_catalogo" not in st.session_state:
 
 # --- MENÚ LATERAL REDISEÑADO ---
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
-if st.sidebar.button("Panel de inicio"): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
-if st.sidebar.button("Reportes financieros"): st.session_state.nav_menu = "Reportes financieros"; st.rerun()
-if st.sidebar.button("Proyecciones de ventas"): st.session_state.nav_menu = "Proyecciones de ventas"; st.rerun()
-if st.sidebar.button("Noticias corporativas"): st.session_state.nav_menu = "Noticias corporativas"; st.rerun()
-st.sidebar.markdown("<p style='font-size: 11px; color: #94A3B8; font-weight: 700; margin-top: 20px; padding-left: 5px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
-if st.sidebar.button("Centro de ayuda"): st.session_state.nav_menu = "Centro de ayuda"; st.rerun()
-if st.sidebar.button("Documentación operativa"): st.session_state.nav_menu = "Documentación operativa"; st.rerun()
+if st.sidebar.button("Panel de inicio", use_container_width=True): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
+if st.sidebar.button("Reportes financieros", use_container_width=True): st.session_state.nav_menu = "Reportes financieros"; st.rerun()
+if st.sidebar.button("Proyecciones de ventas", use_container_width=True): st.session_state.nav_menu = "Proyecciones de ventas"; st.rerun()
+if st.sidebar.button("Noticias corporativas", use_container_width=True): st.session_state.nav_menu = "Noticias corporativas"; st.rerun()
+st.sidebar.markdown("<p style='font-size: 11px; color: #64748B; font-weight: 700; margin-top: 20px; padding-left: 10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
+if st.sidebar.button("Centro de ayuda", use_container_width=True): st.session_state.nav_menu = "Centro de ayuda"; st.rerun()
+if st.sidebar.button("Documentación operativa", use_container_width=True): st.session_state.nav_menu = "Documentación operativa"; st.rerun()
 
 menu = st.session_state.nav_menu
 
 # --- MÓDULOS EN CONSTRUCCIÓN ---
 if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporativas", "Centro de ayuda", "Documentación operativa"]:
-    st.markdown(f"<h2 style='color: #0F172A; font-weight: 700;'>{menu}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color: #0F172A;'>{menu}</h2>", unsafe_allow_html=True)
     st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad.")
 
 # --- VISTA 1: PANEL PRINCIPAL ---
 elif menu == "Panel de inicio":
     st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Panel de inicio</h2>", unsafe_allow_html=True)
     
-    # 1. ACCESOS RÁPIDOS (Contenedor Nativo)
     with st.container(border=True):
         st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Accesos Rápidos</h4>", unsafe_allow_html=True)
         b1, b2, b3 = st.columns(3)
@@ -193,7 +192,6 @@ elif menu == "Panel de inicio":
         with b3:
             if st.button("Red de proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "proveedores"; st.rerun()
     
-    # 2. FILTROS (Contenedor Nativo)
     with st.container(border=True):
         st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Filtros Operativos</h4>", unsafe_allow_html=True)
         col_f1, col_f2, col_f3 = st.columns(3)
@@ -217,7 +215,6 @@ elif menu == "Panel de inicio":
     tot_can = sum(c["total"] for c in cots_dash if c["estado"] == "Cancelada")
     tot_gen = tot_apr + tot_env + tot_bor + tot_can
 
-    # 3. GRÁFICO IMPACTANTE Y LEYENDAS
     with st.container(border=True):
         st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Estado del Portafolio</h4>", unsafe_allow_html=True)
         col_chart, col_leyenda = st.columns([1, 1.8])
@@ -225,7 +222,6 @@ elif menu == "Panel de inicio":
             if tot_gen > 0:
                 df_chart = pd.DataFrame({"Estado": ["Aprobadas", "Enviadas", "Borradores", "Canceladas"], "Monto": [tot_apr, tot_env, tot_bor, tot_can]})
                 df_chart = df_chart[df_chart["Monto"] > 0]
-                # Gráfico moderno de anillo con bordes redondeados y separación
                 chart = alt.Chart(df_chart).mark_arc(innerRadius=65, outerRadius=110, cornerRadius=6, padAngle=0.03).encode(
                     theta=alt.Theta(field="Monto", type="quantitative"), 
                     color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], range=["#059669", "#1E3A8A", "#94A3B8", "#EF4444"]), legend=None), 
@@ -245,7 +241,6 @@ elif menu == "Panel de inicio":
                 if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
                 if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
     
-    # 4. TABLA DE OPERACIONES
     with st.container(border=True):
         col_tit, col_bus = st.columns([2, 1])
         with col_tit: st.markdown(f"<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Operaciones: {st.session_state.filtro_dashboard}</h4>", unsafe_allow_html=True)
@@ -399,7 +394,7 @@ elif menu == "Nueva cotización":
                 with cx[8]:
                     if st.button("↓", key=f"d_{idx}", disabled=(idx == len(st.session_state.items_cot) - 1), type="secondary"): st.session_state.items_cot.insert(idx + 1, st.session_state.items_cot.pop(idx)); st.rerun()
                 with cx[9]:
-                    if st.button("X", key=f"x_{idx}", type="primary"): st.session_state.items_cot.pop(idx); st.rerun() # type primary, pero CSS lo hace ROJO
+                    if st.button("X", key=f"x_{idx}", type="primary"): st.session_state.items_cot.pop(idx); st.rerun() 
                 st.markdown("<hr style='margin: 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
                 
             iva_cli = s_com * 0.15; t_cli = s_com + iva_cli
@@ -407,9 +402,9 @@ elif menu == "Nueva cotización":
             cm1, cm2, ci = st.columns([1.2, 1.2, 1.6])
             with cm1: st.markdown(f"<div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div>", unsafe_allow_html=True)
             with cm2: st.markdown(f"<div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div>", unsafe_allow_html=True)
-            with ci: st.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
+            with ci: st.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
             
-            st.markdown("<hr style='border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
             ce, cg = st.columns([3, 1])
             with cg:
                 if st.button("Guardar cotización", use_container_width=True, type="primary"):
