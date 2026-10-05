@@ -3,153 +3,113 @@ import pandas as pd
 import altair as alt
 from datetime import datetime
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN DE PÁGINA (MÁXIMA EXPANSIÓN) ---
 st.set_page_config(
     page_title="Karkajadas Group - ERP",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILOS CSS AVANZADOS Y COLORIMETRÍA ---
+# --- ESTILOS CSS AVANZADOS Y COLORIMETRÍA ESTRICTA ---
 st.markdown("""
     <style>
-    /* Fondo principal y tipografía */
+    /* Aprovechar al máximo el espacio de la pantalla (QlikSense style) */
+    .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; max-width: 98% !important; }
     .stApp, .main, header { background-color: #F8FAFC !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
+    /* Contenedores nativos más compactos */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 6px !important;
+        border: 1px solid #E2E8F0 !important;
+        background-color: #FFFFFF !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+        padding: 15px !important;
+        margin-bottom: 10px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] { border: none !important; background-color: transparent !important; box-shadow: none !important; padding: 0 !important; }
+
     /* ----------------------------------------------------
-       BOTONES: VERDE (Avanzar/Crear), AZUL (Neutro), ROJO (Borrar)
+       BOTONES: VERDE (Avanzar), AZUL (Neutro), ROJO (Borrar)
        ---------------------------------------------------- */
-    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito y confirmación) */
+    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito) */
     button[kind="primary"] {
-        background-color: #059669 !important; 
-        border: 1px solid #059669 !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        padding: 0.5rem 1.2rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
-        transition: all 0.2s ease !important;
+        background-color: #059669 !important; border: 1px solid #059669 !important; color: #FFFFFF !important;
+        border-radius: 4px !important; padding: 0.4rem 1rem !important; font-weight: 600 !important;
+        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important; transition: all 0.2s ease !important;
     }
-    button[kind="primary"]:hover { background-color: #047857 !important; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(5, 150, 105, 0.3) !important;}
+    button[kind="primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
 
-    /* Botones SECUNDARIOS = AZUL CORPORATIVO (Navegación / Filtros) */
+    /* Botones SECUNDARIOS = AZUL CORPORATIVO (Filtros y navegación) */
     button[kind="secondary"] {
-        background-color: #1E3A8A !important; 
-        border: 1px solid #1E3A8A !important;
-        color: #FFFFFF !important;
-        border-radius: 6px !important;
-        padding: 0.5rem 1.2rem !important;
-        font-weight: 600 !important;
-        box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2) !important;
-        transition: all 0.2s ease !important;
+        background-color: #1E3A8A !important; border: 1px solid #1E3A8A !important; color: #FFFFFF !important;
+        border-radius: 4px !important; padding: 0.4rem 1rem !important; font-weight: 600 !important;
+        box-shadow: 0 2px 4px rgba(30, 58, 138, 0.2) !important; transition: all 0.2s ease !important;
     }
-    button[kind="secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
+    button[kind="secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
-    /* BOTONES COMPACTOS DE LA TABLA (Flechas y Borrar) */
-    div[data-testid="column"]:nth-child(8) button,
-    div[data-testid="column"]:nth-child(9) button {
-        background-color: transparent !important;
-        border: 1px solid #CBD5E1 !important;
-        color: #475569 !important;
-        padding: 0 !important; min-height: 32px !important; height: 32px !important;
-        border-radius: 4px !important;
-        box-shadow: none !important;
+    /* Botones compactos de Tabla */
+    div[data-testid="column"]:nth-child(8) button, div[data-testid="column"]:nth-child(9) button {
+        background-color: transparent !important; border: 1px solid #CBD5E1 !important; color: #475569 !important;
+        padding: 0 !important; min-height: 28px !important; height: 28px !important; box-shadow: none !important;
     }
-    div[data-testid="column"]:nth-child(8) button:hover,
-    div[data-testid="column"]:nth-child(9) button:hover { background-color: #F1F5F9 !important; color: #1E3A8A !important; }
+    div[data-testid="column"]:nth-child(8) button:hover, div[data-testid="column"]:nth-child(9) button:hover { background-color: #F1F5F9 !important; color: #1E3A8A !important; }
 
-    /* BOTÓN ROJO DE ELIMINAR (Fila 10 de la tabla) */
     div[data-testid="column"]:nth-child(10) button {
-        background-color: #EF4444 !important; 
-        border: 1px solid #EF4444 !important;
-        color: white !important;
-        padding: 0 !important; min-height: 32px !important; height: 32px !important;
-        border-radius: 4px !important;
-        font-weight: bold !important;
+        background-color: #EF4444 !important; border: 1px solid #EF4444 !important; color: white !important;
+        padding: 0 !important; min-height: 28px !important; height: 28px !important; font-weight: bold !important;
     }
     div[data-testid="column"]:nth-child(10) button:hover { background-color: #DC2626 !important; }
 
     /* ----------------------------------------------------
-       COLORES ESTRICTOS PARA LOS BOTONES DE MÉTRICAS (Igualando la Dona)
-       Técnica avanzada de inyección por jerarquía DOM
+       COLORES EXACTOS PARA LOS 4 BOTONES DE MÉTRICAS
        ---------------------------------------------------- */
-    /* Ocultar gancho invisible */
-    div[data-testid="element-container"]:has(.metric-colors-hook) { display: none !important; }
+    .marker-aprobada, .marker-enviada, .marker-borrador, .marker-cancelada { display: none !important; }
 
-    /* Aprobadas (Verde) -> Columna 1, Botón 1 */
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) div[data-testid="element-container"]:nth-child(1) button {
-        background-color: #059669 !important; border-color: #059669 !important; color: #FFFFFF !important; box-shadow: 0 2px 4px rgba(5,150,105,0.2) !important;
+    /* Inyección de CSS que busca la columna exacta que contiene el marcador */
+    div[data-testid="column"]:has(.marker-aprobada) button {
+        background-color: #059669 !important; border-color: #059669 !important; color: white !important;
     }
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) div[data-testid="element-container"]:nth-child(1) button:hover { background-color: #047857 !important; transform: translateY(-2px); }
+    div[data-testid="column"]:has(.marker-enviada) button {
+        background-color: #1E3A8A !important; border-color: #1E3A8A !important; color: white !important;
+    }
+    div[data-testid="column"]:has(.marker-borrador) button {
+        background-color: #64748B !important; border-color: #64748B !important; color: white !important;
+    }
+    div[data-testid="column"]:has(.marker-cancelada) button {
+        background-color: #EF4444 !important; border-color: #EF4444 !important; color: white !important;
+    }
 
-    /* Borradores (Gris Pizarra) -> Columna 1, Botón 2 */
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) div[data-testid="element-container"]:nth-child(2) button {
-        background-color: #64748B !important; border-color: #64748B !important; color: #FFFFFF !important; box-shadow: 0 2px 4px rgba(100,116,139,0.2) !important;
-    }
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) div[data-testid="element-container"]:nth-child(2) button:hover { background-color: #475569 !important; transform: translateY(-2px); }
-
-    /* Enviadas (Azul) -> Columna 2, Botón 1 */
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="element-container"]:nth-child(1) button {
-        background-color: #1E3A8A !important; border-color: #1E3A8A !important; color: #FFFFFF !important; box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
-    }
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="element-container"]:nth-child(1) button:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
-
-    /* Canceladas (Rojo) -> Columna 2, Botón 2 */
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="element-container"]:nth-child(2) button {
-        background-color: #EF4444 !important; border-color: #EF4444 !important; color: #FFFFFF !important; box-shadow: 0 2px 4px rgba(239,68,68,0.2) !important;
-    }
-    div[data-testid="column"]:has(.metric-colors-hook) div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) div[data-testid="element-container"]:nth-child(2) button:hover { background-color: #DC2626 !important; transform: translateY(-2px); }
+    /* Hover effects para métricas */
+    div[data-testid="column"]:has(.marker-aprobada) button:hover { background-color: #047857 !important; transform: translateY(-2px); }
+    div[data-testid="column"]:has(.marker-enviada) button:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
+    div[data-testid="column"]:has(.marker-borrador) button:hover { background-color: #475569 !important; transform: translateY(-2px); }
+    div[data-testid="column"]:has(.marker-cancelada) button:hover { background-color: #DC2626 !important; transform: translateY(-2px); }
 
     /* ----------------------------------------------------
-       PANEL LATERAL (Simetría, sombreado y hover 3D)
+       PANEL LATERAL
        ---------------------------------------------------- */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important;
-    }
-    .brand-logo { font-size: 24px; font-weight: 900; color: #FFFFFF; margin-bottom: 25px; margin-top: 10px; text-align: left; padding-left: 5px; letter-spacing: 0.5px;}
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important; }
+    .brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; margin-top: 5px; padding-left: 5px;}
     
     [data-testid="stSidebar"] button {
-        background-color: #1E293B !important; 
-        border: 1px solid #334155 !important;
-        color: #CBD5E1 !important;
-        border-radius: 8px !important;
-        padding: 12px 15px !important;
-        margin-bottom: 8px !important;
-        width: 100% !important;
-        display: block !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-        transition: all 0.3s ease !important;
+        background-color: #1E293B !important; border: 1px solid #334155 !important; color: #CBD5E1 !important;
+        border-radius: 6px !important; padding: 10px 15px !important; margin-bottom: 6px !important;
+        width: 100% !important; display: block !important; box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        transition: all 0.2s ease !important;
     }
     [data-testid="stSidebar"] button p { width: 100% !important; text-align: left !important; font-weight: 500 !important; margin: 0 !important;}
     [data-testid="stSidebar"] button:hover { 
-        background-color: #334155 !important; 
-        color: #FFFFFF !important;
-        border-color: #475569 !important;
-        box-shadow: 0 8px 15px rgba(0,0,0,0.3) !important;
-        transform: translateY(-2px) !important; 
+        background-color: #334155 !important; color: #FFFFFF !important; border-color: #475569 !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important; transform: translateX(3px) !important; 
     }
 
-    /* ----------------------------------------------------
-       DISEÑO DE CONTENEDORES NATIVOS Y FACTURA
-       ---------------------------------------------------- */
-    [data-testid="stVerticalBlockBorderWrapper"] {
-        border-radius: 8px !important;
-        border: 1px solid #E2E8F0 !important;
-        background-color: #FFFFFF !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-        padding: 20px !important;
-        margin-bottom: 15px !important;
-    }
-    [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] { border: none !important; background-color: transparent !important; box-shadow: none !important; padding: 0 !important; }
-
-    div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 6px !important; }
-    button[data-baseweb="tab"] { font-size: 15px !important; font-weight: 600 !important; color: #64748B !important; }
-    button[data-baseweb="tab"][aria-selected="true"] { color: #1E3A8A !important; border-bottom: 3px solid #1E3A8A !important; }
+    /* Formularios compactos */
+    div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px !important; min-height: 36px !important;}
+    .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; }
     
-    .invoice-container { float: right; width: 340px; background-color: #FFFFFF; padding: 25px; border-radius: 8px; border: 1px solid #E2E8F0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .invoice-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; color: #475569; }
-    .invoice-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 15px; margin-top: 15px; font-size: 24px; font-weight: 800; color: #1E3A8A; }
-    .block-container { padding-top: 2rem !important; }
+    .invoice-container { float: right; width: 300px; background-color: #FFFFFF; padding: 20px; border-radius: 6px; border: 1px solid #E2E8F0; }
+    .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
+    .invoice-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 10px; margin-top: 10px; font-size: 20px; font-weight: 800; color: #1E3A8A; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -162,7 +122,7 @@ if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_rec
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# --- GENERACIÓN DE BASE DE DATOS ---
+# --- BASE DE DATOS DE PRUEBA CORREGIDA ---
 if "proveedores_catalogo" not in st.session_state:
     cat_temp = []
     servicios_base = [("Cabina fotográfica 360", "Entretenimiento", 300.0, 0.0), ("Carpa estructural 6x6", "Estructuras", 50.0, 0.15), ("Animador corporativo", "Animación", 150.0, 0.15), ("Catering premium", "Alimentos", 25.0, 0.15), ("Sonido profesional", "Audiovisual", 180.0, 0.15), ("Iluminación robótica", "Audiovisual", 120.0, 0.15), ("Logística pesada", "Logística", 80.0, 0.0), ("Alquiler mobiliario", "Mobiliario", 150.0, 0.15), ("Decoración floral", "Decoración", 350.0, 0.15), ("Maestro ceremonias", "Talento", 250.0, 0.15)]
@@ -172,6 +132,7 @@ if "proveedores_catalogo" not in st.session_state:
     st.session_state.proveedores_catalogo = cat_temp
 
 if "cotizaciones_guardadas" not in st.session_state:
+    # Se añade información de items a TODAS para que ninguna abra vacía
     st.session_state.cotizaciones_guardadas = [
         {"codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00, "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]},
         {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 248.40, "items": [{"servicio": "Sonido profesional", "proveedor": "ProAudiovisual QUI", "ciudad": "Quito", "fecha": "2026-11-10", "cantidad": 1, "costo": 180.0, "iva_prov": 0.15, "fee_pct": 20.0}]},
@@ -186,7 +147,7 @@ if "clientes_catalogo" not in st.session_state:
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
 
-# --- MENÚ LATERAL REDISEÑADO ---
+# --- MENÚ LATERAL ---
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
 if st.sidebar.button("Panel de inicio", use_container_width=True): st.session_state.nav_menu = "Panel de inicio"; st.rerun()
 if st.sidebar.button("Reportes financieros", use_container_width=True): st.session_state.nav_menu = "Reportes financieros"; st.rerun()
@@ -198,35 +159,39 @@ if st.sidebar.button("Documentación operativa", use_container_width=True): st.s
 
 menu = st.session_state.nav_menu
 
-# --- MÓDULOS EN CONSTRUCCIÓN ---
 if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporativas", "Centro de ayuda", "Documentación operativa"]:
     st.markdown(f"<h2 style='color: #0F172A; font-weight: 700;'>{menu}</h2>", unsafe_allow_html=True)
-    st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad.")
+    st.info("Módulo en construcción.")
 
-# --- VISTA 1: PANEL PRINCIPAL ---
+# --- VISTA 1: PANEL PRINCIPAL (ALTA DENSIDAD) ---
 elif menu == "Panel de inicio":
-    st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 20px;'>Panel de inicio</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color: #0F172A; font-weight: 700; margin-bottom: 15px;'>Panel de Control</h2>", unsafe_allow_html=True)
     
+    # 1. BLOQUE SUPERIOR COMPACTO: ACCIONES Y FILTROS EN UNA SOLA LÍNEA
     with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Accesos Rápidos</h4>", unsafe_allow_html=True)
-        b1, b2, b3 = st.columns(3)
-        with b1:
-            if st.button("Crear nueva cotización", use_container_width=True, type="primary"): 
-                st.session_state.nav_menu = "Nueva cotización"; st.session_state.cotizacion_activa = None; st.session_state.items_cot = []; st.rerun()
-        with b2:
-            if st.button("Directorio de clientes", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "clientes"; st.rerun()
-        with b3:
-            if st.button("Red de proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "proveedores"; st.rerun()
-    
-    with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Filtros Operativos</h4>", unsafe_allow_html=True)
-        col_f1, col_f2, col_f3 = st.columns(3)
-        lista_cli = sorted(list(set([c["cliente"] for c in st.session_state.cotizaciones_guardadas])))
-        lista_mes = sorted(list(set([c["fecha"][:7] for c in st.session_state.cotizaciones_guardadas])))
-        with col_f1: f_emp = st.selectbox("Empresa / Cuenta", ["Todas"] + lista_cli)
-        with col_f2: f_mes = st.selectbox("Mes operativo", ["Todos"] + lista_mes)
-        with col_f3: f_ciu = st.selectbox("Ciudad de facturación", ["Todas"] + ciudades_lista)
+        col_acc, col_fil = st.columns([1, 1.2])
+        
+        with col_acc:
+            st.markdown("<span style='font-size:12px; font-weight:700; color:#64748B; margin-bottom:5px; display:block;'>ACCIONES RÁPIDAS</span>", unsafe_allow_html=True)
+            c_a1, c_a2, c_a3 = st.columns(3)
+            with c_a1:
+                if st.button("Crear cotización", use_container_width=True, type="primary"): 
+                    st.session_state.nav_menu = "Nueva cotización"; st.session_state.cotizacion_activa = None; st.session_state.items_cot = []; st.rerun()
+            with c_a2:
+                if st.button("Clientes", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "clientes"; st.rerun()
+            with c_a3:
+                if st.button("Proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "proveedores"; st.rerun()
+        
+        with col_fil:
+            st.markdown("<span style='font-size:12px; font-weight:700; color:#64748B; margin-bottom:5px; display:block;'>FILTROS OPERATIVOS</span>", unsafe_allow_html=True)
+            c_f1, c_f2, c_f3 = st.columns(3)
+            lista_cli = sorted(list(set([c["cliente"] for c in st.session_state.cotizaciones_guardadas])))
+            lista_mes = sorted(list(set([c["fecha"][:7] for c in st.session_state.cotizaciones_guardadas])))
+            with c_f1: f_emp = st.selectbox("Empresa", ["Todas"] + lista_cli, label_visibility="collapsed")
+            with c_f2: f_mes = st.selectbox("Mes", ["Todos"] + lista_mes, label_visibility="collapsed")
+            with c_f3: f_ciu = st.selectbox("Ciudad", ["Todas"] + ciudades_lista, label_visibility="collapsed")
 
+    # Lógica de Filtrado
     cots_dash = []
     for c in st.session_state.cotizaciones_guardadas:
         ciu_cliente = next((cli["ciudad"] for cli in st.session_state.clientes_catalogo if cli["empresa"] == c["cliente"]), "Desconocida")
@@ -241,66 +206,68 @@ elif menu == "Panel de inicio":
     tot_can = sum(c["total"] for c in cots_dash if c["estado"] == "Cancelada")
     tot_gen = tot_apr + tot_env + tot_bor + tot_can
 
+    # 2. BLOQUE INFERIOR DE ALTA DENSIDAD: GRÁFICO, BOTONES EXACTOS Y TABLA
     with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Estado del Portafolio</h4>", unsafe_allow_html=True)
-        col_chart, col_leyenda = st.columns([1, 1.8])
-        with col_chart:
+        col_izq, col_der = st.columns([1, 3]) # 25% Gráfico, 75% Datos
+        
+        with col_izq:
+            st.markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>DISTRIBUCIÓN</span>", unsafe_allow_html=True)
             if tot_gen > 0:
                 df_chart = pd.DataFrame({"Estado": ["Aprobadas", "Enviadas", "Borradores", "Canceladas"], "Monto": [tot_apr, tot_env, tot_bor, tot_can]})
                 df_chart = df_chart[df_chart["Monto"] > 0]
-                chart = alt.Chart(df_chart).mark_arc(innerRadius=65, outerRadius=110, cornerRadius=6, padAngle=0.03).encode(
+                # Colores Mapeados
+                chart = alt.Chart(df_chart).mark_arc(innerRadius=45, outerRadius=85, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta(field="Monto", type="quantitative"), 
                     color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], range=["#059669", "#1E3A8A", "#64748B", "#EF4444"]), legend=None), 
                     tooltip=["Estado", alt.Tooltip("Monto", format="$,.2f")]
-                ).properties(height=280)
+                ).properties(height=200)
                 st.altair_chart(chart, use_container_width=True)
             else:
-                st.info("Sin datos para los filtros seleccionados.")
+                st.info("Sin datos.")
 
-        with col_leyenda:
-            st.markdown("<p style='font-size: 13px; color: #64748B;'>Seleccione una métrica para filtrar el listado inferior:</p>", unsafe_allow_html=True)
+        with col_der:
+            st.markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>RENDIMIENTO Y DETALLE OPERATIVO (CLIC PARA FILTRAR)</span>", unsafe_allow_html=True)
             
-            # GANCHO INVISIBLE PARA INYECTAR CSS EXACTO A ESTAS COLUMNAS
-            st.markdown("<div class='metric-colors-hook'></div>", unsafe_allow_html=True)
+            # Fila de Métricas (Botones Coloreados por DOM)
+            m1, m2, m3, m4 = st.columns(4)
+            with m1:
+                st.markdown("<div class='marker-aprobada'></div>", unsafe_allow_html=True)
+                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True, key="m_apr"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
+            with m2:
+                st.markdown("<div class='marker-enviada'></div>", unsafe_allow_html=True)
+                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, key="m_env"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
+            with m3:
+                st.markdown("<div class='marker-borrador'></div>", unsafe_allow_html=True)
+                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True, key="m_bor"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
+            with m4:
+                st.markdown("<div class='marker-cancelada'></div>", unsafe_allow_html=True)
+                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, key="m_can"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
+
+            st.markdown("<hr style='margin: 10px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
             
-            lm1, lm2 = st.columns(2)
-            with lm1:
-                # El CSS interceptará estos botones y los pintará Verde y Gris Pizarra
-                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
-                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
-            with lm2:
-                # El CSS interceptará estos botones y los pintará Azul y Rojo
-                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
-                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
-    
-    with st.container(border=True):
-        col_tit, col_bus = st.columns([2, 1])
-        with col_tit: st.markdown(f"<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Operaciones: {st.session_state.filtro_dashboard}</h4>", unsafe_allow_html=True)
-        with col_bus: b_univ = st.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código o cliente...")
-        
-        ev_filt = [cot for cot in cots_dash if cot["estado"] == st.session_state.filtro_dashboard]
-        if b_univ: ev_filt = [c for c in ev_filt if b_univ.lower() in c['codigo'].lower() or b_univ.lower() in c['evento'].lower() or b_univ.lower() in c['cliente'].lower()]
-        
-        if ev_filt:
-            cx = st.columns([1.5, 2, 2.5, 1.5, 1])
-            cx[0].markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>CÓDIGO / FECHA</span>", unsafe_allow_html=True)
-            cx[1].markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>EVENTO</span>", unsafe_allow_html=True)
-            cx[2].markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>CLIENTE</span>", unsafe_allow_html=True)
-            cx[3].markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>MONTO</span>", unsafe_allow_html=True)
-            cx[4].markdown("<span style='font-size:12px; font-weight:700; color:#64748B;'>ACCIÓN</span>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin: 5px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-            for cot in ev_filt:
-                cx = st.columns([1.5, 2, 2.5, 1.5, 1])
-                cx[0].write(f"**{cot['codigo']}**\n\n{cot['fecha']}")
-                cx[1].write(f"{cot['evento']}")
-                cx[2].write(f"{cot['cliente']}")
-                cx[3].write(f"**${cot['total']:,.2f}**")
-                with cx[4]:
-                    if st.button("Abrir", key=f"ab_{cot['codigo']}", type="secondary", use_container_width=True):
-                        st.session_state.cotizacion_activa = cot; st.session_state.items_cot = cot.get("items", []); st.session_state.nav_menu = "Nueva cotización"; st.rerun()
-                st.markdown("<hr style='margin: 5px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
-        else:
-            st.info("No hay registros en esta categoría.")
+            # Tabla Compacta
+            ev_filt = [cot for cot in cots_dash if cot["estado"] == st.session_state.filtro_dashboard]
+            if ev_filt:
+                cx = st.columns([1.2, 2.5, 2.5, 1.2, 0.8])
+                cx[0].markdown("<span style='font-size:11px; font-weight:700; color:#64748B;'>CÓDIGO/FECHA</span>", unsafe_allow_html=True)
+                cx[1].markdown("<span style='font-size:11px; font-weight:700; color:#64748B;'>EVENTO</span>", unsafe_allow_html=True)
+                cx[2].markdown("<span style='font-size:11px; font-weight:700; color:#64748B;'>CLIENTE</span>", unsafe_allow_html=True)
+                cx[3].markdown("<span style='font-size:11px; font-weight:700; color:#64748B;'>MONTO</span>", unsafe_allow_html=True)
+                cx[4].markdown("<span style='font-size:11px; font-weight:700; color:#64748B;'>ACCIÓN</span>", unsafe_allow_html=True)
+                st.markdown("<hr style='margin: 2px 0 5px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+                
+                for cot in ev_filt:
+                    cx = st.columns([1.2, 2.5, 2.5, 1.2, 0.8])
+                    cx[0].write(f"**{cot['codigo']}**\n\n<span style='font-size:12px; color:#475569;'>{cot['fecha']}</span>", unsafe_allow_html=True)
+                    cx[1].write(f"{cot['evento']}")
+                    cx[2].write(f"{cot['cliente']}")
+                    cx[3].write(f"**${cot['total']:,.2f}**")
+                    with cx[4]:
+                        if st.button("Abrir", key=f"ab_{cot['codigo']}", type="secondary", use_container_width=True):
+                            st.session_state.cotizacion_activa = cot; st.session_state.items_cot = cot.get("items", []); st.session_state.nav_menu = "Nueva cotización"; st.rerun()
+                    st.markdown("<hr style='margin: 2px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
+            else:
+                st.info(f"No hay cotizaciones con estado: {st.session_state.filtro_dashboard}")
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
@@ -308,12 +275,13 @@ elif menu == "Nueva cotización":
     sub_head = sum((i["cantidad"] * i["costo"] * (1 + i["iva_prov"])) * (1 + i["fee_pct"]/100.0) for i in st.session_state.items_cot)
     tot_head = sub_head * 1.15
     
+    # Encabezado perfecto sin cortes
     st.markdown(f"""
-        <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;'>
+        <div style='display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;'>
             <h2 style='font-weight: 700; color: #0F172A; margin: 0;'>Gestión de cotizaciones</h2>
-            <div style='text-align: right; margin-top: 5px;'>
-                <span style='font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;'>Monto Estimado</span><br>
-                <span style='color: #1E3A8A; font-weight: 800; font-size: 32px;'>${tot_head:,.2f}</span>
+            <div style='text-align: right;'>
+                <span style='font-size: 12px; color: #64748B; font-weight: 700; text-transform: uppercase;'>Monto Estimado</span><br>
+                <span style='color: #1E3A8A; font-weight: 800; font-size: 28px; line-height:1;'>${tot_head:,.2f}</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -327,30 +295,22 @@ elif menu == "Nueva cotización":
     def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
     with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
+        col_tit, col_btn = st.columns([4, 1])
+        with col_tit: st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:8px; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
+        with col_btn:
+            if st.button("Guardar cambios", type="primary", use_container_width=True, key="btn_s_top"):
+                if cliente_sel == "+ Registrar nuevo cliente...": st.error("Registre el cliente.")
+                else:
+                    if c_activa: st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != c_activa["codigo"]]
+                    st.session_state.cotizaciones_guardadas.append({"codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, "fecha": str(fecha_gral), "estado": estado_cot, "total": tot_head, "items": st.session_state.items_cot.copy()})
+                    st.success("Guardado."); st.session_state.nav_menu = "Panel de inicio"; st.rerun()
+
         col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
         with col1: cod_cotizacion = st.text_input("Referencia", value=def_cod)
         with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev)
         with col3: cliente_sel = st.selectbox("Cuenta de cliente", lista_cli, index=def_cli_idx)
         with col4: fecha_gral = st.date_input("Fecha", datetime.now()) 
         with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_espacio, col_boton_top = st.columns([5, 1])
-        with col_boton_top:
-            if st.button("Guardar cambios", type="primary", use_container_width=True, key="btn_save_top"):
-                if cliente_sel == "+ Registrar nuevo cliente...":
-                    st.error("Registre la cuenta del cliente antes de guardar.")
-                else:
-                    if c_activa:
-                        st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != c_activa["codigo"]]
-                    st.session_state.cotizaciones_guardadas.append({
-                        "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
-                        "fecha": str(fecha_gral), "estado": estado_cot, "total": tot_head, "items": st.session_state.items_cot.copy()
-                    })
-                    st.success("Guardado exitoso.")
-                    st.session_state.nav_menu = "Panel de inicio"
-                    st.rerun()
 
     if cliente_sel == "+ Registrar nuevo cliente...":
         with st.container(border=True):
@@ -453,10 +413,10 @@ elif menu == "Nueva cotización":
             with cm2: st.markdown(f"<div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div>", unsafe_allow_html=True)
             with ci: st.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
             
-            st.markdown("<hr style='border-top: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
             ce, cg = st.columns([3, 1])
             with cg:
-                if st.button("Guardar cotización final", use_container_width=True, type="primary", key="btn_save_bot"):
+                if st.button("Guardar cotización final", use_container_width=True, type="primary", key="btn_s_bot"):
                     if c_activa: st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != c_activa["codigo"]]
                     if cliente_sel == "+ Registrar nuevo cliente...": st.error("Registre el cliente.")
                     else:
