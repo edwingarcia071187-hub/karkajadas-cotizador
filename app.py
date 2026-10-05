@@ -638,7 +638,7 @@ elif menu == "Panel de inicio":
                    and (not busqueda or busqueda in f"{c['codigo']} {c['evento']} {c['cliente']}".lower())]
 
         if ev_filt:
-            ANCHOS = [1.6, 1.0, 2.2, 1.0, 2.4, 1.2, 0.9]
+            ANCHOS = [1.3, 0.95, 1.9, 1.05, 2.5, 1.0, 0.8]
             TIT = ["CÓDIGO", "FECHA", "EVENTO", "ESTADO", "CLIENTE CORPORATIVO", "MONTO", ""]
             with st.container(key="tabla_det"):
                 with st.container(key="det_head"):
