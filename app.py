@@ -1,4 +1,5 @@
 import json
+from html import escape as esc
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -214,7 +215,7 @@ if "proveedores_catalogo" not in ss:
     ]
     ss.proveedores_catalogo = [
         {"servicio": s, "proveedor": f"Pro{cat} {ciu[:3].upper()}", "categoria": cat, "ciudad": ciu,
-         "precio_base": precio, "iva": iva, "banco": "Banco", "cuenta": "Cta.", "descripcion": "Estándar"}
+         "precio_base": precio, "iva": iva, "descripcion": "Estándar"}
         for ciu in CIUDADES for s, cat, precio, iva in servicios_base
     ]
 
@@ -240,6 +241,20 @@ if "clientes_catalogo" not in ss:
         {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "ciudad": "Quito", "direccion": "Av. República", "web": "www.siemens.ec", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
+    # Cada cuenta ahora tiene un id y listas de contactos y direcciones (puede haber varios correos, teléfonos, sedes...)
+    for _n, _c in enumerate(ss.clientes_catalogo, 1):
+        _c["id"] = f"CLI-{_n:03d}"
+        _c["contactos"] = [{"nombre": _c["contacto"], "cargo": "", "correo": _c["email"], "telefono": _c["telefono"]}]
+        _c["direcciones"] = [{"etiqueta": "Principal", "direccion": _c["direccion"], "ciudad": _c["ciudad"]}]
+
+if "proveedores" not in ss:
+    # Proveedores como entidad propia (contactos, direcciones y cuentas bancarias); sus servicios están en proveedores_catalogo
+    _vistos = {}
+    for _r in ss.proveedores_catalogo:
+        _vistos.setdefault(_r["proveedor"], _r)
+    ss.proveedores = [{"id": f"PRV-{_n:03d}", "proveedor": _nom, "ruc": "", "categoria": _r["categoria"], "ciudad": _r["ciudad"],
+                       "observaciones": "", "contactos": [], "direcciones": [], "cuentas": []}
+                      for _n, (_nom, _r) in enumerate(_vistos.items(), 1)]
 
 
 # =============================================================================
@@ -457,29 +472,249 @@ def encabezados(cols, titulos):
         col.markdown(f"<span class='col-head'>{t}</span>", unsafe_allow_html=True)
 
 
-def form_cliente(prefijo, titulo_html=""):
-    """Formulario de cliente reutilizado en 'Nueva cotización' y en 'Directorios'. Devuelve dict o None."""
+def _vacio(v):
+    return v is None or (isinstance(v, float) and pd.isna(v))
+
+
+def limpiar_lista(df, columnas):
+    """Convierte la tabla editable en lista de dicts y descarta las filas totalmente vacías."""
+    filas = []
+    for r in df.to_dict("records"):
+        f = {c: "" if _vacio(r.get(c)) else str(r.get(c)).strip() for c in columnas}
+        if any(f.values()):
+            filas.append(f)
+    return filas
+
+
+def editor_lista(clave, filas, columnas, config):
+    """Tabla editable donde se agregan (＋ al final), editan o borran filas: sirve para varios correos, teléfonos, sedes, cuentas..."""
+    df = pd.DataFrame(filas, columns=columnas).astype(object)
+    ed = st.data_editor(df, num_rows="dynamic", hide_index=True, use_container_width=True, column_config=config, key=clave)
+    return limpiar_lista(ed, columnas)
+
+
+COL_CONTACTOS = ["nombre", "cargo", "correo", "telefono"]
+CFG_CONTACTOS = {"nombre": st.column_config.TextColumn("Nombre", width="medium"), "cargo": st.column_config.TextColumn("Cargo / Área"),
+                 "correo": st.column_config.TextColumn("Correo", width="medium"), "telefono": st.column_config.TextColumn("Teléfono")}
+COL_DIRECCIONES = ["etiqueta", "direccion", "ciudad"]
+CFG_DIRECCIONES = {"etiqueta": st.column_config.TextColumn("Etiqueta (Matriz, Bodega...)"),
+                   "direccion": st.column_config.TextColumn("Dirección", width="large"),
+                   "ciudad": st.column_config.SelectboxColumn("Ciudad", options=CIUDADES)}
+COL_CUENTAS = ["banco", "tipo", "numero", "titular"]
+CFG_CUENTAS = {"banco": st.column_config.TextColumn("Banco"), "tipo": st.column_config.SelectboxColumn("Tipo", options=["Ahorros", "Corriente"]),
+               "numero": st.column_config.TextColumn("Número de cuenta"), "titular": st.column_config.TextColumn("Titular")}
+
+
+def indice(opciones, valor):
+    return opciones.index(valor) if valor in opciones else 0
+
+
+def correos_invalidos(contactos):
+    return [c["correo"] for c in contactos if c["correo"] and ("@" not in c["correo"] or " " in c["correo"])]
+
+
+def siguiente_id(prefijo, lista):
+    nums = [int(r["id"].split("-")[1]) for r in lista if str(r.get("id", "")).startswith(prefijo + "-")]
+    return f"{prefijo}-{max(nums, default=0) + 1:03d}"
+
+
+def aplanar_cliente(c):
+    """Copia el contacto y la dirección principales (primera fila) a los campos simples que usa el PDF y las tablas."""
+    con = c["contactos"][0] if c.get("contactos") else {}
+    c["contacto"], c["email"], c["telefono"] = con.get("nombre", ""), con.get("correo", ""), con.get("telefono", "")
+    c["direccion"] = c["direcciones"][0]["direccion"] if c.get("direcciones") else ""
+
+
+def botones_formulario(prefijo, texto_guardar, cancelar):
+    b1, b2, _ = st.columns([1.4, 1, 4])
+    guardar = b1.button(texto_guardar, type="primary", use_container_width=True, key=f"{prefijo}_guardar")
+    return guardar, (cancelar and b2.button("Cancelar", use_container_width=True, key=f"{prefijo}_cancelar"))
+
+
+def form_cliente(prefijo, titulo_html="", datos=None, cancelar=False):
+    """Formulario de cliente (nuevo o edición). Devuelve dict con los datos, "cancelar" o None."""
+    d = datos or {}
     if titulo_html:
         st.markdown(titulo_html, unsafe_allow_html=True)
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        emp = st.text_input("Razón social / Empresa *", key=f"{prefijo}_emp")
-        ruc = st.text_input("RUC *", key=f"{prefijo}_ruc")
-        ciu = st.selectbox("Ciudad", CIUDADES, key=f"{prefijo}_ciu")
-    with c2:
-        dire = st.text_input("Dirección", key=f"{prefijo}_dir")
-        web = st.text_input("Sitio web", key=f"{prefijo}_web")
-        cont = st.text_input("Contacto", key=f"{prefijo}_cont")
-    with c3:
-        mail = st.text_input("Correo", key=f"{prefijo}_mail")
-        tel = st.text_input("Teléfono", key=f"{prefijo}_tel")
-        dias = st.number_input("Días crédito", value=30, step=15, key=f"{prefijo}_dias")
-    if st.button("Guardar cuenta", type="primary", key=f"{prefijo}_save"):
-        if emp.strip() and ruc.strip():
-            return {"empresa": emp, "ruc": ruc, "ciudad": ciu, "direccion": dire, "web": web,
-                    "contacto": cont, "email": mail, "telefono": tel, "dias_credito": dias}
-        st.error("Razón social y RUC son requeridos.")
+    c1, c2, c3, c4, c5 = st.columns([2.3, 1.4, 1.3, 1.8, 1])
+    emp = c1.text_input("Razón social / Empresa *", value=d.get("empresa", ""), key=f"{prefijo}_emp")
+    ruc = c2.text_input("RUC *", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
+    ciu = c3.selectbox("Ciudad principal", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
+    web = c4.text_input("Sitio web", value=d.get("web", ""), key=f"{prefijo}_web")
+    dias = c5.number_input("Días crédito", min_value=0, value=int(d.get("dias_credito", 30)), step=15, key=f"{prefijo}_dias")
+    t_con, t_dir = st.tabs(["Contactos (correos y teléfonos)", "Direcciones"])
+    with t_con:
+        st.caption("Una fila por persona o correo. La primera fila es el contacto principal y es la que sale en la cotización.")
+        contactos = editor_lista(f"{prefijo}_con", d.get("contactos", []), COL_CONTACTOS, CFG_CONTACTOS)
+    with t_dir:
+        st.caption("Una fila por sede o dirección de entrega. La primera es la principal.")
+        direcciones = editor_lista(f"{prefijo}_dirs", d.get("direcciones", []), COL_DIRECCIONES, CFG_DIRECCIONES)
+    guardar, cancel = botones_formulario(prefijo, "Guardar cambios" if datos else "Guardar cuenta", cancelar)
+    if cancel:
+        return "cancelar"
+    if guardar:
+        if not (emp.strip() and ruc.strip()):
+            st.error("Razón social y RUC son requeridos.")
+        elif correos_invalidos(contactos):
+            st.error(f"Revisa estos correos: {', '.join(correos_invalidos(contactos))}")
+        else:
+            return {"empresa": emp.strip(), "ruc": ruc.strip(), "ciudad": ciu, "web": web.strip(), "dias_credito": dias,
+                    "contactos": contactos, "direcciones": direcciones}
     return None
+
+
+def form_proveedor(prefijo, titulo_html="", datos=None, cancelar=False):
+    d = datos or {}
+    if titulo_html:
+        st.markdown(titulo_html, unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns([2.3, 1.4, 1.6, 1.3])
+    nom = c1.text_input("Proveedor *", value=d.get("proveedor", ""), key=f"{prefijo}_nom")
+    ruc = c2.text_input("RUC", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
+    cat = c3.text_input("Categoría", value=d.get("categoria", ""), key=f"{prefijo}_cat")
+    ciu = c4.selectbox("Ciudad base", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
+    obs = st.text_input("Observaciones", value=d.get("observaciones", ""), key=f"{prefijo}_obs")
+    t_con, t_dir, t_cta = st.tabs(["Contactos (correos y teléfonos)", "Direcciones", "Cuentas bancarias"])
+    with t_con:
+        st.caption("Una fila por persona o correo. La primera fila es el contacto principal.")
+        contactos = editor_lista(f"{prefijo}_con", d.get("contactos", []), COL_CONTACTOS, CFG_CONTACTOS)
+    with t_dir:
+        direcciones = editor_lista(f"{prefijo}_dirs", d.get("direcciones", []), COL_DIRECCIONES, CFG_DIRECCIONES)
+    with t_cta:
+        st.caption("Puede tener varias cuentas. La primera es la que se usa por defecto para pagos.")
+        cuentas = editor_lista(f"{prefijo}_cta", d.get("cuentas", []), COL_CUENTAS, CFG_CUENTAS)
+    guardar, cancel = botones_formulario(prefijo, "Guardar cambios" if datos else "Registrar proveedor", cancelar)
+    if cancel:
+        return "cancelar"
+    if guardar:
+        if not nom.strip():
+            st.error("El nombre del proveedor es obligatorio.")
+        elif correos_invalidos(contactos):
+            st.error(f"Revisa estos correos: {', '.join(correos_invalidos(contactos))}")
+        else:
+            return {"proveedor": nom.strip(), "ruc": ruc.strip(), "categoria": cat.strip(), "ciudad": ciu, "observaciones": obs.strip(),
+                    "contactos": contactos, "direcciones": direcciones, "cuentas": cuentas}
+    return None
+
+
+# --- Altas, cambios y validaciones de clientes y proveedores
+def validar_cliente(d, cid=None):
+    for c in ss.clientes_catalogo:
+        if c["id"] != cid and c["ruc"] == d["ruc"]:
+            return f"Ya existe una cuenta con ese RUC ({c['empresa']})."
+        if c["id"] != cid and c["empresa"].lower() == d["empresa"].lower():
+            return "Ya existe una cuenta con ese nombre."
+    return None
+
+
+def crear_cliente(d):
+    d["id"] = siguiente_id("CLI", ss.clientes_catalogo)
+    aplanar_cliente(d)
+    ss.clientes_catalogo.append(d)
+
+
+def actualizar_cliente(cid, nuevo):
+    c = next(x for x in ss.clientes_catalogo if x["id"] == cid)
+    viejo = c["empresa"]
+    c.update(nuevo)
+    aplanar_cliente(c)
+    if viejo != c["empresa"]:   # las cotizaciones ya guardadas siguen apuntando a la misma cuenta
+        for q in ss.cotizaciones_guardadas:
+            if q["cliente"] == viejo:
+                q["cliente"] = c["empresa"]
+
+
+def validar_proveedor(d, pid=None):
+    if any(p["id"] != pid and p["proveedor"].lower() == d["proveedor"].lower() for p in ss.proveedores):
+        return "Ya existe un proveedor con ese nombre."
+    return None
+
+
+def crear_proveedor(d):
+    d["id"] = siguiente_id("PRV", ss.proveedores)
+    ss.proveedores.append(d)
+
+
+def actualizar_proveedor(pid, nuevo):
+    p = next(x for x in ss.proveedores if x["id"] == pid)
+    viejo = p["proveedor"]
+    p.update(nuevo)
+    if viejo != p["proveedor"]:   # sus servicios del catálogo pasan al nuevo nombre
+        for r in ss.proveedores_catalogo:
+            if r["proveedor"] == viejo:
+                r["proveedor"] = p["proveedor"]
+
+
+def asegurar_proveedor(nombre, ciudad, categoria):
+    """Si se registra un servicio de un proveedor que no está en el directorio, se crea el proveedor."""
+    if not any(p["proveedor"].lower() == nombre.lower() for p in ss.proveedores):
+        crear_proveedor({"proveedor": nombre, "ruc": "", "categoria": categoria, "ciudad": ciudad, "observaciones": "",
+                         "contactos": [], "direcciones": [], "cuentas": []})
+
+
+def resumen_contactos(r):
+    """Contacto principal + cuántos más hay."""
+    con = r.get("contactos", [])
+    extra = f" (+{len(con) - 1})" if len(con) > 1 else ""
+    return (con[0]["nombre"] if con else "", (con[0]["correo"] if con else "") + extra, con[0]["telefono"] if con else "")
+
+
+def abrir_nuevo(k):
+    ss[f"dir_{k}_nuevo"] = True
+    ss[f"dir_{k}_ver"] += 1   # deselecciona la fila de la tabla
+
+
+def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, crear, actualizar, nombre, etiqueta_nuevo):
+    """Tabla con búsqueda; al seleccionar una fila se edita; el botón de nuevo abre el formulario vacío."""
+    ss.setdefault(f"dir_{k}_ver", 0)
+    ss.setdefault(f"dir_{k}_nuevo", False)
+    ver = ss[f"dir_{k}_ver"]
+    c_b, c_n = st.columns([3, 1], vertical_alignment="center")
+    busq = c_b.text_input("Buscar", key=f"dir_{k}_b", label_visibility="collapsed", placeholder="Buscar...").lower()
+    c_n.button(f"＋ {etiqueta_nuevo}", key=f"dir_{k}_btn_nuevo", on_click=abrir_nuevo, args=(k,), use_container_width=True, type="primary")
+    vis = [r for r in registros if not busq or busq in texto_busqueda(r).lower()]
+    sel = []
+    if vis:
+        ev = st.dataframe(pd.DataFrame([fila_tabla(r) for r in vis]), hide_index=True, use_container_width=True, on_select="rerun",
+                          selection_mode="single-row", key=f"dir_{k}_t{ver}", height=min(35 * (len(vis) + 1) + 3, 340))
+        sel = ev.selection.rows
+        if not sel:
+            st.caption("Haz clic en el recuadro a la izquierda de una fila para editarla.")
+    else:
+        st.info("No hay registros que coincidan.")
+
+    def cerrar():
+        ss[f"dir_{k}_nuevo"] = False
+        ss[f"dir_{k}_ver"] += 1
+        st.rerun()
+
+    if sel and sel[0] < len(vis):
+        reg = vis[sel[0]]
+        ss[f"dir_{k}_nuevo"] = False
+        with st.container(border=True, key=f"card_dir_{k}_e"):
+            res = form(f"e{k}_{reg['id']}_{ver}", f"<div class='section-title'>Editar: {esc(nombre(reg))}</div>", reg, True)
+            if res == "cancelar":
+                cerrar()
+            elif res:
+                err = validar(res, reg["id"])
+                if err:
+                    st.error(err)
+                else:
+                    actualizar(reg["id"], res)
+                    st.toast("Cambios guardados")
+                    cerrar()
+    elif ss[f"dir_{k}_nuevo"]:
+        with st.container(border=True, key=f"card_dir_{k}_n"):
+            res = form(f"n{k}_{ver}", f"<div class='section-title' style='color:#059669; border-color:#059669;'>{etiqueta_nuevo}</div>", None, True)
+            if res == "cancelar":
+                cerrar()
+            elif res:
+                err = validar(res, None)
+                if err:
+                    st.error(err)
+                else:
+                    crear(res)
+                    st.toast("Registrado")
+                    cerrar()
 
 
 # =============================================================================
@@ -701,9 +936,13 @@ elif menu == "Nueva cotización":
         with st.container(border=True, key="card_6"):
             nuevo = form_cliente("nc", "<div class='section-title' style='color:#059669; border-color:#059669;'>Apertura de cuenta corporativa</div>")
             if nuevo:
-                ss.clientes_catalogo.append(nuevo)
-                ss.cliente_pendiente = nuevo["empresa"]
-                st.rerun()
+                err = validar_cliente(nuevo)
+                if err:
+                    st.error(err)
+                else:
+                    crear_cliente(nuevo)
+                    ss.cliente_pendiente = nuevo["empresa"]
+                    st.rerun()
 
     with st.container(border=True, key="card_7"), st.expander(f"AÑADIR SERVICIOS  ·  {len(items)} en la cotización", expanded=True):
         tab_cat, tab_man = st.tabs(["Seleccionar del catálogo", "Ingreso manual"])
@@ -749,8 +988,9 @@ elif menu == "Nueva cotización":
                     items.append({"servicio": n_ser, "proveedor": n_pro, "ciudad": n_ciu, "fecha": str(f_it_m),
                                   "cantidad": can_it_m, "costo": cos_it_m, "iva_prov": iva_it_m, "fee_pct": fee_it_m})
                     if g_bd:
-                        ss.proveedores_catalogo.append({"servicio": n_ser, "proveedor": n_pro, "categoria": n_cat or "General", "ciudad": n_ciu,
-                                                        "precio_base": cos_it_m, "iva": iva_it_m, "banco": "N/A", "cuenta": "N/A", "descripcion": "Manual"})
+                        asegurar_proveedor(n_pro.strip(), n_ciu, n_cat or "General")
+                        ss.proveedores_catalogo.append({"servicio": n_ser, "proveedor": n_pro.strip(), "categoria": n_cat or "General", "ciudad": n_ciu,
+                                                        "precio_base": cos_it_m, "iva": iva_it_m, "descripcion": "Manual"})
                     st.rerun()
                 else:
                     st.error("Proveedor y servicio requeridos.")
@@ -836,38 +1076,63 @@ elif menu == "Directorios":
         t_cli, t_pro = st.tabs(["Directorio de clientes", "Red de proveedores"])
 
         with t_cli:
-            df_c = pd.DataFrame(ss.clientes_catalogo).rename(columns={
-                "empresa": "Empresa", "ruc": "RUC", "ciudad": "Ciudad", "direccion": "Dirección", "web": "Web",
-                "contacto": "Contacto", "email": "Correo", "telefono": "Teléfono", "dias_credito": "Días Crédito"})
-            st.dataframe(df_c, use_container_width=True, hide_index=True)
-            st.markdown("<hr style='margin:15px 0;'>", unsafe_allow_html=True)
-            nuevo = form_cliente("dir", "<div class='section-title' style='border:none;'>Nueva cuenta corporativa</div>")
-            if nuevo:
-                ss.clientes_catalogo.append(nuevo)
-                st.toast("Cuenta registrada")
-                st.rerun()
+            def fila_cliente(c):
+                con, mail, tel = resumen_contactos(c)
+                return {"Empresa": c["empresa"], "RUC": c["ruc"], "Ciudad": c["ciudad"], "Contacto": con, "Correo": mail, "Teléfono": tel,
+                        "Direcciones": len(c.get("direcciones", [])), "Días crédito": c["dias_credito"]}
+            panel_directorio(
+                "cli", ss.clientes_catalogo, fila_cliente,
+                lambda c: " ".join([c["empresa"], c["ruc"], c["ciudad"]] + [f"{x['nombre']} {x['correo']} {x['telefono']}" for x in c.get("contactos", [])]),
+                form_cliente, validar_cliente, crear_cliente, actualizar_cliente, lambda c: c["empresa"], "Nueva cuenta")
 
         with t_pro:
-            df_p = pd.DataFrame(ss.proveedores_catalogo).rename(columns={
-                "servicio": "Servicio", "proveedor": "Proveedor", "categoria": "Categoría", "ciudad": "Ciudad",
-                "precio_base": "Costo ($)", "iva": "IVA", "banco": "Banco", "cuenta": "Cuenta", "descripcion": "Descripción"})
-            df_p["IVA"] = df_p["IVA"].map(lambda x: f"{int(x*100)}%")
-            df_p["Costo ($)"] = df_p["Costo ($)"].map(lambda x: f"${x:,.2f}")
-            st.dataframe(df_p, use_container_width=True, hide_index=True)
-            st.markdown("<hr style='margin:15px 0;'><div class='section-title' style='border:none;'>Nuevo proveedor</div>", unsafe_allow_html=True)
-            cp1, cp2, cp3 = st.columns(3)
-            with cp1:
-                p_pro = st.text_input("Proveedor *"); p_ser = st.text_input("Servicio *"); p_cat = st.text_input("Categoría")
-            with cp2:
-                p_ciu = st.selectbox("Ciudad", CIUDADES, key="p_ciu"); p_cos = st.number_input("Costo ($)", value=0.00)
-                p_iva = st.selectbox("IVA", [0.0, 0.15], format_func=lambda x: f"{int(x*100)}%", key="p_iva")
-            with cp3:
-                p_ban = st.text_input("Banco"); p_cta = st.text_input("Cuenta"); p_des = st.text_input("Observaciones")
-            if st.button("Registrar proveedor", type="primary"):
-                if p_pro and p_ser:
-                    ss.proveedores_catalogo.append({"servicio": p_ser, "proveedor": p_pro, "categoria": p_cat, "ciudad": p_ciu,
-                                                    "precio_base": p_cos, "iva": p_iva, "banco": p_ban, "cuenta": p_cta, "descripcion": p_des})
-                    st.toast("Proveedor registrado")
-                    st.rerun()
-                else:
-                    st.error("Obligatorio Proveedor y Servicio.")
+            sub_prov, sub_serv = st.tabs(["Proveedores (datos de contacto)", "Servicios y costos"])
+
+            with sub_prov:
+                def fila_proveedor(p):
+                    con, mail, tel = resumen_contactos(p)
+                    cta = p["cuentas"][0] if p.get("cuentas") else {}
+                    return {"Proveedor": p["proveedor"], "Categoría": p["categoria"], "Ciudad": p["ciudad"], "Contacto": con, "Correo": mail, "Teléfono": tel,
+                            "Banco": f"{cta.get('banco', '')} {cta.get('numero', '')}".strip(),
+                            "Servicios": sum(1 for r in ss.proveedores_catalogo if r["proveedor"] == p["proveedor"])}
+                panel_directorio(
+                    "prv", ss.proveedores, fila_proveedor,
+                    lambda p: " ".join([p["proveedor"], p["categoria"], p["ciudad"], p.get("ruc", "")] + [f"{x['nombre']} {x['correo']} {x['telefono']}" for x in p.get("contactos", [])]),
+                    form_proveedor, validar_proveedor, crear_proveedor, actualizar_proveedor, lambda p: p["proveedor"], "Nuevo proveedor")
+
+            with sub_serv:
+                st.caption("Edita directamente en la tabla: cambia un valor con doble clic, agrega una fila con ＋ al final, o borra una fila seleccionándola y pulsando la papelera.")
+                ver_s = ss.setdefault("serv_ver", 0)
+                nombres = [p["proveedor"] for p in ss.proveedores]
+                df_s = pd.DataFrame([{"proveedor": r["proveedor"], "servicio": r["servicio"], "categoria": r.get("categoria", ""), "ciudad": r["ciudad"],
+                                      "precio_base": float(r["precio_base"]), "iva": f"{int(r['iva'] * 100)}%", "descripcion": r.get("descripcion", "")}
+                                     for r in ss.proveedores_catalogo],
+                                    columns=["proveedor", "servicio", "categoria", "ciudad", "precio_base", "iva", "descripcion"])
+                ed_s = st.data_editor(
+                    df_s, num_rows="dynamic", hide_index=True, use_container_width=True, key=f"serv_ed_{ver_s}",
+                    column_config={"proveedor": st.column_config.SelectboxColumn("Proveedor", options=nombres, required=True),
+                                   "servicio": st.column_config.TextColumn("Servicio", required=True),
+                                   "categoria": st.column_config.TextColumn("Categoría"),
+                                   "ciudad": st.column_config.SelectboxColumn("Ciudad", options=CIUDADES),
+                                   "precio_base": st.column_config.NumberColumn("Costo ($)", min_value=0.0, format="$%.2f"),
+                                   "iva": st.column_config.SelectboxColumn("IVA", options=["0%", "15%"]),
+                                   "descripcion": st.column_config.TextColumn("Descripción")})
+                if st.button("Guardar cambios en servicios", type="primary", key="serv_save"):
+                    nuevos, error = [], None
+                    for r in ed_s.to_dict("records"):
+                        f = {k: ("" if _vacio(v) else v) for k, v in r.items()}
+                        if not any(str(v).strip() for v in f.values()):
+                            continue
+                        if not (str(f["proveedor"]).strip() and str(f["servicio"]).strip()):
+                            error = "Cada servicio necesita proveedor y nombre del servicio."
+                            break
+                        nuevos.append({"proveedor": f["proveedor"], "servicio": str(f["servicio"]).strip(), "categoria": str(f["categoria"]).strip(),
+                                       "ciudad": f["ciudad"] or CIUDADES[0], "precio_base": float(f["precio_base"] or 0),
+                                       "iva": 0.15 if f["iva"] == "15%" else 0.0, "descripcion": str(f["descripcion"]).strip()})
+                    if error:
+                        st.error(error)
+                    else:
+                        ss.proveedores_catalogo = nuevos
+                        ss.serv_ver += 1
+                        st.toast("Servicios guardados")
+                        st.rerun()
