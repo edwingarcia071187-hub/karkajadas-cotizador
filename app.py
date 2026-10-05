@@ -28,11 +28,17 @@ st.set_page_config(page_title="Karkajadas Group - ERP", layout="wide", initial_s
 # ESTILOS
 # =============================================================================
 CSS_BASE = """
-.block-container { padding-top: 4rem !important; padding-bottom: 2rem !important; max-width: 98% !important; }
+.block-container { padding-top: 3.2rem !important; padding-bottom: 2rem !important; max-width: 98% !important; }
 .stApp, .main, header { background-color: #EEF2F7 !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
 
-[data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] { color: #FFFFFF !important; background-color: #1E293B !important; border-radius: 4px !important; margin: 10px !important; }
-[data-testid="collapsedControl"] svg, [data-testid="stSidebarCollapsedControl"] svg { fill: #FFFFFF !important; }
+/* Botón para ocultar el panel (dentro del panel azul): blanco y con borde */
+[data-testid="stSidebarCollapseButton"] button { background: rgba(255,255,255,.16) !important; border: 1px solid rgba(255,255,255,.55) !important; border-radius: 8px !important; width: 2.2rem !important; height: 2.2rem !important; opacity: 1 !important; }
+[data-testid="stSidebarCollapseButton"] button:hover { background: rgba(255,255,255,.30) !important; }
+[data-testid="stSidebarCollapseButton"] button span, [data-testid="stSidebarCollapseButton"] button [data-testid="stIconMaterial"] { color: #FFFFFF !important; opacity: 1 !important; }
+/* Botón para volver a mostrar el panel (cuando está oculto): azul oscuro con flecha blanca */
+[data-testid="stExpandSidebarButton"] { background: #1E3A8A !important; border: 1px solid #1E3A8A !important; border-radius: 8px !important; width: 2.2rem !important; height: 2.2rem !important; opacity: 1 !important; }
+[data-testid="stExpandSidebarButton"]:hover { background: #2563EB !important; }
+[data-testid="stExpandSidebarButton"] span, [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] { color: #FFFFFF !important; opacity: 1 !important; }
 
 /* Tarjetas: contenedores con borde, identificados por su clave (st-key-card_N) */
 [class*="st-key-card_"] {
@@ -142,15 +148,16 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important; margin-bottom: 4px !important; }
 .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: .5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; }
 .col-head { font-size: 11px; font-weight: 700; color: #64748B; }
+.st-key-barra_total { position: sticky; bottom: 0; z-index: 20; background: #FFFFFF; border-top: 2px solid #E2E8F0; padding: 10px 0 4px; margin-top: 8px; }
 .metric-tile { background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #1E3A8A; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
 .metric-tile.ganancia { border-left-color: #059669; }
 .internal-metrics { font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: .4px; }
 .internal-metrics-value { font-size: 22px; font-weight: 800; color: #0F172A; }
 .metric-tile.ganancia .internal-metrics-value { color: #047857; }
-.invoice-container { float: right; width: 320px; background-color: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
+.invoice-container { width: 100%; background-color: #F8FAFC; padding: 10px 16px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
 
 /* Monto estimado (encabezado de la cotización) */
-.monto-badge { text-align: right; line-height: 1; }
+.monto-badge { text-align: right; line-height: 1; margin-bottom: 8px; }
 .monto-label { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748B; margin-bottom: 6px; }
 .monto-valor { font-size: 46px; font-weight: 900; letter-spacing: -.02em; color: #1E3A8A; font-variant-numeric: tabular-nums; }
 .monto-valor .mon { font-size: 26px; font-weight: 800; color: #059669; margin-right: 4px; vertical-align: top; position: relative; top: 4px; }
@@ -402,14 +409,14 @@ def generar_pdf(cot, cliente):
     historia += [info, Spacer(1, 16), P("SERVICIOS", size=10, bold=True, color=AZUL), Spacer(1, 5)]
 
     # Servicios (sin costo unitario, IVA del proveedor, margen % ni margen $)
-    cols = [0.8, 3.4, 4.0, 2.2, 2.0, 1.5, 3.1]
+    cols = [0.8, 5.6, 3.0, 2.6, 1.5, 3.5]
     filas = [[P(t, size=8, bold=True, color=colors.white, align=a) for t, a in
-              [("#", TA_CENTER), ("PROVEEDOR", 0), ("SERVICIO", 0), ("FECHA", 0), ("CIUDAD", 0), ("CANT.", TA_RIGHT), ("SUBTOTAL", TA_RIGHT)]]]
+              [("#", TA_CENTER), ("SERVICIO", 0), ("FECHA", 0), ("CIUDAD", 0), ("CANT.", TA_RIGHT), ("SUBTOTAL", TA_RIGHT)]]]
     subtotal = 0.0
     for n, it in enumerate(cot["items"], 1):
         p_ven = calcular_linea(it)[2]
         subtotal += p_ven
-        filas.append([P(n, size=9, align=TA_CENTER), P(it["proveedor"], size=9, bold=True), P(it["servicio"], size=9),
+        filas.append([P(n, size=9, align=TA_CENTER), P(it["servicio"], size=9, bold=True),
                       P(fmt_fecha(it["fecha"]), size=9), P(it["ciudad"], size=9), P(it["cantidad"], size=9, align=TA_RIGHT),
                       P(f"${p_ven:,.2f}", size=9, bold=True, align=TA_RIGHT)])
     tabla = Table(filas, colWidths=[c * cm for c in cols], repeatRows=1)
@@ -640,16 +647,11 @@ elif menu == "Nueva cotización":
 
     if ss.pop("confirmar_salida", False):
         dialogo_salida()
-    st.button("← Regresar al panel", key="back_btn", on_click=navegar, args=("Panel de inicio",))
-
-    st.markdown(f"""
-        <div style='display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px;'>
-            <h2 style='font-weight:800; color:#0F172A; margin:0;'>Gestión de cotizaciones</h2>
-            <div class='monto-badge'>
-                <div class='monto-label'>Monto estimado</div>
-                <div class='monto-valor'><span class='mon'>$</span>{tot_head:,.2f}</div>
-            </div>
-        </div>""", unsafe_allow_html=True)
+    h_back, h_tit, h_monto = st.columns([1.15, 4, 2.2], vertical_alignment="center")
+    h_back.button("← Panel de inicio", key="back_btn", on_click=navegar, args=("Panel de inicio",), help="Volver al panel de inicio")
+    h_tit.markdown("<h2 style='font-weight:800; color:#0F172A; margin:0;'>Gestión de cotizaciones</h2>", unsafe_allow_html=True)
+    h_monto.markdown(f"""<div class='monto-badge'><div class='monto-label'>Monto estimado</div>
+        <div class='monto-valor'><span class='mon'>$</span>{tot_head:,.2f}</div></div>""", unsafe_allow_html=True)
 
     activa = ss.cotizacion_activa
     lista_cli = [c["empresa"] for c in ss.clientes_catalogo] + [NUEVO_CLIENTE]
@@ -681,8 +683,7 @@ elif menu == "Nueva cotización":
                 ss.cliente_pendiente = nuevo["empresa"]
                 st.rerun()
 
-    with st.container(border=True, key="card_7"):
-        st.markdown("<div class='section-title'>Añadir servicios</div>", unsafe_allow_html=True)
+    with st.container(border=True, key="card_7"), st.expander(f"AÑADIR SERVICIOS  ·  {len(items)} en la cotización", expanded=True):
         tab_cat, tab_man = st.tabs(["Seleccionar del catálogo", "Ingreso manual"])
 
         with tab_cat:
@@ -697,13 +698,13 @@ elif menu == "Nueva cotización":
             else:
                 opc = [f"{r['proveedor']} ➔ {r['servicio']} | IVA {int(r['iva']*100)}% | {r.get('descripcion', '')}" for r in res]
                 item_sel = res[opc.index(st.selectbox("Proveedor:", opc))]
-                ca, cb, cc, cd, ce = st.columns(5)
+                ca, cb, cc, cd, ce, cf = st.columns([1.3, 0.8, 1.1, 0.9, 1.0, 1.4], vertical_alignment="bottom")
                 f_it = ca.date_input("Fecha de servicio", value=fecha_gral)
                 can_it = cb.number_input("Cantidad", min_value=1, value=1)
                 cos_it = cc.number_input("Costo unit. ($)", value=float(item_sel["precio_base"]))
                 iva_it = cd.selectbox("IVA prov.", [0.0, 0.15], index=1 if item_sel["iva"] > 0 else 0, format_func=lambda x: f"{int(x*100)}%")
                 fee_it = ce.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
-                if st.button("Agregar a la cotización", type="primary"):
+                if cf.button("Agregar", type="primary", use_container_width=True, key="add_cat"):
                     items.append({"servicio": item_sel["servicio"], "proveedor": item_sel["proveedor"], "ciudad": ciu_f, "fecha": str(f_it),
                                   "cantidad": can_it, "costo": cos_it, "iva_prov": iva_it, "fee_pct": fee_it})
                     st.rerun()
@@ -714,14 +715,14 @@ elif menu == "Nueva cotización":
             n_ser = nc2.text_input("Servicio *")
             n_ciu = nc3.selectbox("Ciudad op.", CIUDADES, key="mc_c")
             n_cat = nc4.text_input("Categoría")
-            ca, cb, cc, cd, ce = st.columns(5)
+            ca, cb, cc, cd, ce, cf = st.columns([1.3, 0.8, 1.1, 0.9, 1.0, 1.4], vertical_alignment="bottom")
             f_it_m = ca.date_input("Fecha de servicio", value=fecha_gral, key="mc_f")
             can_it_m = cb.number_input("Cantidad", min_value=1, value=1, key="mc_ca")
             cos_it_m = cc.number_input("Costo unit. ($)", value=0.00, format="%.2f", key="mc_co")
             iva_it_m = cd.selectbox("IVA prov.", [0.0, 0.15], index=1, format_func=lambda x: f"{int(x*100)}%", key="mc_i")
             fee_it_m = ce.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f", key="mc_ma")
             g_bd = st.checkbox("Guardar en directorio", value=True)
-            if st.button("Registrar y agregar", type="primary"):
+            if cf.button("Agregar", type="primary", use_container_width=True, key="add_man"):
                 if n_pro.strip() and n_ser.strip():
                     items.append({"servicio": n_ser, "proveedor": n_pro, "ciudad": n_ciu, "fecha": str(f_it_m),
                                   "cantidad": can_it_m, "costo": cos_it_m, "iva_prov": iva_it_m, "fee_pct": fee_it_m})
@@ -778,31 +779,30 @@ elif menu == "Nueva cotización":
 
             iva_cli = s_com * IVA_CLIENTE
             t_cli = s_com + iva_cli
-            st.markdown("<br>", unsafe_allow_html=True)
-            cm1, cm2, ci = st.columns([1.2, 1.2, 1.6])
-            cm1.markdown(f"<div class='metric-tile'><div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div></div>", unsafe_allow_html=True)
-            cm2.markdown(f"<div class='metric-tile ganancia'><div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div></div>", unsafe_allow_html=True)
-            ci.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
+            # Barra inferior fija: totales y acciones siempre a la vista aunque la cotización sea larga
+            with st.container(key="barra_total"):
+                cm1, cm2, ci, c_acc = st.columns([1.1, 1.1, 1.7, 1.15], vertical_alignment="center")
+                cm1.markdown(f"<div class='metric-tile'><div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div></div>", unsafe_allow_html=True)
+                cm2.markdown(f"<div class='metric-tile ganancia'><div class='internal-metrics'>Rentabilidad</div><div class='internal-metrics-value'>${t_fee:,.2f}</div></div>", unsafe_allow_html=True)
+                ci.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div>", unsafe_allow_html=True)
+                c_save = c_pdf = c_acc
+                if c_save.button("Guardar cotización", use_container_width=True, type="primary", key="btn_save"):
+                    if guardar_cotizacion(activa, cod_cotizacion, nombre_evento, cliente_sel, fecha_gral, estado_cot, t_cli):
+                        st.toast("Cotización guardada. Ya puedes generar el PDF.")
 
-            st.markdown("<hr style='border-top:1px solid #E2E8F0; margin:20px 0;'>", unsafe_allow_html=True)
-            _, c_pdf, c_save = st.columns([3, 1.3, 1.5])
-            if c_save.button("Guardar cotización", use_container_width=True, type="primary", key="btn_save"):
-                if guardar_cotizacion(activa, cod_cotizacion, nombre_evento, cliente_sel, fecha_gral, estado_cot, t_cli):
-                    st.toast("Cotización guardada. Ya puedes generar el PDF.")
-
-            # El PDF se habilita cuando la cotización está guardada y sin cambios pendientes (así siempre refleja lo guardado)
-            guardada = ss.cotizacion_activa
-            pdf, ayuda = None, "Guarda la cotización para generar el PDF."
-            if guardada and estado_formulario() == ss.cot_base:
-                try:
-                    cli_pdf = next((c for c in ss.clientes_catalogo if c["empresa"] == guardada["cliente"]), None)
-                    pdf, ayuda = generar_pdf(guardada, cli_pdf), "Descargar la cotización en PDF."
-                except ImportError:
-                    ayuda = "Falta instalar reportlab (agrégalo a requirements.txt)."
-            elif guardada:
-                ayuda = "Hay cambios sin guardar: guarda la cotización para actualizar el PDF."
-            c_pdf.download_button("Generar PDF", data=pdf or b"", file_name=f"{(guardada or {}).get('codigo', 'cotizacion')}.pdf",
-                                  mime="application/pdf", disabled=pdf is None, use_container_width=True, key="btn_pdf", help=ayuda)
+                # El PDF se habilita cuando la cotización está guardada y sin cambios pendientes (así siempre refleja lo guardado)
+                guardada = ss.cotizacion_activa
+                pdf, ayuda = None, "Guarda la cotización para generar el PDF."
+                if guardada and estado_formulario() == ss.cot_base:
+                    try:
+                        cli_pdf = next((c for c in ss.clientes_catalogo if c["empresa"] == guardada["cliente"]), None)
+                        pdf, ayuda = generar_pdf(guardada, cli_pdf), "Descargar la cotización en PDF."
+                    except ImportError:
+                        ayuda = "Falta instalar reportlab (agrégalo a requirements.txt)."
+                elif guardada:
+                    ayuda = "Hay cambios sin guardar: guarda la cotización para actualizar el PDF."
+                c_pdf.download_button("Generar PDF", data=pdf or b"", file_name=f"{(guardada or {}).get('codigo', 'cotizacion')}.pdf",
+                                      mime="application/pdf", disabled=pdf is None, use_container_width=True, key="btn_pdf", help=ayuda)
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
