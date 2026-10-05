@@ -49,30 +49,41 @@ st.markdown("""
     /* ----------------------------------------------------
        MÉTODO INFALIBLE PARA BOTONES DE MÉTRICAS (KPIs)
        ---------------------------------------------------- */
-    /* Ocultar gancho invisible */
-    div[data-testid="element-container"]:has(.kpi-marker) { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
+    /* Ocultar marcadores invisibles */
+    div[data-testid="element-container"]:has(.kpi-todas),
+    div[data-testid="element-container"]:has(.kpi-apr),
+    div[data-testid="element-container"]:has(.kpi-env),
+    div[data-testid="element-container"]:has(.kpi-bor),
+    div[data-testid="element-container"]:has(.kpi-can) { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
 
-    /* Estilo base para los 4 botones KPI */
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button {
-        width: 100% !important; padding: 15px 20px !important; border-radius: 8px !important;
-        height: auto !important; min-height: 90px !important; border: none !important;
-        display: flex !important; justify-content: flex-start !important; text-align: left !important;
-        transition: all 0.2s ease !important; color: white !important;
-    }
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button p {
-        font-size: 16px !important; font-weight: 800 !important; line-height: 1.4 !important;
-        white-space: pre-wrap !important; margin: 0 !important;
-    }
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button:hover { transform: translateY(-3px) !important; }
+    /* Colores estrictos forzados por jerarquía de columna */
+    div[data-testid="column"]:has(.kpi-todas) button { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%) !important; border-color: #0F172A !important; color: white !important; }
+    div[data-testid="column"]:has(.kpi-apr) button { background: linear-gradient(135deg, #059669 0%, #047857 100%) !important; border-color: #059669 !important; color: white !important; }
+    div[data-testid="column"]:has(.kpi-env) button { background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%) !important; border-color: #1E3A8A !important; color: white !important; }
+    div[data-testid="column"]:has(.kpi-bor) button { background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important; border-color: #64748B !important; color: white !important; }
+    div[data-testid="column"]:has(.kpi-can) button { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important; border-color: #EF4444 !important; color: white !important; }
 
-    /* Aprobadas -> Verde */
-    div[data-testid="element-container"]:has(.kpi-aprobada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #059669 0%, #047857 100%) !important; box-shadow: 0 4px 6px rgba(5,150,105,0.3) !important; }
-    /* Enviadas -> Azul */
-    div[data-testid="element-container"]:has(.kpi-enviada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%) !important; box-shadow: 0 4px 6px rgba(30,58,138,0.3) !important; }
-    /* Borradores -> Gris */
-    div[data-testid="element-container"]:has(.kpi-borrador) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important; box-shadow: 0 4px 6px rgba(100,116,139,0.3) !important; }
-    /* Canceladas -> Rojo */
-    div[data-testid="element-container"]:has(.kpi-cancelada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important; box-shadow: 0 4px 6px rgba(239,68,68,0.3) !important; }
+    /* Efectos Hover */
+    div[data-testid="column"]:has(.kpi-todas) button:hover { transform: translateY(-3px) !important; box-shadow: 0 5px 10px rgba(15,23,42,0.4) !important; }
+    div[data-testid="column"]:has(.kpi-apr) button:hover { transform: translateY(-3px) !important; box-shadow: 0 5px 10px rgba(5,150,105,0.4) !important; }
+    div[data-testid="column"]:has(.kpi-env) button:hover { transform: translateY(-3px) !important; box-shadow: 0 5px 10px rgba(30,58,138,0.4) !important; }
+    div[data-testid="column"]:has(.kpi-bor) button:hover { transform: translateY(-3px) !important; box-shadow: 0 5px 10px rgba(100,116,139,0.4) !important; }
+    div[data-testid="column"]:has(.kpi-can) button:hover { transform: translateY(-3px) !important; box-shadow: 0 5px 10px rgba(239,68,68,0.4) !important; }
+
+    /* Estructura Base de los botones KPI */
+    div[data-testid="column"]:has(.kpi-todas) button, div[data-testid="column"]:has(.kpi-apr) button,
+    div[data-testid="column"]:has(.kpi-env) button, div[data-testid="column"]:has(.kpi-bor) button,
+    div[data-testid="column"]:has(.kpi-can) button {
+        width: 100% !important; padding: 12px 10px !important; border-radius: 8px !important;
+        height: 100% !important; min-height: 85px !important; display: flex !important;
+        justify-content: flex-start !important; text-align: left !important;
+        box-shadow: 0 3px 5px rgba(0,0,0,0.15) !important; transition: transform 0.2s !important;
+    }
+    div[data-testid="column"]:has(.kpi-todas) button p, div[data-testid="column"]:has(.kpi-apr) button p,
+    div[data-testid="column"]:has(.kpi-env) button p, div[data-testid="column"]:has(.kpi-bor) button p,
+    div[data-testid="column"]:has(.kpi-can) button p {
+        font-size: 15px !important; font-weight: 800 !important; white-space: pre-wrap !important; margin: 0 !important; line-height: 1.3 !important;
+    }
 
     /* ----------------------------------------------------
        BOTONES COMPACTOS DE LA TABLA
@@ -93,7 +104,7 @@ st.markdown("""
        PANEL LATERAL (Simetría Absoluta)
        ---------------------------------------------------- */
     [data-testid="stSidebar"] { background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important; }
-    .brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; margin-top: 5px; padding-left: 5px; letter-spacing: 0.5px;}
+    .brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; margin-top: 5px; padding-left: 5px;}
     
     [data-testid="stSidebar"] div[data-testid="stButton"] { width: 100% !important; margin-bottom: 2px !important; }
     [data-testid="stSidebar"] div[data-testid="stButton"] button {
@@ -128,7 +139,7 @@ if "filtro_estado_tabla" not in st.session_state: st.session_state.filtro_estado
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# --- BASE DE DATOS DE PRUEBA ---
+# --- BASE DE DATOS DE PRUEBA (AMPLIADA PARA VER TENDENCIAS DE FECHAS) ---
 if "proveedores_catalogo" not in st.session_state:
     cat_temp = []
     servicios_base = [("Cabina fotográfica 360", "Entretenimiento", 300.0, 0.0), ("Carpa estructural 6x6", "Estructuras", 50.0, 0.15), ("Animador corporativo", "Animación", 150.0, 0.15), ("Catering premium", "Alimentos", 25.0, 0.15), ("Sonido profesional", "Audiovisual", 180.0, 0.15)]
@@ -195,10 +206,11 @@ elif menu == "Panel de inicio":
         col_f1, col_f2, col_f3 = st.columns(3)
         lista_cli = sorted(list(set([c["cliente"] for c in st.session_state.cotizaciones_guardadas])))
         lista_mes = sorted(list(set([c["fecha"][:7] for c in st.session_state.cotizaciones_guardadas])))
-        with col_f1: f_emp = st.selectbox("Empresa / Cuenta", ["Todas"] + lista_cli, label_visibility="collapsed")
-        with col_f2: f_mes = st.selectbox("Mes operativo", ["Todos"] + lista_mes, label_visibility="collapsed")
-        with col_f3: f_ciu = st.selectbox("Ciudad de facturación", ["Todas"] + ciudades_lista, label_visibility="collapsed")
+        with col_f1: f_emp = st.selectbox("Filtrar por Empresa / Cuenta", ["Todas"] + lista_cli)
+        with col_f2: f_mes = st.selectbox("Filtrar por Mes Operativo", ["Todos"] + lista_mes)
+        with col_f3: f_ciu = st.selectbox("Filtrar por Ciudad", ["Todas"] + ciudades_lista)
 
+    # Procesamiento de filtros
     cots_dash = []
     for c in st.session_state.cotizaciones_guardadas:
         ciu_cliente = next((cli["ciudad"] for cli in st.session_state.clientes_catalogo if cli["empresa"] == c["cliente"]), "Desconocida")
@@ -211,25 +223,28 @@ elif menu == "Panel de inicio":
     tot_env = sum(c["total"] for c in cots_dash if c["estado"] == "Enviada")
     tot_bor = sum(c["total"] for c in cots_dash if c["estado"] == "Borrador")
     tot_can = sum(c["total"] for c in cots_dash if c["estado"] == "Cancelada")
-    tot_gen = tot_apr + tot_env + tot_bor + tot_can
+    tot_gen = tot_apr + tot_env + tot_bor
 
-    # 3. ANÁLISIS VISUAL Y MÉTRICAS (KPIs 100% Funcionales)
+    # 3. ANÁLISIS VISUAL Y MÉTRICAS NATIVAS (Botones exactos)
     with st.container(border=True):
-        st.markdown("<div class='section-title'>Análisis Visual del Portafolio</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>Análisis Financiero Interactivo</div>", unsafe_allow_html=True)
         
-        # Fila de Botones KPI (El CSS inyectado los colorea perfectamente)
-        m1, m2, m3, m4 = st.columns(4)
+        # Fila de 5 Métricas (El CSS inyectado los colorea perfectamente)
+        m0, m1, m2, m3, m4 = st.columns(5)
+        with m0:
+            st.markdown("<span class='kpi-todas'></span>", unsafe_allow_html=True)
+            if st.button(f"MOSTRAR TODAS\n${tot_gen:,.2f}", use_container_width=True, key="btn_tod"): st.session_state.filtro_estado_tabla = "Todas"; st.rerun()
         with m1:
-            st.markdown("<div class='kpi-marker kpi-aprobada'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='kpi-apr'></span>", unsafe_allow_html=True)
             if st.button(f"APROBADAS\n${tot_apr:,.2f}", use_container_width=True, key="btn_apr"): st.session_state.filtro_estado_tabla = "Aprobada"; st.rerun()
         with m2:
-            st.markdown("<div class='kpi-marker kpi-enviada'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='kpi-env'></span>", unsafe_allow_html=True)
             if st.button(f"ENVIADAS\n${tot_env:,.2f}", use_container_width=True, key="btn_env"): st.session_state.filtro_estado_tabla = "Enviada"; st.rerun()
         with m3:
-            st.markdown("<div class='kpi-marker kpi-borrador'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='kpi-bor'></span>", unsafe_allow_html=True)
             if st.button(f"BORRADORES\n${tot_bor:,.2f}", use_container_width=True, key="btn_bor"): st.session_state.filtro_estado_tabla = "Borrador"; st.rerun()
         with m4:
-            st.markdown("<div class='kpi-marker kpi-cancelada'></div>", unsafe_allow_html=True)
+            st.markdown("<span class='kpi-can'></span>", unsafe_allow_html=True)
             if st.button(f"CANCELADAS\n${tot_can:,.2f}", use_container_width=True, key="btn_can"): st.session_state.filtro_estado_tabla = "Cancelada"; st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -239,52 +254,57 @@ elif menu == "Panel de inicio":
             if tot_gen > 0:
                 df_chart = pd.DataFrame({"Estado": ["Aprobada", "Enviada", "Borrador", "Cancelada"], "Monto": [tot_apr, tot_env, tot_bor, tot_can]})
                 df_chart = df_chart[df_chart["Monto"] > 0]
-                # Eliminamos el Padding para evitar el TypeError
                 chart = alt.Chart(df_chart).mark_arc(innerRadius=45, outerRadius=90, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta(field="Monto", type="quantitative"), 
                     color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobada", "Enviada", "Borrador", "Cancelada"], range=["#059669", "#1E3A8A", "#64748B", "#EF4444"]), legend=alt.Legend(title="Distribución", orient="bottom")), 
                     tooltip=["Estado", alt.Tooltip("Monto", format="$,.2f")]
-                ).properties(height=260)
+                ).properties(height=260, padding=10) # Padding reducido para que no se corte arriba
                 st.altair_chart(chart, use_container_width=True)
             else:
                 st.info("Sin datos para distribución.")
 
         with col_trend:
-            # Gráfico de BARRAS (No Timeline Irreal). Cambia según el estado visualizado en la tabla.
             estado_actual = st.session_state.filtro_estado_tabla
-            color_barras = {"Aprobada": "#059669", "Enviada": "#1E3A8A", "Borrador": "#64748B", "Cancelada": "#EF4444"}.get(estado_actual, "#059669")
             
-            df_bar = pd.DataFrame([{"Fecha": c["fecha"], "Monto": c["total"]} for c in cots_dash if c["estado"] == estado_actual])
+            # Lógica para graficar "Todas" (Excluye canceladas) o una categoría específica
+            if estado_actual == "Todas":
+                df_bar = pd.DataFrame([{"Fecha": c["fecha"], "Monto": c["total"]} for c in cots_dash if c["estado"] != "Cancelada"])
+                color_barras = "#0F172A"
+                y_title = "Volumen Total Operativo ($)"
+            else:
+                df_bar = pd.DataFrame([{"Fecha": c["fecha"], "Monto": c["total"]} for c in cots_dash if c["estado"] == estado_actual])
+                color_barras = {"Aprobada": "#059669", "Enviada": "#1E3A8A", "Borrador": "#64748B", "Cancelada": "#EF4444"}.get(estado_actual, "#059669")
+                y_title = f"Volumen {estado_actual.upper()} ($)"
             
             if not df_bar.empty:
-                df_bar["Fecha"] = pd.to_datetime(df_bar["Fecha"]).dt.strftime('%Y-%m-%d')
-                df_bar = df_bar.groupby("Fecha")["Monto"].sum().reset_index().sort_values("Fecha")
+                # Agrupación Mensual (Histograma con sentido de negocio)
+                df_bar["Mes"] = pd.to_datetime(df_bar["Fecha"]).dt.strftime('%b %Y')
+                df_bar = df_bar.groupby("Mes")["Monto"].sum().reset_index()
+                # Ordenar cronológicamente
+                df_bar["Mes_Date"] = pd.to_datetime(df_bar["Mes"], format='%b %Y')
+                df_bar = df_bar.sort_values("Mes_Date")
                 
-                chart_bar = alt.Chart(df_bar).mark_bar(color=color_barras, cornerRadiusTopLeft=4, cornerRadiusTopRight=4, size=30).encode(
-                    x=alt.X('Fecha:O', title='Fecha de Operación', axis=alt.Axis(labelAngle=-45, grid=False, labelColor='#64748B')),
-                    y=alt.Y('Monto:Q', title=f'Volumen {estado_actual.upper()} ($)', axis=alt.Axis(format='$,.0f', gridColor='#E2E8F0', labelColor='#64748B')),
-                    tooltip=[alt.Tooltip('Fecha:O', title='Fecha'), alt.Tooltip('Monto:Q', format='$,.2f', title='Total')]
+                chart_bar = alt.Chart(df_bar).mark_bar(color=color_barras, cornerRadiusTopLeft=4, cornerRadiusTopRight=4, size=35).encode(
+                    x=alt.X('Mes:N', sort=alt.EncodingSortField(field='Mes_Date', order='ascending'), title='Mes Operativo', axis=alt.Axis(labelAngle=0, grid=False, labelColor='#64748B')),
+                    y=alt.Y('Monto:Q', title=y_title, axis=alt.Axis(format='$,.0f', gridColor='#E2E8F0', labelColor='#64748B')),
+                    tooltip=[alt.Tooltip('Mes:N', title='Periodo'), alt.Tooltip('Monto:Q', format='$,.2f', title='Total Acumulado')]
                 ).properties(height=260)
                 st.altair_chart(chart_bar, use_container_width=True)
             else:
                 st.markdown(f"<div style='padding-top:100px; text-align:center; color:#64748B;'>No hay ingresos registrados en la categoría <b>{estado_actual}</b> para el periodo seleccionado.</div>", unsafe_allow_html=True)
 
-    # 4. TABLA DETALLADA CON SELECTOR EXPLÍCITO Sincronizado
+    # 4. TABLA DETALLADA (Totalmente limpia, sin redundancias)
     with st.container(border=True):
-        st.markdown("<div class='section-title'>Detalle Operativo de Cotizaciones</div>", unsafe_allow_html=True)
+        col_tit, col_bus = st.columns([2, 1])
+        with col_tit: st.markdown(f"<div class='section-title'>Detalle Operativo: {st.session_state.filtro_estado_tabla.upper()}</div>", unsafe_allow_html=True)
+        with col_bus: b_univ = st.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código o cliente...")
         
-        col_rad, col_bus = st.columns([2, 1])
-        with col_rad:
-            # Selector vinculado directamente a la misma variable que cambian los botones KPI
-            st.radio("Filtro de visualización en tabla:", ["Todas", "Aprobada", "Enviada", "Borrador", "Cancelada"], horizontal=True, key="filtro_estado_tabla")
-        with col_bus:
-            b_univ = st.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código o cliente...")
-        
-        st.markdown("<hr style='margin: 5px 0 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-        
-        ev_filt = cots_dash
-        if st.session_state.filtro_estado_tabla != "Todas":
+        # Filtrado directo
+        if st.session_state.filtro_estado_tabla == "Todas":
+            ev_filt = cots_dash
+        else:
             ev_filt = [cot for cot in cots_dash if cot["estado"] == st.session_state.filtro_estado_tabla]
+            
         if b_univ:
             ev_filt = [c for c in ev_filt if b_univ.lower() in c['codigo'].lower() or b_univ.lower() in c['evento'].lower() or b_univ.lower() in c['cliente'].lower()]
         
@@ -397,7 +417,7 @@ elif menu == "Nueva cotización":
         with tab_man:
             nc1, nc2, nc3, nc4 = st.columns(4)
             with nc1: n_pro = st.text_input("Proveedor *")
-            with nc2: n_ser = text_input = st.text_input("Servicio *")
+            with nc2: n_ser = st.text_input("Servicio *")
             with nc3: n_ciu = st.selectbox("Ciudad op.", ciudades_lista, key="mc_c")
             with nc4: n_cat = st.text_input("Categoría")
             
