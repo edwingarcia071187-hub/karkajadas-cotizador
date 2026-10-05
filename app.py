@@ -86,15 +86,18 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 [class*="st-key-del_"] button:hover { background: #DC2626 !important; }
 
 /* Tabla "Estructura de costos": cada servicio es una franja suave (fondo + sombra) separada de la siguiente, sin cuadrícula */
-.st-key-tabla_costos { gap: 8px !important; }
-.st-key-tabla_costos [data-testid="stHorizontalBlock"] {
+.st-key-tabla_costos, .st-key-tabla_det { gap: 6px !important; }
+.st-key-tabla_costos [data-testid="stHorizontalBlock"], .st-key-tabla_det [data-testid="stHorizontalBlock"] {
     gap: .4rem !important; align-items: center !important; padding: 7px 12px;
     background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 10px; box-shadow: 0 1px 2px rgba(15,23,42,.06);
 }
-.st-key-costos_head [data-testid="stHorizontalBlock"] { background: transparent; border: none; box-shadow: none; padding: 0 12px 2px; }
+.st-key-costos_head [data-testid="stHorizontalBlock"], .st-key-det_head [data-testid="stHorizontalBlock"] { background: transparent; border: none; box-shadow: none; padding: 0 12px 2px; }
 /* Streamlit resta 1rem al contenedor de markdown para compensar el margen del <p>; al quitar el margen hay que quitar también ese ajuste */
-.st-key-tabla_costos [data-testid="stMarkdownContainer"] { margin: 0 !important; }
-.st-key-tabla_costos [data-testid="stMarkdownContainer"] p, .st-key-tabla_costos [data-testid="stElementContainer"] { margin: 0 !important; }
+.st-key-tabla_costos [data-testid="stMarkdownContainer"], .st-key-tabla_det [data-testid="stMarkdownContainer"] { margin: 0 !important; }
+.st-key-tabla_costos [data-testid="stMarkdownContainer"] p, .st-key-tabla_costos [data-testid="stElementContainer"],
+.st-key-tabla_det [data-testid="stMarkdownContainer"] p, .st-key-tabla_det [data-testid="stElementContainer"] { margin: 0 !important; }
+.st-key-tabla_det button { min-height: 30px !important; padding: 2px 10px !important; }
+.badge-estado { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .3px; padding: 2px 10px; border-radius: 999px; line-height: 18px; }
 .cell { font-size: 14px; color: #1E293B; line-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cell.num, .col-head.num { text-align: right; }
 .cell .pos { color: #059669; font-weight: 600; }
@@ -562,16 +565,29 @@ elif menu == "Panel de inicio":
         col_donut, col_trend = st.columns([1, 2.5])
 
         with col_donut:
-            df_donut = pd.DataFrame({"Estado": ESTADOS, "Monto": [tot[e] for e in ESTADOS]})
+            if estado_actual == "Todas":   # distribución por estado
+                df_donut = pd.DataFrame({"Segmento": ESTADOS, "Monto": [tot[e] for e in ESTADOS]})
+                dominio, paleta, titulo_leyenda = ESTADOS, [COLORES[e] for e in ESTADOS], "Distribución por estado"
+            else:                          # una tarjeta elegida: reparte ese estado por cliente (tonos del color de la tarjeta)
+                por_cli = {}
+                for c in cots_dash:
+                    if c["estado"] == estado_actual:
+                        por_cli[c["cliente"]] = por_cli.get(c["cliente"], 0.0) + c["total"]
+                df_donut = pd.DataFrame({"Segmento": list(por_cli), "Monto": list(por_cli.values())})
+                dominio = list(por_cli)
+                base_rgb = tuple(int(COLORES[estado_actual][i:i + 2], 16) for i in (1, 3, 5))
+                n = max(len(dominio), 1)
+                paleta = ["#%02X%02X%02X" % tuple(int(v + (255 - v) * (0.55 * i / max(n - 1, 1))) for v in base_rgb) for i in range(n)]
+                titulo_leyenda = f"{estado_actual}s por cliente"
             df_donut = df_donut[df_donut["Monto"] > 0]
             if df_donut.empty:
                 st.info("Sin datos para distribución.")
             else:
                 donut = alt.Chart(df_donut).mark_arc(innerRadius=45, outerRadius=90, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta("Monto:Q"),
-                    color=alt.Color("Estado:N", scale=alt.Scale(domain=ESTADOS, range=[COLORES[e] for e in ESTADOS]),
-                                    legend=alt.Legend(title="Distribución", orient="bottom", columns=2)),
-                    tooltip=["Estado", alt.Tooltip("Monto", format="$,.2f")],
+                    color=alt.Color("Segmento:N", scale=alt.Scale(domain=dominio, range=paleta),
+                                    legend=alt.Legend(title=titulo_leyenda, orient="bottom", offset=18, titlePadding=8, columns=1 if estado_actual != "Todas" else 2)),
+                    tooltip=[alt.Tooltip("Segmento", title="Detalle"), alt.Tooltip("Monto", format="$,.2f")],
                     # CORRECCIÓN del TypeError 'bottom': el padding debe ser un dict, no un número
                 ).properties(height=260, padding={"left": 10, "right": 10, "top": 10, "bottom": 10})
                 st.altair_chart(donut, use_container_width=True)
@@ -622,19 +638,25 @@ elif menu == "Panel de inicio":
                    and (not busqueda or busqueda in f"{c['codigo']} {c['evento']} {c['cliente']}".lower())]
 
         if ev_filt:
-            ANCHOS = [1.5, 2, 2.5, 1.5, 1]
-            encabezados(st.columns(ANCHOS), ["CÓDIGO / FECHA", "EVENTO / ESTADO", "CLIENTE CORPORATIVO", "MONTO ESTIMADO", "ACCIÓN"])
-            st.markdown("<hr style='margin:2px 0 5px 0; border-top:1px solid #E2E8F0;'>", unsafe_allow_html=True)
-            for cot in ev_filt:
-                cx = st.columns(ANCHOS)
-                cx[0].write(f"**{cot['codigo']}**\n\n<span style='font-size:12px; color:#475569;'>{cot['fecha']}</span>", unsafe_allow_html=True)
-                cx[1].write(f"{cot['evento']}\n\n<span style='font-size:11px; font-weight:800; color:{COLORES[cot['estado']]};'>{cot['estado'].upper()}</span>", unsafe_allow_html=True)
-                cx[2].write(cot["cliente"])
-                cx[3].write(f"**${cot['total']:,.2f}**")
-                cx[4].button("Abrir", key=f"ab_{cot['codigo']}", type="secondary", use_container_width=True,
-                             on_click=ir, args=("Nueva cotización",),
-                             kwargs={"cotizacion_activa": cot, "items_cot": [dict(i) for i in cot.get("items", [])]})
-                st.markdown("<hr style='margin:2px 0; border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
+            ANCHOS = [1.6, 1.0, 2.2, 1.0, 2.4, 1.2, 0.9]
+            TIT = ["CÓDIGO", "FECHA", "EVENTO", "ESTADO", "CLIENTE CORPORATIVO", "MONTO", ""]
+            with st.container(key="tabla_det"):
+                with st.container(key="det_head"):
+                    hx = st.columns(ANCHOS, vertical_alignment="center")
+                    for i, t in enumerate(TIT):
+                        hx[i].markdown(f"<div class='col-head{' num' if i == 5 else ''}'>{t}</div>", unsafe_allow_html=True)
+                for cot in ev_filt:
+                    col_e = COLORES[cot["estado"]]
+                    cx = st.columns(ANCHOS, vertical_alignment="center")
+                    cx[0].markdown(f"<div class='cell'><b>{cot['codigo']}</b></div>", unsafe_allow_html=True)
+                    cx[1].markdown(f"<div class='cell' style='color:#475569;'>{cot['fecha']}</div>", unsafe_allow_html=True)
+                    cx[2].markdown(f"<div class='cell'>{cot['evento']}</div>", unsafe_allow_html=True)
+                    cx[3].markdown(f"<div class='cell'><span class='badge-estado' style='color:{col_e}; background:{col_e}1F;'>{cot['estado'].upper()}</span></div>", unsafe_allow_html=True)
+                    cx[4].markdown(f"<div class='cell'>{cot['cliente']}</div>", unsafe_allow_html=True)
+                    cx[5].markdown(f"<div class='cell num'><b>${cot['total']:,.2f}</b></div>", unsafe_allow_html=True)
+                    cx[6].button("Abrir", key=f"ab_{cot['codigo']}", type="secondary", use_container_width=True,
+                                 on_click=ir, args=("Nueva cotización",),
+                                 kwargs={"cotizacion_activa": cot, "items_cot": [dict(i) for i in cot.get("items", [])]})
         else:
             st.info("No hay cotizaciones para mostrar.")
 
