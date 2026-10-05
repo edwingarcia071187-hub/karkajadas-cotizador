@@ -19,7 +19,7 @@ st.markdown("""
     /* ----------------------------------------------------
        BOTONES: VERDE (Avanzar/Crear), AZUL (Neutro), ROJO (Borrar)
        ---------------------------------------------------- */
-    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito) */
+    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito y guardado) */
     button[kind="primary"] {
         background-color: #059669 !important; 
         border: 1px solid #059669 !important;
@@ -44,6 +44,12 @@ st.markdown("""
         transition: all 0.2s ease !important;
     }
     button[kind="secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
+
+    /* ESTILOS ESPECÍFICOS PARA LOS BOTONES DE MÉTRICAS (Igualar colores del gráfico) */
+    .btn-metric-aprobada button { background-color: #059669 !important; border-color: #059669 !important; }
+    .btn-metric-enviada button { background-color: #1E3A8A !important; border-color: #1E3A8A !important; }
+    .btn-metric-borrador button { background-color: #64748B !important; border-color: #64748B !important; }
+    .btn-metric-cancelada button { background-color: #EF4444 !important; border-color: #EF4444 !important; }
 
     /* BOTONES COMPACTOS DE LA TABLA (Flechas y Borrar) */
     div[data-testid="column"]:nth-child(8) button,
@@ -77,7 +83,6 @@ st.markdown("""
     }
     .brand-logo { font-size: 24px; font-weight: 900; color: #FFFFFF; margin-bottom: 25px; margin-top: 10px; text-align: left; padding-left: 5px; letter-spacing: 0.5px;}
     
-    /* Configuración SIMÉTRICA de los botones del sidebar */
     [data-testid="stSidebar"] button {
         background-color: #1E293B !important; 
         border: 1px solid #334155 !important;
@@ -85,14 +90,12 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 12px 15px !important;
         margin-bottom: 8px !important;
-        width: 100% !important; /* Fuerza a todos al mismo tamaño */
+        width: 100% !important;
         display: block !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
         transition: all 0.3s ease !important;
     }
     [data-testid="stSidebar"] button p { width: 100% !important; text-align: left !important; font-weight: 500 !important; margin: 0 !important;}
-    
-    /* Efecto Hover: Sombreado, se aclara y levanta */
     [data-testid="stSidebar"] button:hover { 
         background-color: #334155 !important; 
         color: #FFFFFF !important;
@@ -104,7 +107,6 @@ st.markdown("""
     /* ----------------------------------------------------
        DISEÑO DE CONTENEDORES NATIVOS Y FACTURA
        ---------------------------------------------------- */
-    /* Tarjetas nativas de Streamlit para que todo esté alineado */
     [data-testid="stVerticalBlockBorderWrapper"] {
         border-radius: 8px !important;
         border: 1px solid #E2E8F0 !important;
@@ -113,7 +115,6 @@ st.markdown("""
         padding: 20px !important;
         margin-bottom: 15px !important;
     }
-    /* Evitar que el panel lateral herede el borde blanco */
     [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] { border: none !important; background-color: transparent !important; box-shadow: none !important; padding: 0 !important; }
 
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 6px !important; }
@@ -148,9 +149,9 @@ if "proveedores_catalogo" not in st.session_state:
 if "cotizaciones_guardadas" not in st.session_state:
     st.session_state.cotizaciones_guardadas = [
         {"codigo": "KG-20261001-001", "evento": "Fiesta fin de año", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-12-15", "estado": "Aprobada", "total": 414.00, "items": [{"servicio": "Cabina fotográfica 360", "proveedor": "ProEntretenimiento QUI", "ciudad": "Quito", "fecha": "2026-12-15", "cantidad": 1, "costo": 300.0, "iva_prov": 0.0, "fee_pct": 20.0}]},
-        {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 3400.00, "items": []},
-        {"codigo": "KG-20261003-003", "evento": "Cena de directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 850.00, "items": []},
-        {"codigo": "KG-20261004-004", "evento": "Capacitación anual", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-08-05", "estado": "Aprobada", "total": 1250.00, "items": []},
+        {"codigo": "KG-20261002-002", "evento": "Lanzamiento de marca", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-11-10", "estado": "Enviada", "total": 248.40, "items": [{"servicio": "Sonido profesional", "proveedor": "ProAudiovisual QUI", "ciudad": "Quito", "fecha": "2026-11-10", "cantidad": 1, "costo": 180.0, "iva_prov": 0.15, "fee_pct": 20.0}]},
+        {"codigo": "KG-20261003-003", "evento": "Cena de directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 34.50, "items": [{"servicio": "Catering premium", "proveedor": "ProAlimentos QUI", "ciudad": "Quito", "fecha": "2026-10-20", "cantidad": 1, "costo": 25.0, "iva_prov": 0.15, "fee_pct": 20.0}]},
+        {"codigo": "KG-20261004-004", "evento": "Capacitación anual", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-08-05", "estado": "Aprobada", "total": 110.40, "items": [{"servicio": "Logística pesada", "proveedor": "ProLogística QUI", "ciudad": "Quito", "fecha": "2026-08-05", "cantidad": 1, "costo": 80.0, "iva_prov": 0.0, "fee_pct": 20.0}]},
     ]
 
 if "clientes_catalogo" not in st.session_state:
@@ -174,7 +175,7 @@ menu = st.session_state.nav_menu
 
 # --- MÓDULOS EN CONSTRUCCIÓN ---
 if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporativas", "Centro de ayuda", "Documentación operativa"]:
-    st.markdown(f"<h2 style='color: #0F172A;'>{menu}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color: #0F172A; font-weight: 700;'>{menu}</h2>", unsafe_allow_html=True)
     st.info("Módulo en construcción. Nuestro equipo de desarrollo está trabajando para habilitar esta funcionalidad.")
 
 # --- VISTA 1: PANEL PRINCIPAL ---
@@ -224,7 +225,7 @@ elif menu == "Panel de inicio":
                 df_chart = df_chart[df_chart["Monto"] > 0]
                 chart = alt.Chart(df_chart).mark_arc(innerRadius=65, outerRadius=110, cornerRadius=6, padAngle=0.03).encode(
                     theta=alt.Theta(field="Monto", type="quantitative"), 
-                    color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], range=["#059669", "#1E3A8A", "#94A3B8", "#EF4444"]), legend=None), 
+                    color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], range=["#059669", "#1E3A8A", "#64748B", "#EF4444"]), legend=None), 
                     tooltip=["Estado", alt.Tooltip("Monto", format="$,.2f")]
                 ).properties(height=280)
                 st.altair_chart(chart, use_container_width=True)
@@ -235,11 +236,17 @@ elif menu == "Panel de inicio":
             st.markdown("<p style='font-size: 13px; color: #64748B;'>Seleccione una métrica para filtrar el listado inferior:</p>", unsafe_allow_html=True)
             lm1, lm2 = st.columns(2)
             with lm1:
-                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
-                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
+                st.markdown("<div class='btn-metric-aprobada'>", unsafe_allow_html=True)
+                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
+                st.markdown("</div><div class='btn-metric-borrador'>", unsafe_allow_html=True)
+                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
             with lm2:
-                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
-                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, type="secondary"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
+                st.markdown("<div class='btn-metric-enviada'>", unsafe_allow_html=True)
+                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
+                st.markdown("</div><div class='btn-metric-cancelada'>", unsafe_allow_html=True)
+                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
     
     with st.container(border=True):
         col_tit, col_bus = st.columns([2, 1])
@@ -277,11 +284,11 @@ elif menu == "Nueva cotización":
     tot_head = sub_head * 1.15
     
     st.markdown(f"""
-        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;'>
+        <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;'>
             <h2 style='font-weight: 700; color: #0F172A; margin: 0;'>Gestión de cotizaciones</h2>
-            <div style='text-align: right;'>
-                <span style='font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;'>Monto Estimado</span>
-                <h1 style='margin: 0; color: #1E3A8A; font-weight: 800;'>${tot_head:,.2f}</h1>
+            <div style='text-align: right; margin-top: 5px;'>
+                <span style='font-size: 13px; color: #64748B; font-weight: 600; text-transform: uppercase;'>Monto Estimado</span><br>
+                <span style='color: #1E3A8A; font-weight: 800; font-size: 32px;'>${tot_head:,.2f}</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -295,7 +302,24 @@ elif menu == "Nueva cotización":
     def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
     with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
+        col_tit, col_btn = st.columns([4, 1])
+        with col_tit:
+            st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:8px; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
+        with col_btn:
+            if st.button("Guardar cambios", type="primary", use_container_width=True, key="btn_save_top"):
+                if cliente_sel == "+ Registrar nuevo cliente...":
+                    st.error("Registre la cuenta del cliente antes de guardar.")
+                else:
+                    if c_activa:
+                        st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != c_activa["codigo"]]
+                    st.session_state.cotizaciones_guardadas.append({
+                        "codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, 
+                        "fecha": str(fecha_gral), "estado": estado_cot, "total": tot_head, "items": st.session_state.items_cot.copy()
+                    })
+                    st.success("Guardado exitoso.")
+                    st.session_state.nav_menu = "Panel de inicio"
+                    st.rerun()
+
         col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
         with col1: cod_cotizacion = st.text_input("Referencia", value=def_cod)
         with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev)
@@ -310,7 +334,7 @@ elif menu == "Nueva cotización":
             with cc1: i_emp = st.text_input("Razón social *"); i_ruc = st.text_input("RUC *"); i_ciu = st.selectbox("Ciudad", ciudades_lista)
             with cc2: i_dir = st.text_input("Dirección"); i_web = st.text_input("Sitio web"); i_cont = st.text_input("Contacto")
             with cc3: i_mail = st.text_input("Correo"); i_tel = st.text_input("Teléfono"); i_dias = st.number_input("Días crédito", value=30, step=15)
-            if st.button("Guardar y aplicar", type="primary"):
+            if st.button("Guardar cliente y continuar", type="primary"):
                 if i_emp.strip() != "" and i_ruc.strip() != "":
                     st.session_state.clientes_catalogo.append({"empresa": i_emp, "ruc": i_ruc, "ciudad": i_ciu, "direccion": i_dir, "web": i_web, "contacto": i_cont, "email": i_mail, "telefono": i_tel, "dias_credito": i_dias})
                     st.session_state.cliente_recien_creado = i_emp; st.rerun()
@@ -402,17 +426,18 @@ elif menu == "Nueva cotización":
             cm1, cm2, ci = st.columns([1.2, 1.2, 1.6])
             with cm1: st.markdown(f"<div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div>", unsafe_allow_html=True)
             with cm2: st.markdown(f"<div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div>", unsafe_allow_html=True)
-            with ci: st.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
+            with ci: st.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-final-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
             
-            st.markdown("<hr style='border-top: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            ce, cg = st.columns([3, 1])
-            with cg:
-                if st.button("Guardar cotización", use_container_width=True, type="primary"):
-                    if c_activa: st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != cod_cotizacion]
-                    if cliente_sel == OPCION_NUEVO: st.error("Registre el cliente.")
-                    else:
-                        st.session_state.cotizaciones_guardadas.append({"codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, "fecha": str(fecha_gral), "estado": estado_cot, "total": t_cli, "items": st.session_state.items_cot.copy()})
-                        st.success("Guardado exitoso."); st.session_state.nav_menu = "Panel de inicio"; st.rerun()
+    # El botón inferior siempre visible por si se quiere guardar sin items (Borrador)
+    st.markdown("<hr style='border-top: 1px solid #E2E8F0; margin-top: 20px; margin-bottom: 20px;'>", unsafe_allow_html=True)
+    ce, cg = st.columns([3, 1])
+    with cg:
+        if st.button("Guardar cotización final", use_container_width=True, type="primary", key="btn_save_bot"):
+            if c_activa: st.session_state.cotizaciones_guardadas = [c for c in st.session_state.cotizaciones_guardadas if c["codigo"] != c_activa["codigo"]]
+            if cliente_sel == "+ Registrar nuevo cliente...": st.error("Registre el cliente.")
+            else:
+                st.session_state.cotizaciones_guardadas.append({"codigo": cod_cotizacion, "evento": nombre_evento, "cliente": cliente_sel, "fecha": str(fecha_gral), "estado": estado_cot, "total": tot_head, "items": st.session_state.items_cot.copy()})
+                st.success("Guardado exitoso."); st.session_state.nav_menu = "Panel de inicio"; st.rerun()
 
 # --- VISTA 4: DIRECTORIOS ---
 elif menu == "Directorios":
