@@ -71,10 +71,20 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 .total-general b { color: #0F172A; }
 
 /* Botones compactos de la tabla de costos */
-[class*="st-key-mv_"] button { background: transparent !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; padding: 0 !important; min-height: 28px !important; height: 28px !important; box-shadow: none !important; width: 100%; }
+[class*="st-key-mv_"] button, [class*="st-key-del_"] button { padding: 0 !important; min-height: 26px !important; height: 26px !important; width: 100% !important; font-size: 13px !important; line-height: 1 !important; }
+[class*="st-key-mv_"] button { background: transparent !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: none !important; }
 [class*="st-key-mv_"] button:hover { background: #F1F5F9 !important; color: #1E3A8A !important; }
-[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; padding: 0 !important; min-height: 28px !important; height: 28px !important; font-weight: 700 !important; width: 100%; }
+[class*="st-key-mv_"] button:disabled { opacity: .35; }
+[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; }
 [class*="st-key-del_"] button:hover { background: #DC2626 !important; }
+
+/* Tabla "Estructura de costos": filas de una sola línea, sin espacios entre elementos */
+.st-key-tabla_costos { gap: 0 !important; }
+.st-key-tabla_costos [data-testid="stHorizontalBlock"] { gap: .4rem !important; align-items: center !important; padding: 4px 0; border-bottom: 1px solid #F1F5F9; }
+.st-key-tabla_costos [data-testid="stMarkdownContainer"] p, .st-key-tabla_costos [data-testid="stElementContainer"] { margin: 0 !important; }
+.cell { font-size: 14px; color: #1E293B; line-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell.num, .col-head.num { text-align: right; }
+.cell .pos { color: #059669; font-weight: 600; }
 
 /* Panel lateral */
 [data-testid="stSidebar"] { background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important; }
@@ -92,7 +102,14 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 }
 
 /* Formularios y títulos */
-div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px !important; min-height: 38px !important; }
+/* Campos: el borde y el radio van en el contenedor externo; el <input> interno queda sin borde.
+   (Antes ambos tenían borde con radios distintos y el recuadro no cerraba bien en las esquinas) */
+div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="select"] > div {
+    background-color: #FFFFFF !important; border: 1px solid #CBD5E1 !important; border-radius: 6px !important; min-height: 38px !important; overflow: hidden;
+}
+div[data-baseweb="base-input"] { background: transparent !important; border: none !important; border-radius: 0 !important; }
+div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background: transparent !important; border: none !important; box-shadow: none !important; color: #1E293B !important; border-radius: 0 !important; }
+div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within, div[data-baseweb="select"] > div:focus-within { border-color: #1E3A8A !important; box-shadow: 0 0 0 1px #1E3A8A !important; }
 .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important; margin-bottom: 4px !important; }
 .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: .5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; }
 .col-head { font-size: 11px; font-weight: 700; color: #64748B; }
@@ -518,31 +535,36 @@ elif menu == "Nueva cotización":
     if items:
         with st.container(border=True):
             st.markdown("<div class='section-title'>Estructura de costos</div>", unsafe_allow_html=True)
-            ANCHOS = [2.5, 1.4, 0.6, 1.0, 0.6, 1.2, 1.0, 0.4, 0.4, 0.4]
-            encabezados(st.columns(ANCHOS), ["PROVEEDOR / SERVICIO", "FECHA / ZONA", "CANT.", "COSTO U.", "IVA", "MARGEN", "SUBTOTAL", "", "", ""])
-            st.markdown("<hr style='margin:4px 0 10px 0; border-top:1px solid #CBD5E1;'>", unsafe_allow_html=True)
+            # Una línea por servicio, una columna por dato. Los 3 últimos anchos son ↑ ↓ ✕ (botones compactos)
+            ANCHOS = [2.0, 2.2, 1.15, 0.95, 0.6, 1.0, 0.6, 0.8, 1.0, 1.1, 0.38, 0.38, 0.38]
+            TITULOS = ["PROVEEDOR", "SERVICIO", "FECHA", "CIUDAD", "CANT.", "COSTO U.", "IVA", "MARGEN %", "MARGEN $", "SUBTOTAL", "", "", ""]
+            NUM = {4, 5, 6, 7, 8, 9}   # columnas numéricas: alineadas a la derecha
 
             s_prov = t_fee = s_com = 0.0
             accion = None  # (tipo, idx): se ejecuta una sola vez al final, fuera del bucle
-            for idx, item in enumerate(items):
-                c_iva, f_val, p_ven = calcular_linea(item)
-                s_prov += c_iva; t_fee += f_val; s_com += p_ven
+            with st.container(key="tabla_costos"):
+                hx = st.columns(ANCHOS, vertical_alignment="center")
+                for i, t in enumerate(TITULOS):
+                    hx[i].markdown(f"<div class='col-head{' num' if i in NUM else ''}'>{t}</div>", unsafe_allow_html=True)
 
-                cx = st.columns(ANCHOS)
-                cx[0].write(f"**{item['proveedor']}** \n\n<span style='color:#475569;'>{item['servicio']}</span>", unsafe_allow_html=True)
-                cx[1].write(f"{item['fecha']} \n\n<span style='color:#475569;'>{item['ciudad']}</span>", unsafe_allow_html=True)
-                cx[2].write(f"{item['cantidad']}")
-                cx[3].write(f"${item['costo']:,.2f}")
-                cx[4].write(f"{int(item['iva_prov']*100)}%")
-                cx[5].write(f"<span style='color:#64748B;'>{item['fee_pct']:.0f}%</span> <span style='font-weight:600; color:#059669;'>+${f_val:,.2f}</span>", unsafe_allow_html=True)
-                cx[6].write(f"**${p_ven:,.2f}**")
-                if cx[7].button("↑", key=f"mv_up_{idx}", disabled=idx == 0):
-                    accion = ("up", idx)
-                if cx[8].button("↓", key=f"mv_dn_{idx}", disabled=idx == len(items) - 1):
-                    accion = ("dn", idx)
-                if cx[9].button("X", key=f"del_{idx}"):
-                    accion = ("del", idx)
-                st.markdown("<hr style='margin:0; border-top:1px solid #F1F5F9;'>", unsafe_allow_html=True)
+                for idx, item in enumerate(items):
+                    c_iva, f_val, p_ven = calcular_linea(item)
+                    s_prov += c_iva; t_fee += f_val; s_com += p_ven
+
+                    valores = [
+                        f"<b>{item['proveedor']}</b>", item["servicio"], item["fecha"], item["ciudad"],
+                        f"{item['cantidad']}", f"${item['costo']:,.2f}", f"{int(item['iva_prov'] * 100)}%",
+                        f"{item['fee_pct']:.0f}%", f"<span class='pos'>+${f_val:,.2f}</span>", f"<b>${p_ven:,.2f}</b>",
+                    ]
+                    cx = st.columns(ANCHOS, vertical_alignment="center")
+                    for i, v in enumerate(valores):
+                        cx[i].markdown(f"<div class='cell{' num' if i in NUM else ''}'>{v}</div>", unsafe_allow_html=True)
+                    if cx[10].button("↑", key=f"mv_up_{idx}", disabled=idx == 0, help="Subir"):
+                        accion = ("up", idx)
+                    if cx[11].button("↓", key=f"mv_dn_{idx}", disabled=idx == len(items) - 1, help="Bajar"):
+                        accion = ("dn", idx)
+                    if cx[12].button("✕", key=f"del_{idx}", help="Eliminar"):
+                        accion = ("del", idx)
 
             if accion:
                 tipo, i = accion
