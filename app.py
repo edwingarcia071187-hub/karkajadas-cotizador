@@ -42,14 +42,12 @@ CSS_BASE = """
 /* Botones globales: verde = avanzar, azul = neutro */
 button[kind="primary"], button[data-testid="stBaseButton-primary"] {
     background-color: #059669 !important; border: 1px solid #059669 !important; color: #FFFFFF !important;
-    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important;
-    box-shadow: 0 1px 2px rgba(5,150,105,.25), 0 3px 8px rgba(5,150,105,.18) !important;
+    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
 }
 button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
 button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
     background-color: #1E3A8A !important; border: 1px solid #1E3A8A !important; color: #FFFFFF !important;
-    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important;
-    box-shadow: 0 1px 2px rgba(30,58,138,.25), 0 3px 8px rgba(30,58,138,.18) !important;
+    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
@@ -74,10 +72,10 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 
 /* Botones compactos de la tabla de costos */
 [class*="st-key-mv_"] button, [class*="st-key-del_"] button { padding: 0 !important; min-height: 26px !important; height: 26px !important; width: 100% !important; font-size: 13px !important; line-height: 1 !important; }
-[class*="st-key-mv_"] button { background: #FFFFFF !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: 0 1px 2px rgba(15,23,42,.10) !important; border-radius: 6px !important; }
-[class*="st-key-mv_"] button:hover { background: #EFF6FF !important; color: #1E3A8A !important; border-color: #93C5FD !important; }
+[class*="st-key-mv_"] button { background: #E9EEF5 !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: none !important; border-radius: 6px !important; }
+[class*="st-key-mv_"] button:hover { background: #DCE5F0 !important; color: #1E3A8A !important; border-color: #94A3B8 !important; }
 [class*="st-key-mv_"] button:disabled { opacity: .35; }
-[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; border-radius: 6px !important; box-shadow: 0 1px 2px rgba(239,68,68,.35) !important; }
+[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; border-radius: 6px !important; box-shadow: none !important; }
 [class*="st-key-del_"] button:hover { background: #DC2626 !important; }
 
 /* Tabla "Estructura de costos": cada servicio es una franja suave (fondo + sombra) separada de la siguiente, sin cuadrícula */
@@ -120,10 +118,15 @@ div[data-baseweb="base-input"] { background: transparent !important; border: non
 div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background: transparent !important; border: none !important; box-shadow: none !important; color: #1E293B !important; border-radius: 0 !important; }
 div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within, div[data-baseweb="select"] > div:focus-within { background-color: #FFFFFF !important; border-color: #1E3A8A !important; box-shadow: 0 0 0 3px rgba(30,58,138,.15) !important; }
 
-/* Pestañas: barra con fondo y pestaña activa elevada */
-div[data-baseweb="tab-list"] { gap: 4px !important; background: #EEF2F7; padding: 4px; border-radius: 10px; }
-button[data-baseweb="tab"] { border-radius: 8px !important; padding: 6px 16px !important; height: auto !important; }
-button[data-baseweb="tab"][aria-selected="true"] { background: #FFFFFF !important; box-shadow: 0 1px 3px rgba(15,23,42,.15); }
+/* Pestañas: cada una es un botón con fondo y borde propios; la activa va en azul (igual que los botones neutros) */
+div[data-baseweb="tab-list"] { gap: 8px !important; background: transparent !important; padding: 0 !important; }
+button[data-baseweb="tab"] {
+    background: #E9EEF5 !important; border: 1px solid #CBD5E1 !important; border-radius: 8px !important; padding: 8px 18px !important;
+    height: auto !important; color: #475569 !important; box-shadow: none !important; outline: none !important;
+}
+button[data-baseweb="tab"] p { color: inherit !important; font-weight: 600 !important; margin: 0 !important; }
+button[data-baseweb="tab"]:hover { background: #DCE5F0 !important; color: #1E3A8A !important; }
+button[data-baseweb="tab"][aria-selected="true"], button[data-baseweb="tab"][aria-selected="true"]:hover { background: #1E3A8A !important; border-color: #1E3A8A !important; color: #FFFFFF !important; }
 div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: none !important; }
 .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important; margin-bottom: 4px !important; }
 .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: .5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; }
@@ -136,11 +139,11 @@ div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: non
 .invoice-container { float: right; width: 320px; background-color: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
 
 /* Monto estimado (encabezado de la cotización) */
-.monto-badge { text-align: right; color: #FFFFFF; padding: 12px 26px 14px; border-radius: 14px; border-top: 3px solid #34D399;
-    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%); box-shadow: 0 8px 20px rgba(30,58,138,.30); }
-.monto-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #BFDBFE; }
-.monto-valor { font-size: 36px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.monto-valor .mon { font-size: 20px; color: #6EE7B7; margin-right: 3px; vertical-align: top; position: relative; top: 5px; }
+.monto-badge { text-align: right; line-height: 1; }
+.monto-label { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748B; margin-bottom: 6px; }
+.monto-valor { font-size: 46px; font-weight: 900; letter-spacing: -.02em; color: #1E3A8A; font-variant-numeric: tabular-nums; }
+.monto-valor .mon { font-size: 26px; font-weight: 800; color: #059669; margin-right: 4px; vertical-align: top; position: relative; top: 4px; }
+.monto-badge::after { content: ""; display: block; width: 56px; height: 4px; border-radius: 2px; background: #059669; margin: 8px 0 0 auto; }
 .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
 .invoice-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 10px; margin-top: 10px; font-size: 20px; font-weight: 800; color: #1E3A8A; }
 """
