@@ -28,26 +28,28 @@ st.set_page_config(page_title="Karkajadas Group - ERP", layout="wide", initial_s
 # =============================================================================
 CSS_BASE = """
 .block-container { padding-top: 4rem !important; padding-bottom: 2rem !important; max-width: 98% !important; }
-.stApp, .main, header { background-color: #F8FAFC !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
+.stApp, .main, header { background-color: #EEF2F7 !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
 
 [data-testid="collapsedControl"], [data-testid="stSidebarCollapsedControl"] { color: #FFFFFF !important; background-color: #1E293B !important; border-radius: 4px !important; margin: 10px !important; }
 [data-testid="collapsedControl"] svg, [data-testid="stSidebarCollapsedControl"] svg { fill: #FFFFFF !important; }
 
 [data-testid="stVerticalBlockBorderWrapper"] {
-    border-radius: 8px !important; border: 1px solid #E2E8F0 !important; background-color: #FFFFFF !important;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.02) !important; padding: 15px 25px !important; margin-bottom: 15px !important;
+    border-radius: 12px !important; border: 1px solid #DDE5EE !important; background-color: #FFFFFF !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 6px 16px rgba(15,23,42,.06) !important; padding: 18px 25px !important; margin-bottom: 16px !important;
 }
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] { border: none !important; background-color: transparent !important; box-shadow: none !important; padding: 0 !important; }
 
 /* Botones globales: verde = avanzar, azul = neutro */
 button[kind="primary"], button[data-testid="stBaseButton-primary"] {
     background-color: #059669 !important; border: 1px solid #059669 !important; color: #FFFFFF !important;
-    border-radius: 4px !important; font-weight: 600 !important; transition: all .2s ease !important;
+    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important;
+    box-shadow: 0 1px 2px rgba(5,150,105,.25), 0 3px 8px rgba(5,150,105,.18) !important;
 }
 button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
 button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
     background-color: #1E3A8A !important; border: 1px solid #1E3A8A !important; color: #FFFFFF !important;
-    border-radius: 4px !important; font-weight: 600 !important; transition: all .2s ease !important;
+    border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important;
+    box-shadow: 0 1px 2px rgba(30,58,138,.25), 0 3px 8px rgba(30,58,138,.18) !important;
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
@@ -72,15 +74,20 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 
 /* Botones compactos de la tabla de costos */
 [class*="st-key-mv_"] button, [class*="st-key-del_"] button { padding: 0 !important; min-height: 26px !important; height: 26px !important; width: 100% !important; font-size: 13px !important; line-height: 1 !important; }
-[class*="st-key-mv_"] button { background: transparent !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: none !important; }
-[class*="st-key-mv_"] button:hover { background: #F1F5F9 !important; color: #1E3A8A !important; }
+[class*="st-key-mv_"] button { background: #FFFFFF !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: 0 1px 2px rgba(15,23,42,.10) !important; border-radius: 6px !important; }
+[class*="st-key-mv_"] button:hover { background: #EFF6FF !important; color: #1E3A8A !important; border-color: #93C5FD !important; }
 [class*="st-key-mv_"] button:disabled { opacity: .35; }
-[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; }
+[class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; border-radius: 6px !important; box-shadow: 0 1px 2px rgba(239,68,68,.35) !important; }
 [class*="st-key-del_"] button:hover { background: #DC2626 !important; }
 
-/* Tabla "Estructura de costos": filas de una sola línea, sin espacios entre elementos */
-.st-key-tabla_costos { gap: 0 !important; }
-.st-key-tabla_costos [data-testid="stHorizontalBlock"] { gap: .4rem !important; align-items: center !important; padding: 4px 0; border-bottom: 1px solid #F1F5F9; }
+/* Tabla "Estructura de costos": cada servicio es una franja suave (fondo + sombra) separada de la siguiente, sin cuadrícula */
+.st-key-tabla_costos { gap: 8px !important; }
+.st-key-tabla_costos [data-testid="stHorizontalBlock"] {
+    gap: .4rem !important; align-items: center !important; padding: 7px 12px;
+    background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 1px 2px rgba(15,23,42,.06);
+}
+.st-key-costos_head { margin-bottom: -2px; }
+.st-key-costos_head [data-testid="stHorizontalBlock"] { background: transparent; border: none; box-shadow: none; padding-top: 0; padding-bottom: 0; }
 .st-key-tabla_costos [data-testid="stMarkdownContainer"] p, .st-key-tabla_costos [data-testid="stElementContainer"] { margin: 0 !important; }
 .cell { font-size: 14px; color: #1E293B; line-height: 26px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cell.num, .col-head.num { text-align: right; }
@@ -105,17 +112,35 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 /* Campos: el borde y el radio van en el contenedor externo; el <input> interno queda sin borde.
    (Antes ambos tenían borde con radios distintos y el recuadro no cerraba bien en las esquinas) */
 div[data-baseweb="input"], div[data-baseweb="textarea"], div[data-baseweb="select"] > div {
-    background-color: #FFFFFF !important; border: 1px solid #CBD5E1 !important; border-radius: 6px !important; min-height: 38px !important; overflow: hidden;
+    background-color: #F4F7FB !important; border: 1px solid #CBD5E1 !important; border-radius: 8px !important; min-height: 40px !important; overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(15,23,42,.06) !important; transition: background-color .15s, border-color .15s;
 }
+div[data-baseweb="input"]:hover, div[data-baseweb="select"] > div:hover { border-color: #94A3B8 !important; }
 div[data-baseweb="base-input"] { background: transparent !important; border: none !important; border-radius: 0 !important; }
 div[data-baseweb="input"] input, div[data-baseweb="textarea"] textarea { background: transparent !important; border: none !important; box-shadow: none !important; color: #1E293B !important; border-radius: 0 !important; }
-div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within, div[data-baseweb="select"] > div:focus-within { border-color: #1E3A8A !important; box-shadow: 0 0 0 1px #1E3A8A !important; }
+div[data-baseweb="input"]:focus-within, div[data-baseweb="textarea"]:focus-within, div[data-baseweb="select"] > div:focus-within { background-color: #FFFFFF !important; border-color: #1E3A8A !important; box-shadow: 0 0 0 3px rgba(30,58,138,.15) !important; }
+
+/* Pestañas: barra con fondo y pestaña activa elevada */
+div[data-baseweb="tab-list"] { gap: 4px !important; background: #EEF2F7; padding: 4px; border-radius: 10px; }
+button[data-baseweb="tab"] { border-radius: 8px !important; padding: 6px 16px !important; height: auto !important; }
+button[data-baseweb="tab"][aria-selected="true"] { background: #FFFFFF !important; box-shadow: 0 1px 3px rgba(15,23,42,.15); }
+div[data-baseweb="tab-highlight"], div[data-baseweb="tab-border"] { display: none !important; }
 .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important; margin-bottom: 4px !important; }
 .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: .5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; }
 .col-head { font-size: 11px; font-weight: 700; color: #64748B; }
-.internal-metrics { font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; }
+.metric-tile { background: #F8FAFC; border: 1px solid #E2E8F0; border-left: 4px solid #1E3A8A; border-radius: 10px; padding: 12px 16px; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+.metric-tile.ganancia { border-left-color: #059669; }
+.internal-metrics { font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: .4px; }
 .internal-metrics-value { font-size: 22px; font-weight: 800; color: #0F172A; }
-.invoice-container { float: right; width: 320px; background-color: #F8FAFC; padding: 20px; border-radius: 6px; border: 1px solid #CBD5E1; }
+.metric-tile.ganancia .internal-metrics-value { color: #047857; }
+.invoice-container { float: right; width: 320px; background-color: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
+
+/* Monto estimado (encabezado de la cotización) */
+.monto-badge { text-align: right; color: #FFFFFF; padding: 12px 26px 14px; border-radius: 14px; border-top: 3px solid #34D399;
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%); box-shadow: 0 8px 20px rgba(30,58,138,.30); }
+.monto-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #BFDBFE; }
+.monto-valor { font-size: 36px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.monto-valor .mon { font-size: 20px; color: #6EE7B7; margin-right: 3px; vertical-align: top; position: relative; top: 5px; }
 .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
 .invoice-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 10px; margin-top: 10px; font-size: 20px; font-weight: 800; color: #1E3A8A; }
 """
@@ -441,9 +466,9 @@ elif menu == "Nueva cotización":
     st.markdown(f"""
         <div style='display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px;'>
             <h2 style='font-weight:800; color:#0F172A; margin:0;'>Gestión de cotizaciones</h2>
-            <div style='text-align:right;'>
-                <span style='font-size:12px; color:#64748B; font-weight:700; text-transform:uppercase;'>Monto Estimado</span><br>
-                <span style='color:#1E3A8A; font-weight:800; font-size:28px; line-height:1;'>${tot_head:,.2f}</span>
+            <div class='monto-badge'>
+                <div class='monto-label'>Monto estimado</div>
+                <div class='monto-valor'><span class='mon'>$</span>{tot_head:,.2f}</div>
             </div>
         </div>""", unsafe_allow_html=True)
 
@@ -543,9 +568,10 @@ elif menu == "Nueva cotización":
             s_prov = t_fee = s_com = 0.0
             accion = None  # (tipo, idx): se ejecuta una sola vez al final, fuera del bucle
             with st.container(key="tabla_costos"):
-                hx = st.columns(ANCHOS, vertical_alignment="center")
-                for i, t in enumerate(TITULOS):
-                    hx[i].markdown(f"<div class='col-head{' num' if i in NUM else ''}'>{t}</div>", unsafe_allow_html=True)
+                with st.container(key="costos_head"):
+                    hx = st.columns(ANCHOS, vertical_alignment="center")
+                    for i, t in enumerate(TITULOS):
+                        hx[i].markdown(f"<div class='col-head{' num' if i in NUM else ''}'>{t}</div>", unsafe_allow_html=True)
 
                 for idx, item in enumerate(items):
                     c_iva, f_val, p_ven = calcular_linea(item)
@@ -579,8 +605,8 @@ elif menu == "Nueva cotización":
             t_cli = s_com + iva_cli
             st.markdown("<br>", unsafe_allow_html=True)
             cm1, cm2, ci = st.columns([1.2, 1.2, 1.6])
-            cm1.markdown(f"<div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div>", unsafe_allow_html=True)
-            cm2.markdown(f"<div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div>", unsafe_allow_html=True)
+            cm1.markdown(f"<div class='metric-tile'><div class='internal-metrics'>Costos operativos</div><div class='internal-metrics-value'>${s_prov:,.2f}</div></div>", unsafe_allow_html=True)
+            cm2.markdown(f"<div class='metric-tile ganancia'><div class='internal-metrics'>Rentabilidad (Ganancia)</div><div class='internal-metrics-value'>${t_fee:,.2f}</div></div>", unsafe_allow_html=True)
             ci.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div><div style='clear:both;'></div>", unsafe_allow_html=True)
 
             st.markdown("<hr style='border-top:1px solid #E2E8F0; margin:20px 0;'>", unsafe_allow_html=True)
