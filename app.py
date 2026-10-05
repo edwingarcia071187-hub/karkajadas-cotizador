@@ -10,12 +10,12 @@ from datetime import date, datetime
 # =============================================================================
 ESTADOS = ["Aprobada", "Enviada", "Borrador", "Cancelada"]
 COLORES = {
-    "Todas": "#0F172A",      # negro azulado
     "Aprobada": "#059669",   # verde
     "Enviada": "#1E3A8A",    # azul
     "Borrador": "#64748B",   # gris
     "Cancelada": "#EF4444",  # rojo
 }
+MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 CIUDADES = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 NUEVO_CLIENTE = "+ Registrar nuevo cliente..."
 IVA_CLIENTE = 0.15
@@ -51,18 +51,24 @@ button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
-/* Tarjetas KPI (el color de cada una se agrega por código según su estado) */
+/* Tarjetas KPI (el color de cada una, incluido hover/focus, se agrega por código según su estado) */
 [class*="st-key-kpi_"] button {
     width: 100% !important; min-height: 85px !important; padding: 12px 10px !important; border-radius: 8px !important;
     justify-content: flex-start !important; text-align: left !important; box-shadow: 0 3px 5px rgba(0,0,0,.15) !important;
 }
 [class*="st-key-kpi_"] button * { color: #FFFFFF !important; }
 [class*="st-key-kpi_"] button p { font-size: 15px !important; font-weight: 800 !important; white-space: pre-wrap !important; margin: 0 !important; line-height: 1.3 !important; }
-[class*="st-key-kpi_"] button:hover { filter: brightness(.88); transform: translateY(-3px) !important; }
+[class*="st-key-kpi_"] button:hover { filter: brightness(.9); transform: translateY(-3px) !important; }
 
-/* Botón "Borrar selección" (contorno, neutro) */
-.st-key-clear_btn button { background: #FFFFFF !important; color: #475569 !important; border: 1px solid #CBD5E1 !important; }
-.st-key-clear_btn button:hover { background: #F1F5F9 !important; color: #0F172A !important; }
+/* "Borrar filtros": enlace de texto discreto, sin aspecto de botón */
+div.st-key-clear_btn button, div.st-key-clear_btn button:hover, div.st-key-clear_btn button:focus, div.st-key-clear_btn button:active {
+    background: transparent !important; border: none !important; box-shadow: none !important; transform: none !important;
+    color: #64748B !important; font-weight: 500 !important; font-size: 13px !important;
+    min-height: 0 !important; padding: 2px 0 !important; justify-content: flex-end !important; width: 100%;
+}
+div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: underline; }
+.total-general { text-align: right; font-size: 13px; color: #64748B; font-weight: 500; }
+.total-general b { color: #0F172A; }
 
 /* Botones compactos de la tabla de costos */
 [class*="st-key-mv_"] button { background: transparent !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; padding: 0 !important; min-height: 28px !important; height: 28px !important; box-shadow: none !important; width: 100%; }
@@ -99,11 +105,22 @@ div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !i
 
 
 def css_kpi():
-    """Un color por tarjeta, tomado de COLORES (una sola fuente de verdad)."""
-    return "".join(
-        f".st-key-kpi_{e} button{{background:{c} !important;border:1px solid {c} !important;}}"
-        for e, c in COLORES.items()
-    )
+    """Un color por tarjeta, tomado de COLORES. Se fija también en :hover/:focus/:active
+    (con mayor especificidad que el estilo global de botones) para que el hover no la pinte de azul."""
+    reglas = []
+    for e in ESTADOS:
+        c = COLORES[e]
+        sel = ", ".join(f"div.st-key-kpi_{e} button{p}" for p in ("", ":hover", ":focus", ":active"))
+        reglas.append(f"{sel}{{background:{c} !important;border:1px solid {c} !important;color:#FFFFFF !important;}}")
+    return "".join(reglas)
+
+
+def css_tarjeta_activa(estado):
+    """Anillo del color de la tarjeta seleccionada (se mantiene también con hover/focus)."""
+    if estado not in COLORES:
+        return ""
+    sel = ", ".join(f"div.st-key-kpi_{estado} button{p}" for p in ("", ":hover", ":focus", ":active"))
+    return f"{sel}{{box-shadow:0 0 0 2px #FFFFFF, 0 0 0 5px {COLORES[estado]} !important;}}"
 
 
 st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
@@ -167,7 +184,8 @@ def ir(destino, **estado):
 
 
 def fijar_estado(estado):
-    ss.filtro_estado_tabla = estado
+    """Selecciona la tarjeta; si ya estaba seleccionada, vuelve a 'Todas'."""
+    ss.filtro_estado_tabla = "Todas" if ss.filtro_estado_tabla == estado else estado
 
 
 def limpiar_filtros():
@@ -297,21 +315,26 @@ elif menu == "Panel de inicio":
     ]
 
     tot = {e: sum(c["total"] for c in cots_dash if c["estado"] == e) for e in ESTADOS}
-    tot["Todas"] = sum(v for e, v in tot.items() if e != "Cancelada")  # las canceladas no cuentan como ingreso
+    # Total general: todas las cotizaciones, sin filtros y de todos los tiempos (las canceladas no cuentan como ingreso)
+    total_general = sum(c["total"] for c in cotizaciones if c["estado"] != "Cancelada")
     estado_actual = ss.filtro_estado_tabla
+    hay_filtros = estado_actual != "Todas" or any(ss[k] != v for k, v in SIN_FILTRO.items())
 
     # 3. Tarjetas + gráficos
     with st.container(border=True):
-        c_tit, c_clear = st.columns([4, 1])
+        c_tit, c_clear = st.columns([3, 2], vertical_alignment="center")
         c_tit.markdown("<div class='section-title'>Análisis Financiero Interactivo</div>", unsafe_allow_html=True)
-        c_clear.button("↺ Borrar selección", use_container_width=True, key="clear_btn", on_click=limpiar_filtros)
+        with c_clear:
+            if hay_filtros:   # enlace discreto: borra tarjeta, filtros globales y buscador
+                st.button(f"↺ Borrar filtros · Total general ${total_general:,.2f}", key="clear_btn", on_click=limpiar_filtros)
+            else:
+                st.markdown(f"<div class='total-general'>Total general: <b>${total_general:,.2f}</b></div>", unsafe_allow_html=True)
 
-        etiquetas = {"Todas": "TOTAL GENERAL", "Aprobada": "APROBADAS", "Enviada": "ENVIADAS", "Borrador": "BORRADORES", "Cancelada": "CANCELADAS"}
-        for col, e in zip(st.columns(5), etiquetas):
+        etiquetas = {"Aprobada": "APROBADAS", "Enviada": "ENVIADAS", "Borrador": "BORRADORES", "Cancelada": "CANCELADAS"}
+        for col, e in zip(st.columns(4), ESTADOS):
             col.button(f"{etiquetas[e]}\n${tot[e]:,.2f}", use_container_width=True, key=f"kpi_{e}", on_click=fijar_estado, args=(e,))
 
-        # Resalta la tarjeta activa
-        st.markdown(f"<style>.st-key-kpi_{estado_actual} button{{outline:3px solid #FBBF24; outline-offset:2px;}}</style>", unsafe_allow_html=True)
+        st.markdown(f"<style>{css_tarjeta_activa(estado_actual)}</style>", unsafe_allow_html=True)  # anillo en la tarjeta activa
 
         st.markdown("<br>", unsafe_allow_html=True)
         col_donut, col_trend = st.columns([1, 2.5])
@@ -332,24 +355,35 @@ elif menu == "Panel de inicio":
                 st.altair_chart(donut, use_container_width=True)
 
         with col_trend:
-            if estado_actual == "Todas":
-                filas = [c for c in cots_dash if c["estado"] != "Cancelada"]
-                color_barras, y_title = COLORES["Todas"], "Volumen Total Operativo ($)"
-            else:
-                filas = [c for c in cots_dash if c["estado"] == estado_actual]
-                color_barras, y_title = COLORES[estado_actual], f"Volumen {estado_actual.upper()} ($)"
+            # "Todas" = una serie por estado (incluye canceladas); una tarjeta = solo esa serie
+            estados_graf = ESTADOS if estado_actual == "Todas" else [estado_actual]
+            y_title = "Volumen ($)" if estado_actual == "Todas" else f"Volumen {estado_actual.upper()} ($)"
+            filas = [c for c in cots_dash if c["estado"] in estados_graf]
 
             if filas:
-                df = pd.DataFrame({"Periodo": pd.to_datetime([c["fecha"] for c in filas]).to_period("M"),
-                                   "Monto": [c["total"] for c in filas]})
-                df = df.groupby("Periodo", as_index=False)["Monto"].sum()   # el groupby ya ordena cronológicamente
-                df["Mes"] = df["Periodo"].dt.strftime("%b %Y")
-                barras = alt.Chart(df).mark_bar(color=color_barras, cornerRadiusTopLeft=4, cornerRadiusTopRight=4, size=35).encode(
-                    x=alt.X("Mes:N", sort=df["Mes"].tolist(), title="Mes Operativo", axis=alt.Axis(labelAngle=0, grid=False, labelColor="#64748B")),
-                    y=alt.Y("Monto:Q", title=y_title, axis=alt.Axis(format="$,.0f", gridColor="#E2E8F0", labelColor="#64748B")),
-                    tooltip=[alt.Tooltip("Mes:N", title="Periodo"), alt.Tooltip("Monto:Q", format="$,.2f", title="Total Acumulado")],
+                # Eje completo de meses (los meses sin movimiento valen 0, así la línea no une puntos lejanos)
+                meses = pd.period_range(min(c["fecha"][:7] for c in cots_dash), max(c["fecha"][:7] for c in cots_dash), freq="M")
+                orden = [f"{MESES_ES[p.month - 1]} {p.year}" for p in meses]
+                df = pd.DataFrame({"Periodo": [pd.Period(c["fecha"][:7], "M") for c in filas],
+                                   "Estado": [c["estado"] for c in filas], "Monto": [c["total"] for c in filas]})
+                df = (df.pivot_table(index="Periodo", columns="Estado", values="Monto", aggfunc="sum")
+                        .reindex(index=meses, columns=estados_graf).fillna(0.0))
+                df.index = orden
+                df = df.rename_axis(index="Mes", columns="Estado").stack().rename("Monto").reset_index()
+
+                base = alt.Chart(df).encode(
+                    x=alt.X("Mes:O", sort=orden, title="Mes Operativo", axis=alt.Axis(labelAngle=0, grid=False, labelColor="#64748B")),
+                    y=alt.Y("Monto:Q", stack=None, title=y_title, axis=alt.Axis(format="$,.0f", gridColor="#E2E8F0", labelColor="#64748B")),
+                    color=alt.Color("Estado:N", scale=alt.Scale(domain=estados_graf, range=[COLORES[e] for e in estados_graf]),
+                                    legend=alt.Legend(title=None, orient="bottom") if len(estados_graf) > 1 else None),
+                )
+                grafico = (
+                    base.mark_area(opacity=0.14, interpolate="monotone")                       # área sutil del color de la tarjeta
+                    + base.mark_line(strokeWidth=2.5, interpolate="monotone")
+                    + base.mark_point(filled=True, size=70, opacity=1).encode(
+                        tooltip=["Estado:N", alt.Tooltip("Mes:O", title="Periodo"), alt.Tooltip("Monto:Q", format="$,.2f", title="Total")])
                 ).properties(height=260)
-                st.altair_chart(barras, use_container_width=True)
+                st.altair_chart(grafico, use_container_width=True)
             else:
                 st.markdown(f"<div style='padding-top:100px; text-align:center; color:#64748B;'>No hay ingresos registrados en la categoría <b>{estado_actual}</b> para el periodo seleccionado.</div>", unsafe_allow_html=True)
 
