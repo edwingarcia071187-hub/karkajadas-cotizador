@@ -241,20 +241,38 @@ if "clientes_catalogo" not in ss:
         {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "ciudad": "Quito", "direccion": "Av. República", "web": "www.siemens.ec", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
     ]
-    # Cada cuenta ahora tiene un id y listas de contactos y direcciones (puede haber varios correos, teléfonos, sedes...)
-    for _n, _c in enumerate(ss.clientes_catalogo, 1):
-        _c["id"] = f"CLI-{_n:03d}"
-        _c["contactos"] = [{"nombre": _c["contacto"], "cargo": "", "correo": _c["email"], "telefono": _c["telefono"]}]
-        _c["direcciones"] = [{"etiqueta": "Principal", "direccion": _c["direccion"], "ciudad": _c["ciudad"]}]
 
-if "proveedores" not in ss:
-    # Proveedores como entidad propia (contactos, direcciones y cuentas bancarias); sus servicios están en proveedores_catalogo
-    _vistos = {}
-    for _r in ss.proveedores_catalogo:
-        _vistos.setdefault(_r["proveedor"], _r)
-    ss.proveedores = [{"id": f"PRV-{_n:03d}", "proveedor": _nom, "ruc": "", "categoria": _r["categoria"], "ciudad": _r["ciudad"],
-                       "observaciones": "", "contactos": [], "direcciones": [], "cuentas": []}
-                      for _n, (_nom, _r) in enumerate(_vistos.items(), 1)]
+
+def migrar_datos():
+    """Pone al día los datos de la sesión (también los creados con versiones anteriores de la app)."""
+    for n, c in enumerate(ss.clientes_catalogo, 1):
+        c.setdefault("id", f"CLI-{n:03d}")
+        c.setdefault("contactos", [{"nombre": c.get("contacto", ""), "cargo": "", "correo": c.get("email", ""), "telefono": c.get("telefono", "")}]
+                     if any(c.get(k) for k in ("contacto", "email", "telefono")) else [])
+        c.setdefault("direcciones", [{"etiqueta": "Principal", "direccion": c.get("direccion", ""), "ciudad": c.get("ciudad", "")}] if c.get("direccion") else [])
+        c.setdefault("web", "")
+        c.setdefault("dias_credito", 30)
+    for r in ss.proveedores_catalogo:
+        r.pop("banco", None)
+        r.pop("cuenta", None)
+        r.setdefault("categoria", "")
+        r.setdefault("descripcion", "")
+    if "proveedores" not in ss:
+        vistos = {}
+        for r in ss.proveedores_catalogo:
+            vistos.setdefault(r["proveedor"], r)
+        ss.proveedores = [{"id": f"PRV-{n:03d}", "proveedor": nom, "ruc": "", "categoria": r["categoria"], "ciudad": r["ciudad"],
+                           "observaciones": "", "contactos": [], "direcciones": [], "cuentas": []}
+                          for n, (nom, r) in enumerate(vistos.items(), 1)]
+    for n, p in enumerate(ss.proveedores, 1):
+        p.setdefault("id", f"PRV-{n:03d}")
+        for k in ("contactos", "direcciones", "cuentas"):
+            p.setdefault(k, [])
+        for k in ("ruc", "categoria", "observaciones"):
+            p.setdefault(k, "")
+
+
+migrar_datos()
 
 
 # =============================================================================
@@ -500,6 +518,11 @@ COL_DIRECCIONES = ["etiqueta", "direccion", "ciudad"]
 CFG_DIRECCIONES = {"etiqueta": st.column_config.TextColumn("Etiqueta (Matriz, Bodega...)"),
                    "direccion": st.column_config.TextColumn("Dirección", width="large"),
                    "ciudad": st.column_config.SelectboxColumn("Ciudad", options=CIUDADES)}
+COL_SERVICIOS = ["servicio", "categoria", "ciudad", "precio_base", "iva", "descripcion"]
+CFG_SERVICIOS = {"servicio": st.column_config.TextColumn("Servicio", width="medium"), "categoria": st.column_config.TextColumn("Categoría"),
+                 "ciudad": st.column_config.SelectboxColumn("Ciudad", options=CIUDADES),
+                 "precio_base": st.column_config.NumberColumn("Costo ($)", min_value=0.0, format="$%.2f"),
+                 "iva": st.column_config.SelectboxColumn("IVA", options=["0%", "15%"]), "descripcion": st.column_config.TextColumn("Descripción")}
 COL_CUENTAS = ["banco", "tipo", "numero", "titular"]
 CFG_CUENTAS = {"banco": st.column_config.TextColumn("Banco"), "tipo": st.column_config.SelectboxColumn("Tipo", options=["Ahorros", "Corriente"]),
                "numero": st.column_config.TextColumn("Número de cuenta"), "titular": st.column_config.TextColumn("Titular")}
@@ -570,10 +593,10 @@ def form_proveedor(prefijo, titulo_html="", datos=None, cancelar=False):
     c1, c2, c3, c4 = st.columns([2.3, 1.4, 1.6, 1.3])
     nom = c1.text_input("Proveedor *", value=d.get("proveedor", ""), key=f"{prefijo}_nom")
     ruc = c2.text_input("RUC", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
-    cat = c3.text_input("Categoría", value=d.get("categoria", ""), key=f"{prefijo}_cat")
+    cat = c3.text_input("Categoría general", value=d.get("categoria", ""), key=f"{prefijo}_cat")
     ciu = c4.selectbox("Ciudad base", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
     obs = st.text_input("Observaciones", value=d.get("observaciones", ""), key=f"{prefijo}_obs")
-    t_con, t_dir, t_cta = st.tabs(["Contactos (correos y teléfonos)", "Direcciones", "Cuentas bancarias"])
+    t_srv, t_con, t_dir, t_cta = st.tabs(["Servicios y costos", "Contactos (correos y teléfonos)", "Direcciones", "Cuentas bancarias"])
     with t_con:
         st.caption("Una fila por persona o correo. La primera fila es el contacto principal.")
         contactos = editor_lista(f"{prefijo}_con", d.get("contactos", []), COL_CONTACTOS, CFG_CONTACTOS)
@@ -582,6 +605,12 @@ def form_proveedor(prefijo, titulo_html="", datos=None, cancelar=False):
     with t_cta:
         st.caption("Puede tener varias cuentas. La primera es la que se usa por defecto para pagos.")
         cuentas = editor_lista(f"{prefijo}_cta", d.get("cuentas", []), COL_CUENTAS, CFG_CUENTAS)
+    with t_srv:
+        st.caption("Todo lo que ofrece este proveedor: una fila por servicio (sonido, pantallas, TVs...). Estos servicios aparecen al cotizar.")
+        srv_ini = [dict(r) for r in ss.proveedores_catalogo if d and r["proveedor"] == d.get("proveedor")]
+        df_srv = pd.DataFrame(srv_ini, columns=COL_SERVICIOS)
+        df_srv["iva"] = df_srv["iva"].map(lambda x: f"{int(x * 100)}%")
+        ed_srv = st.data_editor(df_srv, num_rows="dynamic", hide_index=True, use_container_width=True, column_config=CFG_SERVICIOS, key=f"{prefijo}_srv")
     guardar, cancel = botones_formulario(prefijo, "Guardar cambios" if datos else "Registrar proveedor", cancelar)
     if cancel:
         return "cancelar"
@@ -590,8 +619,17 @@ def form_proveedor(prefijo, titulo_html="", datos=None, cancelar=False):
             st.error("El nombre del proveedor es obligatorio.")
         elif correos_invalidos(contactos):
             st.error(f"Revisa estos correos: {', '.join(correos_invalidos(contactos))}")
+        elif any(_vacio(r["servicio"]) or not str(r["servicio"]).strip() for r in ed_srv.to_dict("records") if any(not _vacio(v) and str(v).strip() for v in r.values())):
+            st.error("Cada servicio necesita su nombre.")
         else:
-            return {"proveedor": nom.strip(), "ruc": ruc.strip(), "categoria": cat.strip(), "ciudad": ciu, "observaciones": obs.strip(),
+            servicios = []
+            for r in ed_srv.to_dict("records"):
+                if _vacio(r["servicio"]) or not str(r["servicio"]).strip():
+                    continue
+                servicios.append({"servicio": str(r["servicio"]).strip(), "categoria": "" if _vacio(r["categoria"]) else str(r["categoria"]).strip(),
+                                  "ciudad": ciu if _vacio(r["ciudad"]) else r["ciudad"], "precio_base": 0.0 if _vacio(r["precio_base"]) else float(r["precio_base"]),
+                                  "iva": 0.15 if r["iva"] == "15%" else 0.0, "descripcion": "" if _vacio(r["descripcion"]) else str(r["descripcion"]).strip()})
+            return {"servicios": servicios, "proveedor": nom.strip(), "ruc": ruc.strip(), "categoria": cat.strip(), "ciudad": ciu, "observaciones": obs.strip(),
                     "contactos": contactos, "direcciones": direcciones, "cuentas": cuentas}
     return None
 
@@ -630,18 +668,19 @@ def validar_proveedor(d, pid=None):
 
 
 def crear_proveedor(d):
+    servicios = d.pop("servicios", [])
     d["id"] = siguiente_id("PRV", ss.proveedores)
     ss.proveedores.append(d)
+    ss.proveedores_catalogo.extend({**sv, "proveedor": d["proveedor"]} for sv in servicios)
 
 
 def actualizar_proveedor(pid, nuevo):
     p = next(x for x in ss.proveedores if x["id"] == pid)
     viejo = p["proveedor"]
+    servicios = nuevo.pop("servicios", None)
     p.update(nuevo)
-    if viejo != p["proveedor"]:   # sus servicios del catálogo pasan al nuevo nombre
-        for r in ss.proveedores_catalogo:
-            if r["proveedor"] == viejo:
-                r["proveedor"] = p["proveedor"]
+    if servicios is not None:   # los servicios del formulario reemplazan a los anteriores de este proveedor
+        ss.proveedores_catalogo = [r for r in ss.proveedores_catalogo if r["proveedor"] != viejo] + [{**sv, "proveedor": p["proveedor"]} for sv in servicios]
 
 
 def asegurar_proveedor(nombre, ciudad, categoria):
