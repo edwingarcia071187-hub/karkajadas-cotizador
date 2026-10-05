@@ -13,7 +13,7 @@ st.set_page_config(
 # --- ESTILOS CSS AVANZADOS Y COLORIMETRÍA ESTRICTA ---
 st.markdown("""
     <style>
-    /* Ajuste de márgenes principales para que no se corte el título */
+    /* Ajuste de márgenes principales */
     .block-container { padding-top: 4rem !important; padding-bottom: 2rem !important; max-width: 98% !important; }
     .stApp, .main, header { background-color: #F8FAFC !important; color: #1E293B !important; font-family: 'Inter', sans-serif; }
     
@@ -47,32 +47,26 @@ st.markdown("""
     button[kind="secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
     /* ----------------------------------------------------
-       MÉTODO INFALIBLE PARA BOTONES DE MÉTRICAS (KPIs)
+       INYECCIÓN CSS PARA BOTONES DE MÉTRICAS (KPIs Interactivos)
        ---------------------------------------------------- */
-    /* Ocultar gancho invisible */
-    div[data-testid="element-container"]:has(.kpi-marker) { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
-
-    /* Estilo base para los 4 botones KPI */
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button {
+    div[data-testid="column"]:has(.kpi-marker) button {
         width: 100% !important; padding: 15px 20px !important; border-radius: 8px !important;
         height: auto !important; min-height: 90px !important; border: none !important;
         display: flex !important; justify-content: flex-start !important; text-align: left !important;
-        transition: all 0.2s ease !important; color: white !important;
+        transition: all 0.2s ease !important;
     }
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button p {
-        font-size: 16px !important; font-weight: 800 !important; line-height: 1.4 !important;
-        white-space: pre-wrap !important; margin: 0 !important;
+    div[data-testid="column"]:has(.kpi-marker) button p {
+        font-size: 17px !important; font-weight: 800 !important; line-height: 1.4 !important;
+        color: white !important; white-space: pre-wrap !important; margin: 0 !important;
     }
-    div[data-testid="element-container"]:has(.kpi-marker) + div[data-testid="element-container"] button:hover { transform: translateY(-3px) !important; }
+    div[data-testid="column"]:has(.kpi-marker) button:hover { transform: translateY(-3px); }
 
-    /* Aprobadas -> Verde */
-    div[data-testid="element-container"]:has(.kpi-aprobada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #059669 0%, #047857 100%) !important; box-shadow: 0 4px 6px rgba(5,150,105,0.3) !important; }
-    /* Enviadas -> Azul */
-    div[data-testid="element-container"]:has(.kpi-enviada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%) !important; box-shadow: 0 4px 6px rgba(30,58,138,0.3) !important; }
-    /* Borradores -> Gris */
-    div[data-testid="element-container"]:has(.kpi-borrador) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important; box-shadow: 0 4px 6px rgba(100,116,139,0.3) !important; }
-    /* Canceladas -> Rojo */
-    div[data-testid="element-container"]:has(.kpi-cancelada) + div[data-testid="element-container"] button { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important; box-shadow: 0 4px 6px rgba(239,68,68,0.3) !important; }
+    div[data-testid="column"]:has(.btn-color-aprobada) button { background: linear-gradient(135deg, #059669 0%, #047857 100%) !important; box-shadow: 0 4px 6px rgba(5,150,105,0.3) !important; }
+    div[data-testid="column"]:has(.btn-color-enviada) button { background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%) !important; box-shadow: 0 4px 6px rgba(30,58,138,0.3) !important; }
+    div[data-testid="column"]:has(.btn-color-borrador) button { background: linear-gradient(135deg, #64748B 0%, #475569 100%) !important; box-shadow: 0 4px 6px rgba(100,116,139,0.3) !important; }
+    div[data-testid="column"]:has(.btn-color-cancelada) button { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important; box-shadow: 0 4px 6px rgba(239,68,68,0.3) !important; }
+    
+    div[data-testid="element-container"]:has(.kpi-marker) { display: none !important; }
 
     /* ----------------------------------------------------
        BOTONES COMPACTOS DE LA TABLA
@@ -93,7 +87,7 @@ st.markdown("""
        PANEL LATERAL (Simetría Absoluta)
        ---------------------------------------------------- */
     [data-testid="stSidebar"] { background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important; }
-    .brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; margin-top: 5px; padding-left: 5px; letter-spacing: 0.5px;}
+    .brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin-bottom: 20px; margin-top: 5px; padding-left: 5px;}
     
     [data-testid="stSidebar"] div[data-testid="stButton"] { width: 100% !important; margin-bottom: 2px !important; }
     [data-testid="stSidebar"] div[data-testid="stButton"] button {
@@ -110,8 +104,8 @@ st.markdown("""
 
     /* Formularios y Títulos */
     div[data-baseweb="select"] > div, input, textarea { background-color: #FFFFFF !important; color: #1E293B !important; border: 1px solid #CBD5E1 !important; border-radius: 4px !important; min-height: 38px !important;}
-    .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important; margin-bottom: 4px !important;}
-    .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;}
+    .stSelectbox label, .stTextInput label, .stNumberInput label { font-size: 13px !important; color: #64748B !important; font-weight: 600 !important;}
+    .section-title { color: #0F172A; font-size: 14px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px;}
     
     .invoice-container { float: right; width: 320px; background-color: #F8FAFC; padding: 20px; border-radius: 6px; border: 1px solid #CBD5E1; }
     .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
@@ -124,11 +118,11 @@ if "nav_menu" not in st.session_state: st.session_state.nav_menu = "Panel de ini
 if "items_cot" not in st.session_state: st.session_state.items_cot = []
 if "cotizacion_activa" not in st.session_state: st.session_state.cotizacion_activa = None
 if "cliente_recien_creado" not in st.session_state: st.session_state.cliente_recien_creado = None
-if "filtro_estado_tabla" not in st.session_state: st.session_state.filtro_estado_tabla = "Todas"
+if "filtro_estado_tabla" not in st.session_state: st.session_state.filtro_estado_tabla = "Aprobada"
 
 ciudades_lista = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
 
-# --- BASE DE DATOS DE PRUEBA ---
+# --- BASE DE DATOS DE PRUEBA (AMPLIADA PARA VER TENDENCIAS DE FECHAS) ---
 if "proveedores_catalogo" not in st.session_state:
     cat_temp = []
     servicios_base = [("Cabina fotográfica 360", "Entretenimiento", 300.0, 0.0), ("Carpa estructural 6x6", "Estructuras", 50.0, 0.15), ("Animador corporativo", "Animación", 150.0, 0.15), ("Catering premium", "Alimentos", 25.0, 0.15), ("Sonido profesional", "Audiovisual", 180.0, 0.15)]
@@ -170,7 +164,7 @@ if menu in ["Reportes financieros", "Proyecciones de ventas", "Noticias corporat
     st.markdown(f"<h2 style='color: #0F172A; font-weight: 800;'>{menu}</h2>", unsafe_allow_html=True)
     st.info("Módulo en construcción.")
 
-# --- VISTA 1: PANEL PRINCIPAL (ALTA DENSIDAD BI) ---
+# --- VISTA 1: PANEL PRINCIPAL ---
 elif menu == "Panel de inicio":
     
     # 1. ACCESOS RÁPIDOS Y TÍTULO COMPACTO
@@ -189,7 +183,7 @@ elif menu == "Panel de inicio":
             with b3:
                 if st.button("Directorio Proveedores", use_container_width=True, type="secondary"): st.session_state.nav_menu = "Directorios"; st.session_state.vista_directorio = "proveedores"; st.rerun()
     
-    # 2. FILTROS OPERATIVOS GLOBALES
+    # 2. FILTROS OPERATIVOS
     with st.container(border=True):
         st.markdown("<div class='section-title' style='border:none; margin-bottom:0;'>Filtros Operativos Globales</div>", unsafe_allow_html=True)
         col_f1, col_f2, col_f3 = st.columns(3)
@@ -213,23 +207,23 @@ elif menu == "Panel de inicio":
     tot_can = sum(c["total"] for c in cots_dash if c["estado"] == "Cancelada")
     tot_gen = tot_apr + tot_env + tot_bor + tot_can
 
-    # 3. ANÁLISIS VISUAL Y MÉTRICAS (KPIs 100% Funcionales)
+    # 3. ANÁLISIS VISUAL Y MÉTRICAS NATIVAS (Botones exactos)
     with st.container(border=True):
         st.markdown("<div class='section-title'>Análisis Visual del Portafolio</div>", unsafe_allow_html=True)
         
-        # Fila de Botones KPI (El CSS inyectado los colorea perfectamente)
+        # Fila de Métricas (Botones interactivos que actúan como filtros, interceptados por CSS)
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            st.markdown("<div class='kpi-marker kpi-aprobada'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='kpi-marker btn-color-aprobada'></div>", unsafe_allow_html=True)
             if st.button(f"APROBADAS\n${tot_apr:,.2f}", use_container_width=True, key="btn_apr"): st.session_state.filtro_estado_tabla = "Aprobada"; st.rerun()
         with m2:
-            st.markdown("<div class='kpi-marker kpi-enviada'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='kpi-marker btn-color-enviada'></div>", unsafe_allow_html=True)
             if st.button(f"ENVIADAS\n${tot_env:,.2f}", use_container_width=True, key="btn_env"): st.session_state.filtro_estado_tabla = "Enviada"; st.rerun()
         with m3:
-            st.markdown("<div class='kpi-marker kpi-borrador'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='kpi-marker btn-color-borrador'></div>", unsafe_allow_html=True)
             if st.button(f"BORRADORES\n${tot_bor:,.2f}", use_container_width=True, key="btn_bor"): st.session_state.filtro_estado_tabla = "Borrador"; st.rerun()
         with m4:
-            st.markdown("<div class='kpi-marker kpi-cancelada'></div>", unsafe_allow_html=True)
+            st.markdown("<div class='kpi-marker btn-color-cancelada'></div>", unsafe_allow_html=True)
             if st.button(f"CANCELADAS\n${tot_can:,.2f}", use_container_width=True, key="btn_can"): st.session_state.filtro_estado_tabla = "Cancelada"; st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -237,20 +231,19 @@ elif menu == "Panel de inicio":
         
         with col_donut:
             if tot_gen > 0:
-                df_chart = pd.DataFrame({"Estado": ["Aprobada", "Enviada", "Borrador", "Cancelada"], "Monto": [tot_apr, tot_env, tot_bor, tot_can]})
+                df_chart = pd.DataFrame({"Estado": ["Aprobadas", "Enviadas", "Borradores", "Canceladas"], "Monto": [tot_apr, tot_env, tot_bor, tot_can]})
                 df_chart = df_chart[df_chart["Monto"] > 0]
-                # Eliminamos el Padding para evitar el TypeError
-                chart = alt.Chart(df_chart).mark_arc(innerRadius=45, outerRadius=90, cornerRadius=4, padAngle=0.03).encode(
+                chart = alt.Chart(df_chart).mark_arc(innerRadius=45, outerRadius=80, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta(field="Monto", type="quantitative"), 
-                    color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobada", "Enviada", "Borrador", "Cancelada"], range=["#059669", "#1E3A8A", "#64748B", "#EF4444"]), legend=alt.Legend(title="Distribución", orient="bottom")), 
+                    color=alt.Color(field="Estado", type="nominal", scale=alt.Scale(domain=["Aprobadas", "Enviadas", "Borradores", "Canceladas"], range=["#059669", "#1E3A8A", "#64748B", "#EF4444"]), legend=alt.Legend(title="Distribución", orient="bottom")), 
                     tooltip=["Estado", alt.Tooltip("Monto", format="$,.2f")]
-                ).properties(height=260)
+                ).properties(height=260, padding=20)
                 st.altair_chart(chart, use_container_width=True)
             else:
                 st.info("Sin datos para distribución.")
 
         with col_trend:
-            # Gráfico de BARRAS (No Timeline Irreal). Cambia según el estado visualizado en la tabla.
+            # Gráfico de BARRAS temporal. Cambia según el estado que estés visualizando (Dinámico)
             estado_actual = st.session_state.filtro_estado_tabla
             color_barras = {"Aprobada": "#059669", "Enviada": "#1E3A8A", "Borrador": "#64748B", "Cancelada": "#EF4444"}.get(estado_actual, "#059669")
             
@@ -267,26 +260,17 @@ elif menu == "Panel de inicio":
                 ).properties(height=260)
                 st.altair_chart(chart_bar, use_container_width=True)
             else:
-                st.markdown(f"<div style='padding-top:100px; text-align:center; color:#64748B;'>No hay ingresos registrados en la categoría <b>{estado_actual}</b> para el periodo seleccionado.</div>", unsafe_allow_html=True)
+                st.info(f"Seleccione una métrica con datos para visualizar el gráfico temporal de eventos.")
 
-    # 4. TABLA DETALLADA CON SELECTOR EXPLÍCITO Sincronizado
+    # 4. TABLA DETALLADA (Solo afectada por clics en métricas y buscador)
     with st.container(border=True):
-        st.markdown("<div class='section-title'>Detalle Operativo de Cotizaciones</div>", unsafe_allow_html=True)
+        col_tit, col_bus = st.columns([2, 1])
+        with col_tit: st.markdown(f"<div class='section-title'>Detalle Operativo: {st.session_state.filtro_estado_tabla.upper()}</div>", unsafe_allow_html=True)
+        with col_bus: b_univ = st.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código o cliente...")
         
-        col_rad, col_bus = st.columns([2, 1])
-        with col_rad:
-            # Selector vinculado directamente a la misma variable que cambian los botones KPI
-            st.radio("Filtro de visualización en tabla:", ["Todas", "Aprobada", "Enviada", "Borrador", "Cancelada"], horizontal=True, key="filtro_estado_tabla")
-        with col_bus:
-            b_univ = st.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código o cliente...")
-        
-        st.markdown("<hr style='margin: 5px 0 15px 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-        
-        ev_filt = cots_dash
-        if st.session_state.filtro_estado_tabla != "Todas":
-            ev_filt = [cot for cot in cots_dash if cot["estado"] == st.session_state.filtro_estado_tabla]
-        if b_univ:
-            ev_filt = [c for c in ev_filt if b_univ.lower() in c['codigo'].lower() or b_univ.lower() in c['evento'].lower() or b_univ.lower() in c['cliente'].lower()]
+        # Filtramos la tabla basándonos en el botón de métrica pulsado
+        ev_filt = [cot for cot in cots_dash if cot["estado"] == st.session_state.filtro_estado_tabla]
+        if b_univ: ev_filt = [c for c in ev_filt if b_univ.lower() in c['codigo'].lower() or b_univ.lower() in c['evento'].lower() or b_univ.lower() in c['cliente'].lower()]
         
         if ev_filt:
             cx = st.columns([1.5, 2, 2.5, 1.5, 1])
@@ -302,7 +286,7 @@ elif menu == "Panel de inicio":
                 cx[0].write(f"**{cot['codigo']}**\n\n<span style='font-size:12px; color:#475569;'>{cot['fecha']}</span>", unsafe_allow_html=True)
                 
                 col_est = "#059669" if cot['estado'] == "Aprobada" else ("#1E3A8A" if cot['estado'] == "Enviada" else ("#64748B" if cot['estado'] == "Borrador" else "#EF4444"))
-                cx[1].write(f"{cot['evento']}\n\n<span style='font-size:11px; font-weight:800; color:{col_est};'>{cot['estado'].upper()}</span>", unsafe_allow_html=True)
+                cx[1].write(f"{cot['evento']}\n\n<span style='font-size:11px; font-weight:700; color:{col_est};'>{cot['estado'].upper()}</span>", unsafe_allow_html=True)
                 
                 cx[2].write(f"{cot['cliente']}")
                 cx[3].write(f"**${cot['total']:,.2f}**")
@@ -311,7 +295,7 @@ elif menu == "Panel de inicio":
                         st.session_state.cotizacion_activa = cot; st.session_state.items_cot = cot.get("items", []); st.session_state.nav_menu = "Nueva cotización"; st.rerun()
                 st.markdown("<hr style='margin: 2px 0; border-top: 1px solid #F1F5F9;'>", unsafe_allow_html=True)
         else:
-            st.info(f"No hay cotizaciones para mostrar.")
+            st.info(f"No hay cotizaciones para mostrar en esta categoría.")
 
 # --- VISTA 2: NUEVA COTIZACIÓN ---
 elif menu == "Nueva cotización":
@@ -397,7 +381,7 @@ elif menu == "Nueva cotización":
         with tab_man:
             nc1, nc2, nc3, nc4 = st.columns(4)
             with nc1: n_pro = st.text_input("Proveedor *")
-            with nc2: n_ser = text_input = st.text_input("Servicio *")
+            with nc2: n_ser = st.text_input("Servicio *")
             with nc3: n_ciu = st.selectbox("Ciudad op.", ciudades_lista, key="mc_c")
             with nc4: n_cat = st.text_input("Categoría")
             
