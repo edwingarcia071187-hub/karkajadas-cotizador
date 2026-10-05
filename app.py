@@ -19,7 +19,7 @@ st.markdown("""
     /* ----------------------------------------------------
        BOTONES: VERDE (Avanzar/Crear), AZUL (Neutro), ROJO (Borrar)
        ---------------------------------------------------- */
-    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito) */
+    /* Botones PRIMARIOS = VERDE ESMERALDA (Acciones de éxito y confirmación) */
     button[kind="primary"] {
         background-color: #059669 !important; 
         border: 1px solid #059669 !important;
@@ -45,12 +45,6 @@ st.markdown("""
     }
     button[kind="secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
 
-    /* ESTILOS ESPECÍFICOS PARA LOS BOTONES DE MÉTRICAS (Igualar colores del gráfico) */
-    .btn-metric-aprobada button { background-color: #059669 !important; border-color: #059669 !important; }
-    .btn-metric-enviada button { background-color: #1E3A8A !important; border-color: #1E3A8A !important; }
-    .btn-metric-borrador button { background-color: #64748B !important; border-color: #64748B !important; }
-    .btn-metric-cancelada button { background-color: #EF4444 !important; border-color: #EF4444 !important; }
-
     /* BOTONES COMPACTOS DE LA TABLA (Flechas y Borrar) */
     div[data-testid="column"]:nth-child(8) button,
     div[data-testid="column"]:nth-child(9) button {
@@ -74,6 +68,36 @@ st.markdown("""
         font-weight: bold !important;
     }
     div[data-testid="column"]:nth-child(10) button:hover { background-color: #DC2626 !important; }
+
+    /* ----------------------------------------------------
+       COLORES DINÁMICOS PARA LAS MÉTRICAS (Mapeados al Donut Chart)
+       ---------------------------------------------------- */
+    /* Ocultar contenedores de los marcadores */
+    div[data-testid="element-container"]:has(.btn-marker) { display: none !important; margin: 0 !important; padding: 0 !important; height: 0 !important; }
+
+    /* Verde para Aprobadas */
+    div[data-testid="element-container"]:has(.metric-aprobada) + div[data-testid="element-container"] button {
+        background-color: #059669 !important; border: none !important; color: white !important; box-shadow: 0 2px 4px rgba(5,150,105,0.2) !important;
+    }
+    div[data-testid="element-container"]:has(.metric-aprobada) + div[data-testid="element-container"] button:hover { background-color: #047857 !important; transform: translateY(-2px); }
+
+    /* Azul para Enviadas */
+    div[data-testid="element-container"]:has(.metric-enviada) + div[data-testid="element-container"] button {
+        background-color: #1E3A8A !important; border: none !important; color: white !important; box-shadow: 0 2px 4px rgba(30,58,138,0.2) !important;
+    }
+    div[data-testid="element-container"]:has(.metric-enviada) + div[data-testid="element-container"] button:hover { background-color: #1E40AF !important; transform: translateY(-2px); }
+
+    /* Gris Pizarra para Borradores */
+    div[data-testid="element-container"]:has(.metric-borrador) + div[data-testid="element-container"] button {
+        background-color: #64748B !important; border: none !important; color: white !important; box-shadow: 0 2px 4px rgba(100,116,139,0.2) !important;
+    }
+    div[data-testid="element-container"]:has(.metric-borrador) + div[data-testid="element-container"] button:hover { background-color: #475569 !important; transform: translateY(-2px); }
+
+    /* Rojo para Canceladas */
+    div[data-testid="element-container"]:has(.metric-cancelada) + div[data-testid="element-container"] button {
+        background-color: #EF4444 !important; border: none !important; color: white !important; box-shadow: 0 2px 4px rgba(239,68,68,0.2) !important;
+    }
+    div[data-testid="element-container"]:has(.metric-cancelada) + div[data-testid="element-container"] button:hover { background-color: #DC2626 !important; transform: translateY(-2px); }
 
     /* ----------------------------------------------------
        PANEL LATERAL (Simetría, sombreado y hover 3D)
@@ -236,17 +260,15 @@ elif menu == "Panel de inicio":
             st.markdown("<p style='font-size: 13px; color: #64748B;'>Seleccione una métrica para filtrar el listado inferior:</p>", unsafe_allow_html=True)
             lm1, lm2 = st.columns(2)
             with lm1:
-                st.markdown("<div class='btn-metric-aprobada'>", unsafe_allow_html=True)
-                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
-                st.markdown("</div><div class='btn-metric-borrador'>", unsafe_allow_html=True)
-                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown('<span class="btn-marker metric-aprobada"></span>', unsafe_allow_html=True)
+                if st.button(f"Aprobadas\n\n${tot_apr:,.2f}", use_container_width=True, key="b_apr"): st.session_state.filtro_dashboard = "Aprobada"; st.rerun()
+                st.markdown('<span class="btn-marker metric-borrador"></span>', unsafe_allow_html=True)
+                if st.button(f"Borradores\n\n${tot_bor:,.2f}", use_container_width=True, key="b_bor"): st.session_state.filtro_dashboard = "Borrador"; st.rerun()
             with lm2:
-                st.markdown("<div class='btn-metric-enviada'>", unsafe_allow_html=True)
-                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
-                st.markdown("</div><div class='btn-metric-cancelada'>", unsafe_allow_html=True)
-                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, type="primary"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown('<span class="btn-marker metric-enviada"></span>', unsafe_allow_html=True)
+                if st.button(f"Enviadas\n\n${tot_env:,.2f}", use_container_width=True, key="b_env"): st.session_state.filtro_dashboard = "Enviada"; st.rerun()
+                st.markdown('<span class="btn-marker metric-cancelada"></span>', unsafe_allow_html=True)
+                if st.button(f"Canceladas\n\n${tot_can:,.2f}", use_container_width=True, key="b_can"): st.session_state.filtro_dashboard = "Cancelada"; st.rerun()
     
     with st.container(border=True):
         col_tit, col_bus = st.columns([2, 1])
@@ -283,7 +305,6 @@ elif menu == "Nueva cotización":
     sub_head = sum((i["cantidad"] * i["costo"] * (1 + i["iva_prov"])) * (1 + i["fee_pct"]/100.0) for i in st.session_state.items_cot)
     tot_head = sub_head * 1.15
     
-    # Encabezado Corregido
     st.markdown(f"""
         <div style='display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px;'>
             <h2 style='font-weight: 700; color: #0F172A; margin: 0;'>Gestión de cotizaciones</h2>
@@ -303,18 +324,10 @@ elif menu == "Nueva cotización":
     def_est_idx = ["Borrador", "Enviada", "Aprobada", "Cancelada"].index(c_activa["estado"]) if c_activa else 0
     
     with st.container(border=True):
-        st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:0; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
-        col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
-        with col1: cod_cotizacion = st.text_input("Referencia", value=def_cod)
-        with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev)
-        with col3: cliente_sel = st.selectbox("Cuenta de cliente", lista_cli, index=def_cli_idx)
-        with col4: fecha_gral = st.date_input("Fecha", datetime.now()) 
-        with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
-        
-        # Botón de guardado rápido ubicado después de las variables para evitar NameError
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_espacio, col_boton_top = st.columns([5, 1])
-        with col_boton_top:
+        col_tit, col_btn = st.columns([4, 1])
+        with col_tit:
+            st.markdown("<h4 style='color: #0F172A; font-size: 14px; margin-top:8px; text-transform: uppercase;'>Información del evento</h4>", unsafe_allow_html=True)
+        with col_btn:
             if st.button("Guardar cambios", type="primary", use_container_width=True, key="btn_save_top"):
                 if cliente_sel == "+ Registrar nuevo cliente...":
                     st.error("Registre la cuenta del cliente antes de guardar.")
@@ -328,6 +341,13 @@ elif menu == "Nueva cotización":
                     st.success("Guardado exitoso.")
                     st.session_state.nav_menu = "Panel de inicio"
                     st.rerun()
+
+        col1, col2, col3, col4, col5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
+        with col1: cod_cotizacion = st.text_input("Referencia", value=def_cod)
+        with col2: nombre_evento = st.text_input("Nombre del evento", value=def_ev)
+        with col3: cliente_sel = st.selectbox("Cuenta de cliente", lista_cli, index=def_cli_idx)
+        with col4: fecha_gral = st.date_input("Fecha", datetime.now()) 
+        with col5: estado_cot = st.selectbox("Estado", ["Borrador", "Enviada", "Aprobada", "Cancelada"], index=def_est_idx)
 
     if cliente_sel == "+ Registrar nuevo cliente...":
         with st.container(border=True):
