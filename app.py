@@ -13,6 +13,8 @@ from datetime import date, datetime
 # CONSTANTES
 # =============================================================================
 ESTADOS = ["Aprobada", "Enviada", "Borrador", "Cancelada"]
+MENU_CLIENTES = "Directorio de clientes"
+MENU_PROVEEDORES = "Directorio de proveedores"
 COLORES = {
     "Aprobada": "#059669",   # verde
     "Enviada": "#1E3A8A",    # azul
@@ -198,7 +200,7 @@ st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
 # ESTADO INICIAL
 # =============================================================================
 ss = st.session_state
-ss.setdefault("nav_menu", "Panel de inicio")
+ss.setdefault("nav_menu", "Panel de control")
 ss.setdefault("items_cot", [])
 ss.setdefault("cotizacion_activa", None)
 ss.setdefault("filtro_estado_tabla", "Todas")
@@ -339,7 +341,7 @@ def dialogo_salida():
     st.write("Hiciste cambios en esta cotización que todavía no se guardaron. Si sales ahora, se perderán.")
     c1, c2 = st.columns(2)
     if c1.button("Salir sin guardar", key="exit_confirm", use_container_width=True):
-        ir(ss.pop("destino_salida", "Panel de inicio"))
+        ir(ss.pop("destino_salida", "Panel de control"))
         st.rerun()
     if c2.button("Cancelar", key="exit_cancel", use_container_width=True):
         ss.pop("destino_salida", None)
@@ -379,6 +381,13 @@ def dialogo_editar(idx):
             st.rerun()
     if b2.button("Cancelar", use_container_width=True, key=f"ed_no_{idx}"):
         st.rerun()
+
+
+def encabezado_modulo(clave, html, unsafe_allow_html=True):
+    """Encabezado de cada módulo: botón para volver al panel de control + el título."""
+    c_vol, c_tit = st.columns([2.1, 8], vertical_alignment="center")
+    c_vol.button("← Panel de control", key=f"volver_{clave}", on_click=navegar, args=("Panel de control",), help="Volver al panel de control")
+    c_tit.markdown(html, unsafe_allow_html=True)
 
 
 def fijar_estado(estado):
@@ -897,10 +906,10 @@ def editor_lista(clave, filas, columnas, config):
 
 
 COL_CONTACTOS = ["nombre", "cargo", "correo", "telefono"]
-CFG_CONTACTOS = {"nombre": st.column_config.TextColumn("Nombre", width="medium"), "cargo": st.column_config.TextColumn("Cargo / Área"),
+CFG_CONTACTOS = {"nombre": st.column_config.TextColumn("Nombre", width="medium"), "cargo": st.column_config.TextColumn("Cargo / área"),
                  "correo": st.column_config.TextColumn("Correo", width="medium"), "telefono": st.column_config.TextColumn("Teléfono")}
 COL_DIRECCIONES = ["etiqueta", "direccion", "ciudad"]
-CFG_DIRECCIONES = {"etiqueta": st.column_config.TextColumn("Etiqueta (Matriz, Bodega...)"),
+CFG_DIRECCIONES = {"etiqueta": st.column_config.TextColumn("Etiqueta (matriz, bodega...)"),
                    "direccion": st.column_config.TextColumn("Dirección", width="large"),
                    "ciudad": st.column_config.SelectboxColumn("Ciudad", options=CIUDADES)}
 COL_SERVICIOS = ["servicio", "categoria", "ciudad", "precio_base", "iva", "descripcion"]
@@ -945,7 +954,7 @@ def form_cliente(prefijo, titulo_html="", datos=None, cancelar=False):
     if titulo_html:
         st.markdown(titulo_html, unsafe_allow_html=True)
     c1, c2, c3, c4, c5 = st.columns([2.3, 1.4, 1.3, 1.8, 1])
-    emp = c1.text_input("Razón social / Empresa *", value=d.get("empresa", ""), key=f"{prefijo}_emp")
+    emp = c1.text_input("Razón social / empresa *", value=d.get("empresa", ""), key=f"{prefijo}_emp")
     ruc = c2.text_input("RUC *", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
     ciu = c3.selectbox("Ciudad principal", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
     web = c4.text_input("Sitio web", value=d.get("web", ""), key=f"{prefijo}_web")
@@ -1104,7 +1113,7 @@ def completar_proveedor(nombre, ciudad):
     """Lleva al directorio; si el proveedor no existe todavía, lo crea para poder completarlo."""
     asegurar_proveedor(nombre, ciudad, "General")
     ss.dir_prv_solo = True
-    navegar("Directorios")
+    navegar(MENU_PROVEEDORES)
 
 
 def resumen_contactos(r):
@@ -1177,7 +1186,7 @@ def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, cr
 # MENÚ LATERAL
 # =============================================================================
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
-MENU_PRINCIPAL = ["Panel de inicio", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
+MENU_PRINCIPAL = ["Panel de control", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
 MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
 CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
 MENU_PROV = "Órdenes a proveedores"
@@ -1188,6 +1197,9 @@ for opcion in MENU_PRINCIPAL:
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>COTIZADOR DE CATÁLOGOS</p>", unsafe_allow_html=True)
 for opcion in CATALOGOS:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
+st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>DIRECTORIOS</p>", unsafe_allow_html=True)
+for _op in (MENU_CLIENTES, MENU_PROVEEDORES):
+    st.sidebar.button(_op, use_container_width=True, key=f"nav_{_op}", on_click=navegar, args=(_op,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>OPERACIONES</p>", unsafe_allow_html=True)
 for _op in (MENU_PROV, MENU_BODEGA):
     st.sidebar.button(_op, use_container_width=True, key=f"nav_{_op}", on_click=navegar, args=(_op,))
@@ -1203,36 +1215,36 @@ if ss.get("aviso_pendiente"):
 # MÓDULOS EN CONSTRUCCIÓN
 # =============================================================================
 if menu in MENU_PRINCIPAL[1:] + MENU_SOPORTE:
-    st.markdown(f"<h2 style='color:#0F172A; font-weight:800;'>{menu}</h2>", unsafe_allow_html=True)
+    encabezado_modulo("obra", f"<h2 style='color:#0F172A; font-weight:800; margin:0;'>{menu}</h2>")
     st.info("Módulo en construcción.")
 
 # =============================================================================
 # VISTA 1: PANEL DE INICIO
 # =============================================================================
-elif menu == "Panel de inicio":
+elif menu == "Panel de control":
 
     # 1. Título + accesos rápidos
     with st.container(border=True, key="card_1"):
         col_tit, col_btns = st.columns([1, 2.5])
         with col_tit:
-            st.markdown("<h3 style='color:#0F172A; font-weight:800; margin:0; padding-top:5px;'>Panel de Control</h3>", unsafe_allow_html=True)
-            st.markdown("<span style='color:#64748B; font-size:13px; font-weight:600;'>Resumen Ejecutivo</span>", unsafe_allow_html=True)
+            st.markdown("<h3 style='color:#0F172A; font-weight:800; margin:0; padding-top:5px;'>Panel de control</h3>", unsafe_allow_html=True)
+            st.markdown("<span style='color:#64748B; font-size:13px; font-weight:600;'>Resumen ejecutivo</span>", unsafe_allow_html=True)
         with col_btns:
             b1, b2, b3 = st.columns(3)
             b1.button("Crear cotización", use_container_width=True, type="primary", key="go_new",
                       on_click=ir, args=("Nueva cotización",), kwargs={"cotizacion_activa": None, "items_cot": []})
-            b2.button("Directorio Clientes", use_container_width=True, type="secondary", key="go_cli", on_click=ir, args=("Directorios",))
-            b3.button("Directorio Proveedores", use_container_width=True, type="secondary", key="go_pro", on_click=ir, args=("Directorios",))
+            b2.button("Directorio de clientes", use_container_width=True, type="secondary", key="go_cli", on_click=navegar, args=(MENU_CLIENTES,))
+            b3.button("Directorio de proveedores", use_container_width=True, type="secondary", key="go_pro", on_click=navegar, args=(MENU_PROVEEDORES,))
 
     # 2. Filtros globales (con key para poder borrarlos desde el botón "Borrar selección")
     cotizaciones = ss.cotizaciones_guardadas
     ciudad_cliente = {c["empresa"]: c["ciudad"] for c in ss.clientes_catalogo}
     with st.container(border=True, key="card_2"):
-        st.markdown("<div class='section-title' style='border:none; margin-bottom:0;'>Filtros Operativos Globales</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title' style='border:none; margin-bottom:0;'>Filtros operativos globales</div>", unsafe_allow_html=True)
         col_f1, col_f2, col_f3 = st.columns(3)
-        col_f1.selectbox("Filtrar por Empresa / Cuenta", ["Todas"] + sorted({c["cliente"] for c in cotizaciones}), key="f_emp")
-        col_f2.selectbox("Filtrar por Mes Operativo", ["Todos"] + sorted({c["fecha"][:7] for c in cotizaciones}), key="f_mes")
-        col_f3.selectbox("Filtrar por Ciudad", ["Todas"] + CIUDADES, key="f_ciu")
+        col_f1.selectbox("Filtrar por empresa / cuenta", ["Todas"] + sorted({c["cliente"] for c in cotizaciones}), key="f_emp")
+        col_f2.selectbox("Filtrar por mes operativo", ["Todos"] + sorted({c["fecha"][:7] for c in cotizaciones}), key="f_mes")
+        col_f3.selectbox("Filtrar por ciudad", ["Todas"] + CIUDADES, key="f_ciu")
 
     cots_dash = [
         c for c in cotizaciones
@@ -1250,7 +1262,7 @@ elif menu == "Panel de inicio":
     # 3. Tarjetas + gráficos
     with st.container(border=True, key="card_3"):
         c_tit, c_clear = st.columns([3, 2], vertical_alignment="center")
-        c_tit.markdown("<div class='section-title'>Análisis Financiero Interactivo</div>", unsafe_allow_html=True)
+        c_tit.markdown("<div class='section-title'>Análisis financiero interactivo</div>", unsafe_allow_html=True)
         with c_clear:
             if hay_filtros:   # enlace discreto: borra tarjeta, filtros globales y buscador
                 st.button(f"↺ Borrar filtros · Total general ${total_general:,.2f}", key="clear_btn", on_click=limpiar_filtros)
@@ -1315,7 +1327,7 @@ elif menu == "Panel de inicio":
                 color = alt.Color("Estado:N", scale=alt.Scale(domain=estados_graf, range=[COLORES[e] for e in estados_graf]),
                                   legend=alt.Legend(title=None, orient="bottom", symbolOpacity=1, symbolType="circle") if len(estados_graf) > 1 else None)
                 base = alt.Chart(df).encode(
-                    x=alt.X("Mes:O", sort=orden, title="Mes Operativo", axis=alt.Axis(labelAngle=0, grid=False, labelColor="#64748B")),
+                    x=alt.X("Mes:O", sort=orden, title="Mes operativo", axis=alt.Axis(labelAngle=0, grid=False, labelColor="#64748B")),
                     y=alt.Y("Monto:Q", stack=None, title=y_title, axis=alt.Axis(format="$,.0f", gridColor="#E2E8F0", labelColor="#64748B")),
                     color=color,
                 )
@@ -1332,7 +1344,7 @@ elif menu == "Panel de inicio":
     # 4. Tabla detallada
     with st.container(border=True, key="card_4"):
         col_tit, col_bus = st.columns([2, 1])
-        col_tit.markdown(f"<div class='section-title'>Detalle Operativo: {estado_actual.upper()}</div>", unsafe_allow_html=True)
+        col_tit.markdown(f"<div class='section-title'>Detalle operativo: {estado_actual.upper()}</div>", unsafe_allow_html=True)
         busqueda = col_bus.text_input("Buscador...", key="b_u", label_visibility="collapsed", placeholder="Buscar código, evento o cliente...").lower()
 
         ev_filt = [c for c in cots_dash
@@ -1372,7 +1384,7 @@ elif menu == "Nueva cotización":
     if ss.pop("confirmar_salida", False):
         dialogo_salida()
     h_back, h_tit, h_monto = st.columns([1.15, 4, 2.2], vertical_alignment="center")
-    h_back.button("← Panel de inicio", key="back_btn", on_click=navegar, args=("Panel de inicio",), help="Volver al panel de inicio")
+    h_back.button("← Panel de control", key="back_btn", on_click=navegar, args=("Panel de control",), help="Volver al panel de control")
     h_tit.markdown("<h2 style='font-weight:800; color:#0F172A; margin:0;'>Gestión de cotizaciones</h2>", unsafe_allow_html=True)
     h_monto.markdown(f"""<div class='monto-badge'><div class='monto-label'>Monto estimado</div>
         <div class='monto-valor'><span class='mon'>$</span>{tot_head:,.2f}</div></div>""", unsafe_allow_html=True)
@@ -1548,8 +1560,8 @@ elif menu in CATALOGOS:
     _titulo = "Catálogo navideño" if _nav else "Catálogo regular"
     _lema = "Shows, inflables y experiencias para la temporada" if _nav else "Atracciones y servicios para tus eventos corporativos"
     _icono = "🎄" if _nav else "🎪"
-    st.markdown(
-        "<style>.block-container{padding-top:2.4rem !important; padding-bottom:0 !important; min-height:0 !important;}</style>"
+    encabezado_modulo("cat",
+        "<style>.block-container{padding-top:3.4rem !important; padding-bottom:0 !important; min-height:0 !important;}</style>"
         f"<div style='display:flex; align-items:center; justify-content:space-between; gap:18px; background:{_fondo}; border-radius:14px; padding:12px 24px; margin:0 0 10px 0; box-shadow:0 1px 2px rgba(15,23,42,.10);'>"
         f"<div style='display:flex; align-items:center; gap:16px;'>"
         f"<span style='font-size:2rem; line-height:1;'>{_icono}</span>"
@@ -1569,7 +1581,7 @@ elif menu in CATALOGOS:
 # ÓRDENES A PROVEEDORES (cotización aprobada -> datos del evento -> una ficha de contratación por proveedor)
 # =============================================================================
 elif menu == MENU_PROV:
-    st.markdown(
+    encabezado_modulo("prov",
         "<style>.block-container{padding-top:2.4rem !important;}</style>"
         "<div style='background:#134E4A; border-radius:14px; padding:12px 24px; margin:0 0 12px 0;'>"
         "<div style='font-size:0.78rem; font-weight:600; color:#99F6E4;'>Operaciones</div>"
@@ -1647,7 +1659,7 @@ elif menu == MENU_PROV:
 # BODEGA (pedido generado desde la cotización + checklist detallado del bodeguero)
 # =============================================================================
 elif menu == MENU_BODEGA:
-    st.markdown(
+    encabezado_modulo("bod",
         "<style>.block-container{padding-top:2.4rem !important;}</style>"
         "<div style='background:#134E4A; border-radius:14px; padding:12px 24px; margin:0 0 12px 0;'>"
         "<div style='font-size:0.78rem; font-weight:600; color:#99F6E4;'>Operaciones</div>"
@@ -1723,13 +1735,11 @@ elif menu == MENU_BODEGA:
 # =============================================================================
 # VISTA 3: DIRECTORIOS
 # =============================================================================
-elif menu == "Directorios":
-    st.markdown("<h2 style='color:#0F172A; font-weight:800; margin-bottom:20px;'>Gestión de cuentas (CRM)</h2>", unsafe_allow_html=True)
+elif menu in (MENU_CLIENTES, MENU_PROVEEDORES):
+    encabezado_modulo("dir", f"<h2 style='color:#0F172A; font-weight:800; margin:0;'>{menu}</h2>")
 
     with st.container(border=True, key="card_9"):
-        t_cli, t_pro = st.tabs(["Directorio de clientes", "Red de proveedores"])
-
-        with t_cli:
+        if menu == MENU_CLIENTES:
             def fila_cliente(c):
                 con, mail, tel = resumen_contactos(c)
                 return {"Empresa": c["empresa"], "RUC": c["ruc"], "Ciudad": c["ciudad"], "Contacto": con, "Correo": mail, "Teléfono": tel,
@@ -1739,7 +1749,7 @@ elif menu == "Directorios":
                 lambda c: " ".join([c["empresa"], c["ruc"], c["ciudad"]] + [f"{x['nombre']} {x['correo']} {x['telefono']}" for x in c.get("contactos", [])]),
                 form_cliente, validar_cliente, crear_cliente, actualizar_cliente, lambda c: c["empresa"], "Nueva cuenta")
 
-        with t_pro:
+        if menu == MENU_PROVEEDORES:
             sub_prov, sub_serv = st.tabs(["Proveedores (datos de contacto)", "Servicios y costos"])
 
             with sub_prov:
