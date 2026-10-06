@@ -1440,6 +1440,13 @@ elif menu == MENU_ORDENES:
         # ---- 1. Datos del evento (una sola vez; los usan todas las fichas y bodega)
         with st.expander("1. Datos del evento (se llenan una vez y se usan en todas las fichas y en bodega)", expanded=cod not in ss.eventos):
             contactos = cli.get("contactos", [])
+            if contactos:
+                def _rellenar(cod=cod, contactos=contactos):
+                    x = next((c for c in contactos if f"{c['nombre']} {('- ' + c['cargo']) if c['cargo'] else ''}".strip() == ss[f"ev_pick_{cod}"]), None)
+                    if x:
+                        ss[f"ev_n_{cod}"], ss[f"ev_p_{cod}"] = x["nombre"], x["telefono"]
+                st.selectbox("Atajo: rellenar «Persona que recibe» con un contacto registrado del cliente", [f"{c['nombre']} {('- ' + c['cargo']) if c['cargo'] else ''}".strip() for c in contactos],
+                             index=None, placeholder="Elige un contacto (opcional)", key=f"ev_pick_{cod}", on_change=_rellenar)
             with st.form(f"form_evento_{cod}"):
                 a, b = st.columns(2)
                 f_ent = a.date_input("Fecha de entrega del servicio", value=datetime.strptime(ev["fecha_entrega"][:10], "%Y-%m-%d"), key=f"ev_f_{cod}")
@@ -1449,11 +1456,9 @@ elif menu == MENU_ORDENES:
                 direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{cod}")
                 horario = st.text_area("Horario", ev["horario"], height=90, key=f"ev_h_{cod}",
                                        placeholder="Montaje 06/10/2026 - A partir de las 05h00\nEvento 06/10/2026 - 06:00 - 08:30")
-                c1, c2, c3 = st.columns(3)
-                nombres = ["(escribir otra persona)"] + [f"{x['nombre']} - {x['cargo']}".strip(" -") for x in contactos]
-                elegido = c1.selectbox("Persona que recibe (contactos del cliente)", nombres, key=f"ev_c_{cod}")
-                otro_n = c2.text_input("Si es otra persona: nombre", ev["recibe"] if elegido == nombres[0] else "", key=f"ev_n_{cod}")
-                otro_t = c3.text_input("Si es otra persona: teléfono", ev["telefono_recibe"] if elegido == nombres[0] else "", key=f"ev_p_{cod}")
+                c2, c3 = st.columns(2)
+                otro_n = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{cod}")
+                otro_t = c3.text_input("Teléfono de quien recibe", ev["telefono_recibe"], key=f"ev_p_{cod}")
                 d1, d2, d3, d4 = st.columns(4)
                 ubic = d1.selectbox("Ubicación enviada", ["Pendiente", "Enviada"], index=["Pendiente", "Enviada"].index(ev["ubicacion"]) if ev["ubicacion"] in ("Pendiente", "Enviada") else 0, key=f"ev_u_{cod}")
                 mon = d2.selectbox("Montaje", ["Sí", "No"], index=0 if ev["montaje"] == "Sí" else 1, key=f"ev_m_{cod}")
@@ -1464,11 +1469,7 @@ elif menu == MENU_ORDENES:
                 otros = e2.text_input("Otros", ev["otros"], key=f"ev_o_{cod}")
                 obs = st.text_area("Observación", ev["observacion"], height=120, key=f"ev_ob_{cod}")
                 if st.form_submit_button("Guardar datos del evento"):
-                    if elegido != nombres[0]:
-                        x = contactos[nombres.index(elegido) - 1]
-                        recibe, tel = x["nombre"], x["telefono"]
-                    else:
-                        recibe, tel = otro_n, otro_t
+                    recibe, tel = otro_n, otro_t
                     ss.eventos[cod] = {"fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": inv, "lugar": lugar, "direccion": direccion,
                                        "ubicacion": ubic, "horario": horario, "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
                                        "montaje": mon, "hora_montaje": hmon, "desmontaje": desm, "documento": doc_in, "otros": otros, "observacion": obs}
