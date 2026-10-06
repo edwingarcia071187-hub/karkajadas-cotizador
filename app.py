@@ -1115,13 +1115,23 @@ elif menu == "Nueva cotización":
 # COTIZADOR DE CATÁLOGOS (regular y navideño): página HTML incrustada
 # =============================================================================
 elif menu in CATALOGOS:
-    st.markdown(f"<h2 style='color:#0F172A; font-weight:800; margin-bottom:6px;'>Cotizador · {menu.replace('Catálogo ', 'catálogo ')}</h2>", unsafe_allow_html=True)
+    _nav = CATALOGOS[menu] == "navidad"
+    _color = "#B91C1C" if _nav else "#1E3A8A"
+    _fondo = "#FEE2E2" if _nav else "#E3E9F1"
+    _tipo = "navideño" if _nav else "regular"
+    st.markdown(
+        "<style>.block-container{padding-top:2.2rem !important; padding-bottom:0 !important;}</style>"
+        "<div style='display:flex; align-items:center; gap:14px; margin:0 0 8px 0;'>"
+        "<span style='font-size:1.55rem; font-weight:800; color:#0F172A; letter-spacing:-0.01em;'>Cotizador de catálogos</span>"
+        f"<span style='font-size:0.82rem; font-weight:700; color:{_color}; background:{_fondo}; border:1px solid {_color}33; padding:4px 14px; border-radius:999px;'>Catálogo {_tipo}</span>"
+        "</div>",
+        unsafe_allow_html=True)
     ruta_html = Path(__file__).parent / "cotizador_catalogos.html"
     if not ruta_html.exists():
         st.error("Falta el archivo cotizador_catalogos.html en el repositorio, junto a app.py. Súbelo en GitHub (Add file → Upload files).")
     else:
         pagina = ruta_html.read_text(encoding="utf-8").replace("</body>", f"<script>iniciarEmbebido('{CATALOGOS[menu]}');</script></body>")
-        components.html(pagina, height=900, scrolling=True)
+        components.html(pagina, height=700, scrolling=False)
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
