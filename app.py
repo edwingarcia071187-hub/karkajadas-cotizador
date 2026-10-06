@@ -1082,6 +1082,29 @@ def asegurar_proveedor(nombre, ciudad, categoria):
     if not any(p["proveedor"].lower() == nombre.lower() for p in ss.proveedores):
         crear_proveedor({"proveedor": nombre, "ruc": "", "categoria": categoria, "ciudad": ciudad, "observaciones": "",
                          "contactos": [], "direcciones": [], "cuentas": []})
+        return True
+    return False
+
+
+def faltantes_proveedor(p):
+    """Qué le falta a un proveedor para considerarse completo: RUC y un contacto con teléfono (la empresa propia no se revisa)."""
+    if not p:
+        return ["estar en el directorio"]
+    if p.get("proveedor") == "Karkajadas Group":
+        return []
+    falta = []
+    if not str(p.get("ruc", "")).strip():
+        falta.append("RUC")
+    if not any(str(c.get("telefono", "")).strip() for c in p.get("contactos", [])):
+        falta.append("contacto con teléfono")
+    return falta
+
+
+def completar_proveedor(nombre, ciudad):
+    """Lleva al directorio; si el proveedor no existe todavía, lo crea para poder completarlo."""
+    asegurar_proveedor(nombre, ciudad, "General")
+    ss.dir_prv_solo = True
+    navegar("Directorios")
 
 
 def resumen_contactos(r):
@@ -1096,7 +1119,7 @@ def abrir_nuevo(k):
     ss[f"dir_{k}_ver"] += 1   # deselecciona la fila de la tabla
 
 
-def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, crear, actualizar, nombre, etiqueta_nuevo):
+def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, crear, actualizar, nombre, etiqueta_nuevo, filtro=None):
     """Tabla con búsqueda; al seleccionar una fila se edita; el botón de nuevo abre el formulario vacío."""
     ss.setdefault(f"dir_{k}_ver", 0)
     ss.setdefault(f"dir_{k}_nuevo", False)
@@ -1104,7 +1127,7 @@ def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, cr
     c_b, c_n = st.columns([3, 1], vertical_alignment="center")
     busq = c_b.text_input("Buscar", key=f"dir_{k}_b", label_visibility="collapsed", placeholder="Buscar...").lower()
     c_n.button(f"＋ {etiqueta_nuevo}", key=f"dir_{k}_btn_nuevo", on_click=abrir_nuevo, args=(k,), use_container_width=True, type="primary")
-    vis = [r for r in registros if not busq or busq in texto_busqueda(r).lower()]
+    vis = [r for r in registros if (not busq or busq in texto_busqueda(r).lower()) and (filtro is None or filtro(r))]
     sel = []
     if vis:
         ev = st.dataframe(pd.DataFrame([fila_tabla(r) for r in vis]), hide_index=True, use_container_width=True, on_select="rerun",
@@ -1173,6 +1196,8 @@ for opcion in MENU_SOPORTE:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
 
 menu = ss.nav_menu
+if ss.get("aviso_pendiente"):
+    st.toast(ss.pop("aviso_pendiente"), icon="ℹ️")
 
 # =============================================================================
 # MÓDULOS EN CONSTRUCCIÓN
@@ -1430,7 +1455,8 @@ elif menu == "Nueva cotización":
                     items.append({"servicio": n_ser, "proveedor": n_pro, "ciudad": n_ciu, "fecha": str(f_it_m),
                                   "cantidad": can_it_m, "costo": cos_it_m, "iva_prov": iva_it_m, "fee_pct": fee_it_m})
                     if g_bd:
-                        asegurar_proveedor(n_pro.strip(), n_ciu, n_cat or "General")
+                        if asegurar_proveedor(n_pro.strip(), n_ciu, n_cat or "General"):
+                            ss.aviso_pendiente = f"Proveedor «{n_pro.strip()}» creado. Complétalo luego en Directorios."
                         ss.proveedores_catalogo.append({"servicio": n_ser, "proveedor": n_pro.strip(), "categoria": n_cat or "General", "ciudad": n_ciu,
                                                         "precio_base": cos_it_m, "iva": iva_it_m, "descripcion": "Manual"})
                     st.rerun()
@@ -1584,6 +1610,12 @@ elif menu == MENU_PROV:
                         if w2.button("Actualizar desde la cotización", key=f"act_{n}_{cod}", type="primary", use_container_width=True):
                             ss.fichas.pop(clave, None)
                             st.rerun()
+                    falta = faltantes_proveedor(proveedor_de(prov))
+                    if falta:
+                        q1, q2 = st.columns([4, 1.6], vertical_alignment="center")
+                        q1.warning(f"A este proveedor le falta: {', '.join(falta)}.")
+                        q2.button("Completar proveedor", key=f"comp_{n}_{cod}", type="primary", use_container_width=True,
+                                  on_click=completar_proveedor, args=(prov, items[0]["ciudad"]))
                     fp = {**proveedor_inicial(cot, prov, items), **{k: v for k, v in (guardada or {}).items() if k != "firma"}}
                     st.dataframe(pd.DataFrame([{"Servicio": i["servicio"], "Fecha": fmt_fecha(i["fecha"]), "Ciudad": i["ciudad"], "Cantidad": i["cantidad"]} for i in items]),
                                  hide_index=True, use_container_width=True, height=min(35 * (len(items) + 1) + 3, 240))
@@ -1714,13 +1746,24 @@ elif menu == "Directorios":
                 def fila_proveedor(p):
                     con, mail, tel = resumen_contactos(p)
                     cta = p["cuentas"][0] if p.get("cuentas") else {}
-                    return {"Proveedor": p["proveedor"], "Categoría": p["categoria"], "Ciudad": p["ciudad"], "Contacto": con, "Correo": mail, "Teléfono": tel,
+                    return {"Proveedor": p["proveedor"], "Estado": "Incompleto" if faltantes_proveedor(p) else "Completo",
+                            "Categoría": p["categoria"], "Ciudad": p["ciudad"], "Contacto": con, "Correo": mail, "Teléfono": tel,
                             "Banco": f"{cta.get('banco', '')} {cta.get('numero', '')}".strip(),
                             "Servicios": sum(1 for r in ss.proveedores_catalogo if r["proveedor"] == p["proveedor"])}
+                n_inc = sum(1 for p in ss.proveedores if faltantes_proveedor(p))
+                ss.setdefault("dir_prv_solo", False)
+                if n_inc:
+                    a1, a2 = st.columns([4, 1.6], vertical_alignment="center")
+                    a1.warning(f"{n_inc} proveedor(es) por completar (falta RUC o un contacto con teléfono).")
+                    a2.checkbox("Ver solo los incompletos", key="dir_prv_solo")
+                else:
+                    ss.dir_prv_solo = False
+                    st.caption("Todos los proveedores tienen su información básica completa.")
                 panel_directorio(
                     "prv", ss.proveedores, fila_proveedor,
                     lambda p: " ".join([p["proveedor"], p["categoria"], p["ciudad"], p.get("ruc", "")] + [f"{x['nombre']} {x['correo']} {x['telefono']}" for x in p.get("contactos", [])]),
-                    form_proveedor, validar_proveedor, crear_proveedor, actualizar_proveedor, lambda p: p["proveedor"], "Nuevo proveedor")
+                    form_proveedor, validar_proveedor, crear_proveedor, actualizar_proveedor, lambda p: p["proveedor"], "Nuevo proveedor",
+                    filtro=(lambda p: bool(faltantes_proveedor(p))) if ss.dir_prv_solo else None)
 
             with sub_serv:
                 st.caption("Edita directamente en la tabla: cambia un valor con doble clic, agrega una fila con ＋ al final, o borra una fila seleccionándola y pulsando la papelera.")
