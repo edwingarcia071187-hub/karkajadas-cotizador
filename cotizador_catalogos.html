@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karkajadas Group - Cotizador Exclusivo</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg-void: #03050a;
+      --surface-dark: #0a0f1d;
+      --card-dark: #111827;
+      --gold-primary: #d97706;
+      --gold-glow: #f59e0b;
+      --gold-gradient: linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #b45309 100%);
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(245, 158, 11, 0.35);
+      --preview-bg: #ffffff;
+      --preview-text: #0f172a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+
+    body {
+      background-color: var(--bg-void);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding: 16px 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ESTUDIO DE ILUMINACIÓN VOLUMÉTRICA */
+    .cinematic-environment {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .film-grain-mesh {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: 
+        radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        radial-gradient(rgba(245, 158, 11, 0.025) 1px, transparent 1px);
+      background-size: 32px 32px, 48px 48px;
+      background-position: 0 0, 16px 16px;
+      opacity: 0.7;
+    }
+
+    .stage-beam-gold {
+      position: absolute;
+      width: 950px;
+      height: 950px;
+      top: -300px;
+      left: -200px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.14) 0%, rgba(217, 119, 6, 0.04) 50%, transparent 70%);
+      filter: blur(130px);
+      animation: ambientDriftGold 32s ease-in-out infinite alternate;
+    }
+
+    .stage-beam-blue {
+      position: absolute;
+      width: 1000px;
+      height: 1000px;
+      bottom: -320px;
+      right: -220px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.13) 0%, rgba(30, 58, 138, 0.04) 50%, transparent 70%);
+      filter: blur(140px);
+      animation: ambientDriftBlue 36s ease-in-out infinite alternate;
+    }
+
+    @keyframes ambientDriftGold {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, 40px) scale(1.06); }
+      100% { transform: translate(-30px, 60px) scale(0.96); }
+    }
+
+    @keyframes ambientDriftBlue {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(-50px, -40px) scale(1.08); }
+      100% { transform: translate(40px, -60px) scale(0.94); }
+    }
+
+    .hero-view, .app-workspace {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* HERO PORTADA */
+    .hero-view {
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+      padding: 60px 42px;
+      background: linear-gradient(175deg, rgba(17, 24, 39, 0.88) 0%, rgba(10, 15, 29, 0.94) 100%);
+      backdrop-filter: blur(36px);
+      -webkit-backdrop-filter: blur(36px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 32px;
+      box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.95);
+      animation: heroStudioEntry 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes heroStudioEntry {
+      0% { opacity: 0; transform: translateY(24px); filter: blur(10px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    .hero-view.exit-animation {
+      opacity: 0;
+      transform: translateY(-20px);
+      filter: blur(12px);
+      transition: all 0.4s ease;
+    }
+
+    .brand-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 40px;
+      color: #fcd34d;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+      box-shadow: 0 0 24px rgba(245, 158, 11, 0.15);
+    }
+
+    .hero-title {
+      font-size: 3.6rem;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      background: linear-gradient(180deg, #ffffff 40%, #cbd5e1 85%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-slogan {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 660px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    .hero-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 24px;
+    }
+
+    .big-btn {
+      padding: 30px 26px;
+      border-radius: 24px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+      border: 1.5px solid var(--border-subtle);
+    }
+
+    .big-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -80%;
+      width: 50%; height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+      transform: rotate(30deg);
+      transition: all 0.85s ease;
+      pointer-events: none;
+    }
+
+    .big-btn:hover::after { left: 150%; }
+
+    .big-btn-regular {
+      background: linear-gradient(160deg, rgba(26, 36, 56, 0.95) 0%, rgba(13, 19, 33, 0.98) 100%);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8);
+    }
+
+    .big-btn-regular:hover {
+      transform: translateY(-5px);
+      border-color: #3b82f6;
+      box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.4), 0 0 25px rgba(59, 130, 246, 0.2);
+    }
+
+    .big-btn-navidad {
+      background: linear-gradient(160deg, rgba(46, 18, 24, 0.95) 0%, rgba(20, 8, 11, 0.98) 100%);
+      border-color: rgba(239, 68, 68, 0.35);
+      box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8);
+    }
+
+    .big-btn-navidad:hover {
+      transform: translateY(-5px);
+      border-color: #ef4444;
+      box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.45), 0 0 25px rgba(239, 68, 68, 0.25);
+    }
+
+    .big-btn-title {
+      font-size: 1.38rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .big-btn-desc {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* DISTRIBUCIÓN 46% - 54% */
+    .app-workspace {
+      display: none;
+      width: 98vw;
+      max-width: 1820px;
+      gap: 24px;
+      align-items: flex-start;
+      position: relative;
+      z-index: 1;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .app-workspace.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .config-panel {
+      flex: 0 0 46%;
+      max-width: 46%;
+      background: linear-gradient(175deg, rgba(17, 24, 39, 0.94) 0%, rgba(10, 15, 29, 0.98) 100%);
+      border: 1px solid var(--border-subtle);
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 30px 60px -15px rgba(0,0,0,0.85);
+      backdrop-filter: blur(28px);
+    }
+
+    .stepper-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .step-track {
+      display: flex;
+      gap: 7px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .step-pill {
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      white-space: nowrap;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .step-pill.active {
+      background: rgba(245, 158, 11, 0.14);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+    }
+
+    .group-hero-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+    }
+
+    .group-hero-subtitle {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      line-height: 1.45;
+    }
+
+    .items-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      margin-bottom: 20px;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .item-card {
+      background: rgba(24, 34, 56, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.07);
+      border-radius: 16px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .item-card:hover { border-color: rgba(59, 130, 246, 0.6); transform: translateY(-2px); }
+    .item-card.selected { border-color: var(--gold-glow); background: rgba(245, 158, 11, 0.09); box-shadow: 0 8px 24px -6px rgba(245, 158, 11, 0.2); }
+
+    .item-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .item-left { display: flex; gap: 12px; align-items: flex-start; }
+    .item-checkbox { width: 18px; height: 18px; margin-top: 3px; accent-color: var(--gold-glow); pointer-events: none; }
+    .item-title { font-weight: 700; font-size: 0.98rem; color: #fff; letter-spacing: -0.01em; }
+    .item-specs { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; line-height: 1.35; }
+    .item-price { font-size: 1.2rem; font-weight: 800; color: #fbbf24; white-space: nowrap; }
+
+    .metabtns-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      flex-wrap: wrap;
+    }
+
+    .metabtn {
+      padding: 4px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .metabtn:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
+    .metabtn.active { background: var(--gold-gradient); color: #000; border-color: var(--gold-glow); font-weight: 800; }
+
+    .custom-price-container {
+      display: none;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(245, 158, 11, 0.35);
+      align-items: center;
+      gap: 10px;
+    }
+
+    .custom-price-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .custom-price-input {
+      padding: 7px 11px;
+      background: var(--surface-dark);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 700;
+      width: 140px;
+      outline: none;
+    }
+
+    .custom-price-input:focus {
+      border-color: var(--gold-glow);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    }
+
+    .empathy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .empathy-card {
+      background: rgba(24, 34, 56, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .empathy-card label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .empathy-input {
+      background: var(--surface-dark);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 9px 11px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .empathy-input:focus {
+      border-color: var(--gold-glow);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+    }
+
+    .step-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 16px;
+    }
+
+    .btn-step-nav {
+      padding: 13px 22px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-step-next { background: var(--gold-gradient); color: #000; margin-left: auto; box-shadow: 0 10px 24px -4px rgba(245, 158, 11, 0.45); }
+    .btn-step-next:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -4px rgba(245, 158, 11, 0.55); }
+    .btn-step-prev { background: transparent; border: 1.5px solid rgba(255, 255, 255, 0.18); color: var(--text-muted); }
+    .btn-step-prev:hover { color: #fff; border-color: #fff; }
+
+    /* Columna Derecha (54%) */
+    .right-workspace-column {
+      flex: 0 0 54%;
+      max-width: 54%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 16px;
+    }
+
+    .dual-preview-wrapper {
+      width: 100%;
+      display: flex;
+      gap: 16px;
+    }
+
+    .panel-preview-items {
+      flex: 1;
+      width: 50%;
+      background: #ffffff;
+      color: var(--preview-text);
+      border-radius: 24px;
+      padding: 22px 18px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+
+    .panel-preview-groups {
+      flex: 1;
+      width: 50%;
+      background: #f8fafc;
+      color: var(--preview-text);
+      border-radius: 24px;
+      padding: 22px 18px;
+      border: 1.5px solid #e2e8f0;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 520px;
+    }
+
+    .preview-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .tag-blue { background: #e0e7ff; color: #4338ca; }
+    .tag-amber { background: #fef3c7; color: #b45309; }
+
+    .preview-card-title {
+      font-size: 1.22rem;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+    }
+
+    .audience-badge {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.76rem;
+      color: #334155;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .audience-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .items-scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 360px;
+      padding-right: 6px;
+    }
+
+    .item-spec-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 10px 4px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.88rem;
+    }
+
+    .item-spec-name { font-weight: 700; color: #1e293b; line-height: 1.35; }
+    .item-spec-dur { font-size: 0.74rem; color: #64748b; margin-top: 2px; }
+    .item-spec-price { font-weight: 800; color: #0f172a; white-space: nowrap; margin-left: 10px; }
+
+    .groups-scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 230px;
+      padding-right: 4px;
+      margin-bottom: 12px;
+    }
+
+    .group-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 0.86rem;
+    }
+
+    .group-stat-name { font-weight: 700; color: #334155; }
+    .group-stat-val { font-weight: 800; color: #0f172a; }
+
+    .smart-pack-banner {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid var(--gold-glow);
+      border-radius: 12px;
+      padding: 11px 13px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .smart-pack-icon { font-size: 1.25rem; }
+    .smart-pack-text { font-size: 0.8rem; font-weight: 700; color: #1e293b; line-height: 1.35; }
+
+    .totals-box {
+      border-top: 2px dashed #cbd5e1;
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.92rem;
+    }
+
+    .total-line.subtotal { font-weight: 700; color: #334155; font-size: 0.98rem; }
+    .total-line.iva { font-size: 0.76rem; color: #94a3b8; font-weight: 500; }
+
+    .total-line.final {
+      color: #0f172a;
+      border-top: 1.5px solid #0f172a;
+      padding-top: 8px;
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .final-label { font-size: 1.05rem; font-weight: 800; color: #0f172a; text-transform: uppercase; white-space: nowrap; }
+    .final-number { font-size: 2.1rem; font-weight: 900; color: #2563eb; letter-spacing: -0.03em; white-space: nowrap; }
+
+    .empty-state {
+      text-align: center;
+      color: #94a3b8;
+      font-style: italic;
+      padding: 36px 0;
+      font-size: 0.88rem;
+    }
+
+    /* TARJETA DE DISTRIBUCIÓN DE PRESUPUESTO */
+    .budget-analytics-card {
+      width: 100%;
+      background: linear-gradient(175deg, rgba(17, 24, 39, 0.94) 0%, rgba(10, 15, 29, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 16px 20px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .budget-analytics-card:hover {
+      border-color: var(--gold-glow);
+      transform: translateY(-3px);
+      box-shadow: 0 25px 55px rgba(245, 158, 11, 0.2);
+    }
+
+    .chart-left-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .donut-chart-container {
+      position: relative;
+      width: 68px;
+      height: 68px;
+      flex-shrink: 0;
+    }
+
+    .donut-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .donut-center-label {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+
+    .chart-titles h4 {
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
+
+    .chart-titles p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .chart-bars-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+      max-width: 320px;
+    }
+
+    .chart-bar-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.74rem;
+    }
+
+    .chart-bar-name {
+      width: 110px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #cbd5e1;
+    }
+
+    .chart-bar-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.4s ease;
+    }
+
+    .chart-bar-pct {
+      font-weight: 800;
+      color: #fbbf24;
+      width: 35px;
+      text-align: right;
+    }
+
+    .chart-expand-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      padding: 6px 12px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    /* MODAL DE ANÁLISIS EXPANDIDO */
+    .modal-expanded-analytics {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .analytics-dialog {
+      background: #ffffff;
+      color: #0f172a;
+      width: 100%;
+      max-width: 820px;
+      max-height: 88vh;
+      overflow-y: auto;
+      border-radius: 28px;
+      padding: 32px 36px;
+      box-shadow: 0 35px 80px rgba(0,0,0,0.6);
+      position: relative;
+    }
+
+    .analytics-dialog h3 {
+      font-size: 1.55rem;
+      font-weight: 900;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .analytics-dialog-subtitle {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-bottom: 22px;
+    }
+
+    .expanded-groups-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .expanded-group-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 16px 20px;
+    }
+
+    .expanded-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .expanded-group-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .expanded-group-badge {
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .expanded-items-sublist {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .expanded-item-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    .expanded-item-row strong {
+      color: #0f172a;
+    }
+
+    .analytics-close-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .analytics-close-btn:hover { background: #1e293b; }
+
+    /* FORMULARIO FINAL */
+    .final-contact-box {
+      display: none;
+      background: rgba(24, 34, 56, 0.65);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 22px;
+      padding: 24px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .form-group label { font-size: 0.8rem; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input {
+      padding: 11px 13px;
+      background: var(--surface-dark);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.92rem;
+      outline: none;
+    }
+    .form-group input:focus { border-color: var(--gold-glow); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+
+    .privacy-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 16px 0 12px 0;
+      padding: 12px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+    }
+
+    .privacy-checkbox {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--gold-glow);
+      cursor: pointer;
+    }
+
+    .privacy-text {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .privacy-link {
+      color: #fbbf24;
+      text-decoration: underline;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-finish-download {
+      width: 100%;
+      padding: 15px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 800;
+      font-size: 0.96rem;
+      cursor: pointer;
+      background: var(--gold-gradient);
+      color: #000;
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.45);
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+    .btn-finish-download:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(245, 158, 11, 0.55); }
+
+    .btn-outline-back {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: var(--text-muted);
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-outline-back:hover { color: #fff; border-color: #fff; }
+
+    .btn-reset-hero {
+      background: #1e293b;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      width: 100%;
+      margin-top: 10px;
+      transition: all 0.2s;
+    }
+    .btn-reset-hero:hover { background: #334155; }
+
+    /* MODAL LOPDP */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      color: #0f172a;
+      width: 100%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+
+    .modal-box h3 { font-size: 1.25rem; margin-bottom: 12px; color: #0f172a; }
+    .modal-box p { font-size: 0.85rem; line-height: 1.55; color: #475569; margin-bottom: 12px; }
+    .modal-close-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* PLANTILLA PDF CALIBRADA PARA A4 */
+    #pdfOfficialTemplate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 720px;
+      background: #ffffff;
+      color: #0f172a;
+      padding: 24px 30px;
+      box-sizing: border-box;
+      z-index: -9999;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pdf-no-break {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .pdf-header-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .pdf-meta-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      box-sizing: border-box;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+
+    .pdf-table thead {
+      display: table-header-group;
+    }
+
+    .pdf-table th {
+      background: #0f172a;
+      color: #fff;
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .pdf-table tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .pdf-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.82rem;
+      word-break: break-word;
+    }
+
+    .pdf-totals-table {
+      width: 260px;
+      margin-left: auto;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .pdf-totals-table td {
+      padding: 5px 8px;
+    }
+
+    /* REGLAS RESPONSIVE */
+    @media (max-width: 1200px) {
+      .app-workspace {
+        flex-direction: column;
+        width: 100%;
+      }
+      .config-panel, .right-workspace-column {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+      .dual-preview-wrapper {
+        position: static;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .panel-preview-items, .panel-preview-groups {
+        width: 100%;
+        min-height: auto;
+      }
+      .hero-title { font-size: 2.4rem; }
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 10px 8px; }
+      .config-panel { padding: 18px 14px; border-radius: 18px; }
+      .hero-view { padding: 36px 16px; }
+      .hero-title { font-size: 1.8rem; }
+      .group-hero-title { font-size: 1.2rem; }
+      .item-header-row { flex-direction: column; gap: 8px; }
+      .item-price { align-self: flex-start; }
+      .step-actions { flex-direction: column; gap: 10px; }
+      .btn-step-prev, .btn-step-next { width: 100%; justify-content: center; }
+      .budget-analytics-card { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ESTUDIO DE ILUMINACIÓN DE FONDO -->
+  <div class="cinematic-environment">
+    <div class="stage-beam-gold"></div>
+    <div class="stage-beam-blue"></div>
+    <div class="film-grain-mesh"></div>
+  </div>
+
+  <!-- 1. HERO INICIAL (PORTADA) -->
+  <div class="hero-view" id="heroView">
+    <span class="brand-tag">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      Experiencias Corporativas de Alto Impacto
+    </span>
+    <h1 class="hero-title">Karkajadas Group</h1>
+    <p class="hero-slogan">Construimos experiencias felices en la vida de los seres humanos.</p>
+
+    <div class="hero-buttons">
+      <div class="big-btn big-btn-regular" onclick="startAppWithTransition('regular')">
+        <span class="big-btn-title">🎪 Cotiza tu Evento</span>
+        <span class="big-btn-desc">Catálogo corporativo e institucional regular (2h y 3h)</span>
+      </div>
+
+      <div class="big-btn big-btn-navidad" onclick="startAppWithTransition('navidad')">
+        <span class="big-btn-title">🎄 Cotiza tu Evento Navideño</span>
+        <span class="big-btn-desc">Shows artísticos, Santa Claus, ferias temáticas y temporada festiva 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ESPACIO DE TRABAJO (DISTRIBUCIÓN 46% - 54%) -->
+  <div class="app-workspace" id="appWorkspace">
+    
+    <!-- COLUMNA IZQUIERDA: CONFIGURADOR (46%) -->
+    <div class="config-panel">
+      <div class="stepper-header">
+        <button class="btn-outline-back" onclick="goHome()">⬅ Cambiar Catálogo</button>
+        <div id="catalogBadge" style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #fbbf24;"></div>
+      </div>
+
+      <div class="step-track" id="stepTrack"></div>
+
+      <!-- PASO 0: PERFIL, EMPATÍA Y ACCESIBILIDAD -->
+      <div id="empathyStep" style="display: none;">
+        <h2 class="group-hero-title">🤝 Cuéntanos sobre tu evento</h2>
+        <p class="group-hero-subtitle">
+          Para recomendarte la infraestructura ideal y cuidar a cada asistente, dinos cómo está compuesto tu grupo:
+        </p>
+
+        <div class="empathy-grid">
+          <div class="empathy-card">
+            <label>N° Estimado de Adultos</label>
+            <input type="number" id="empAdults" class="empathy-input" min="0" placeholder="Ej. 100" oninput="updateEmpathyData()">
+          </div>
+          <div class="empathy-card">
+            <label>N° Estimado de Niños</label>
+            <input type="number" id="empKids" class="empathy-input" min="0" placeholder="Ej. 40" oninput="updateEmpathyData()">
+          </div>
+          <div class="empathy-card">
+            <label>Vegetarianos / Dietas Especiales</label>
+            <input type="number" id="empVegetarians" class="empathy-input" min="0" placeholder="Ej. 10" oninput="updateEmpathyData()">
+          </div>
+          <div class="empathy-card">
+            <label>♿ Personas con Capacidades Especiales</label>
+            <input type="number" id="empSpecialNeeds" class="empathy-input" min="0" placeholder="Ej. 3" oninput="updateEmpathyData()">
+          </div>
+          <div class="empathy-card" style="grid-column: 1 / -1;">
+            <label>Alergias o Cuidados Específicos (Maní, Gluten, Movilidad, Sensibilidad Auditiva, etc.)</label>
+            <input type="text" id="empAllergies" class="empathy-input" placeholder="Ej. 1 persona en silla de ruedas (requiere rampa), 2 celíacos" oninput="updateEmpathyData()">
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPOS DE SERVICIOS -->
+      <div id="groupContent">
+        <h2 class="group-hero-title" id="groupTitle"></h2>
+        <p class="group-hero-subtitle" id="groupSubtitle"></p>
+        <div class="items-grid" id="itemsContainer"></div>
+      </div>
+
+      <!-- FORMULARIO FINAL -->
+      <div class="final-contact-box" id="finalContactBox">
+        <h2 style="font-size: 1.4rem; color: #fff; margin-bottom: 6px;">¡Tu propuesta está lista!</h2>
+        <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">
+          Ingresa los datos comerciales para generar el PDF formal y registrar la reserva:
+        </p>
+
+        <form id="finalQuoteForm" onsubmit="handleFinalSubmit(event)">
+          <div class="form-group">
+            <label>Nombre y Apellido del Responsable *</label>
+            <input type="text" id="custName" placeholder="Ej. Ing. Carlos Mendoza" required>
+          </div>
+          <div class="form-group">
+            <label>Empresa / Organización *</label>
+            <input type="text" id="custCompany" placeholder="Ej. Banco Pichincha / CNT EP" required>
+          </div>
+          <div class="form-group">
+            <label>Teléfono Celular / WhatsApp *</label>
+            <input type="tel" id="custPhone" placeholder="Ej. 0991234567" required>
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico Corporativo *</label>
+            <input type="email" id="custEmail" placeholder="cmendoza@empresa.com" required>
+          </div>
+
+          <div class="privacy-container">
+            <input type="checkbox" id="privacyConsent" class="privacy-checkbox" required>
+            <label for="privacyConsent" class="privacy-text">
+              Autorizo de manera libre, previa e informada el tratamiento de mis datos personales a <b>Karkajadas Group</b> para la emisión de esta cotización y gestión de servicios, conforme a la <b>Ley Orgánica de Protección de Datos Personales del Ecuador (LOPDP)</b>. 
+              <span class="privacy-link" onclick="openPrivacyModal(event)">Leer más</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-finish-download">
+            📥 Descargar Propuesta en PDF & Enviar Cotización
+          </button>
+          <button type="button" class="btn-reset-hero" onclick="goHome()">
+            🔄 Iniciar Nueva Cotización
+          </button>
+        </form>
+      </div>
+
+      <div class="step-actions" id="stepActions">
+        <button type="button" class="btn-step-nav btn-step-prev" id="btnPrev" onclick="navigateGroup(-1)">⬅ Paso Anterior</button>
+        <button type="button" class="btn-step-nav btn-step-next" id="btnNext" onclick="navigateGroup(1)">Siguiente Paso ➔</button>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: PREVISUALIZADORES + GRÁFICO (54%) -->
+    <div class="right-workspace-column" id="screenPreviewsWrapper">
+      
+      <div class="dual-preview-wrapper">
+        <!-- PREVISUALIZADOR 1 -->
+        <div class="panel-preview-items">
+          <span class="preview-tag tag-blue">Previsualizador 1</span>
+          <div class="preview-card-title">Detalle de Ítems</div>
+
+          <div class="audience-badge" id="audienceBadge">
+            <div class="audience-row">
+              <span>👥 Asistentes: Sin definir</span>
+              <span id="vegBadge" style="color: #64748b;">🌱 0 especiales</span>
+            </div>
+            <div class="audience-row" id="specialNeedsRow" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 3px; margin-top: 2px;">
+              <span id="specialNeedsBadge" style="color: #2563eb;">♿ 0 accesibilidad</span>
+            </div>
+          </div>
+          
+          <div class="items-scroll-list" id="itemsScrollList">
+            <div class="empty-state">No has seleccionado ítems aún</div>
+          </div>
+
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+            * Modifica la duración usando los metabotones de cada servicio.
+          </div>
+        </div>
+
+        <!-- PREVISUALIZADOR 2 -->
+        <div class="panel-preview-groups">
+          <div>
+            <span class="preview-tag tag-amber">Previsualizador 2</span>
+            <div class="preview-card-title">Resumen por Grupos</div>
+
+            <div class="smart-pack-banner" id="smartPackBanner">
+              <span class="smart-pack-icon" id="smartIcon">💡</span>
+              <span class="smart-pack-text" id="smartText">Selecciona atracciones para visualizar el resumen por categorías.</span>
+            </div>
+
+            <div class="groups-scroll-list" id="groupsScrollList">
+              <div class="empty-state">Sin grupos activos</div>
+            </div>
+          </div>
+
+          <div class="totals-box">
+            <div class="total-line subtotal">
+              <span>Subtotal Servicios:</span>
+              <span id="subtotalVal">$0.00</span>
+            </div>
+            <div class="total-line iva">
+              <span>+ IVA (15%):</span>
+              <span id="ivaVal">$0.00</span>
+            </div>
+            <div class="total-line final">
+              <span class="final-label">INVERSIÓN TOTAL:</span>
+              <span class="final-number" id="totalVal">$0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRÁFICO DINÁMICO DE DISTRIBUCIÓN DE PRESUPUESTO -->
+      <div class="budget-analytics-card" id="budgetAnalyticsCard" onclick="openAnalyticsModal()">
+        <div class="chart-left-info">
+          <div class="donut-chart-container">
+            <svg class="donut-svg" viewBox="0 0 36 36" id="donutSvg">
+              <circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"></circle>
+            </svg>
+            <div class="donut-center-label" id="donutCenterPct">0%</div>
+          </div>
+          <div class="chart-titles">
+            <h4>Distribución del Presupuesto</h4>
+            <p id="chartSubtext">¿Dónde se está destinando más tu inversión?</p>
+          </div>
+        </div>
+
+        <div class="chart-bars-preview" id="chartBarsPreview">
+          <span style="font-size: 0.76rem; color: #94a3b8; font-style: italic;">Selecciona servicios para generar el gráfico.</span>
+        </div>
+
+        <div class="chart-expand-badge">
+          <span>🔍 Ver Detalle</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL DE ANÁLISIS EXPANDIDO -->
+  <div class="modal-expanded-analytics" id="analyticsModal" onclick="closeAnalyticsModal(event)">
+    <div class="analytics-dialog" onclick="event.stopPropagation();">
+      <h3>Radiografía Estratégica de Inversión</h3>
+      <p class="analytics-dialog-subtitle">Visualiza exactamente cómo se distribuyen los fondos en cada aspecto de tu evento:</p>
+      
+      <div class="expanded-groups-grid" id="expandedGroupsContainer"></div>
+
+      <button type="button" class="analytics-close-btn" onclick="closeAnalyticsModal()">Entendido, volver a la cotización</button>
+    </div>
+  </div>
+
+  <!-- MODAL LEGAL LOPDP -->
+  <div class="modal-overlay" id="privacyModal" onclick="closePrivacyModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation();">
+      <h3>Política de Tratamiento de Datos Personales (Ecuador)</h3>
+      <p>
+        En cumplimiento con lo dispuesto en la <b>Ley Orgánica de Protección de Datos Personales (Registro Oficial N° 459)</b> y su Reglamento General en la República del Ecuador, <b>Karkajadas Group</b> le informa que los datos personales consignados en este cotizador serán tratados bajo principios de licitud, consentimiento, lealtad y confidencialidad.
+      </p>
+      <p>
+        <b>1. Finalidad:</b> La recolección de sus datos tiene como fin exclusivo emitir y enviarle la propuesta comercial requerida, dimensionar de manera segura la capacidad del evento (control de dietas, aforos y requerimientos de accesibilidad) y gestionar el eventual contacto comercial.
+      </p>
+      <p>
+        <b>2. Derechos del Titular:</b> Usted tiene derecho al acceso, rectificación, actualización, eliminación u oposición sobre sus datos personales, los cuales podrá ejercer comunicándose a nuestros canales de atención oficiales.
+      </p>
+      <p>
+        <b>3. Seguridad:</b> No comercializamos ni transferimos su información personal a terceros con fines ajenos a la prestación y logística integral de su evento.
+      </p>
+      <button class="modal-close-btn" onclick="closePrivacyModal()">He leído y acepto</button>
+    </div>
+  </div>
+
+  <!-- PLANTILLA FORMAL DEDICADA PARA EL PDF EXPORTABLE -->
+  <div id="pdfOfficialTemplate">
+    <table class="pdf-header-table pdf-no-break">
+      <tr>
+        <td style="width: 60%; vertical-align: top;">
+          <h2 style="font-size: 1.6rem; color: #0f172a; margin-bottom: 2px; letter-spacing: -0.02em;">KARKAJADAS GROUP</h2>
+          <p style="color: #64748b; font-size: 0.82rem; font-weight: 600;">Construimos experiencias felices en la vida de los seres humanos</p>
+          <p style="color: #d97706; font-weight: bold; font-size: 0.8rem; margin-top: 4px;" id="pdfCatalogName">Catálogo de Servicios</p>
+        </td>
+        <td style="width: 40%; text-align: right; vertical-align: top; font-size: 0.8rem; color: #475569; line-height: 1.45;">
+          <p><strong>Fecha de Emisión:</strong> <span id="pdfDate"></span></p>
+          <p><strong>Validez:</strong> 15 días calendario</p>
+          <p><strong>Lugar:</strong> Quito / Pichincha - Ecuador</p>
+        </td>
+      </tr>
+    </table>
+
+    <div class="pdf-meta-box pdf-no-break">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 48%; vertical-align: top; padding-right: 10px;">
+            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; text-transform: uppercase; font-size: 0.78rem;">Datos Comerciales del Cliente:</p>
+            <p><strong>Responsable:</strong> <span id="pdfClientName"></span></p>
+            <p><strong>Empresa / Org:</strong> <span id="pdfClientCompany"></span></p>
+            <p><strong>Teléfono:</strong> <span id="pdfClientPhone"></span></p>
+            <p><strong>Correo:</strong> <span id="pdfClientEmail"></span></p>
+          </td>
+          <td style="width: 52%; vertical-align: top; border-left: 1px solid #cbd5e1; padding-left: 12px;">
+            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; text-transform: uppercase; font-size: 0.78rem;">Ficha Técnica & Empatía del Evento:</p>
+            <p><strong>Aforo Total:</strong> <span id="pdfTotalGuests"></span> asistentes</p>
+            <p><strong>Composición:</strong> <span id="pdfAdultsKids"></span></p>
+            <p><strong>Alimentación Especial:</strong> <span id="pdfDietNeeds"></span></p>
+            <p><strong>Inclusión & Accesibilidad:</strong> <span id="pdfSpecialNeeds"></span></p>
+            <p><strong>Observaciones / Cuidados:</strong> <span id="pdfAllergies"></span></p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- TABLA DE SERVICIOS -->
+    <table class="pdf-table" id="pdfGroupsTableContainer">
+      <thead>
+        <tr>
+          <th style="width: 72%;">Descripción del Servicio / Atracción</th>
+          <th style="text-align: right; width: 28%;">Valor Total</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody"></tbody>
+    </table>
+
+    <table class="pdf-totals-table pdf-no-break">
+      <tr>
+        <td><strong>Subtotal Servicios:</strong></td>
+        <td style="text-align: right;" id="pdfSubtotal">$0.00</td>
+      </tr>
+      <tr>
+        <td><strong>IVA (15%):</strong></td>
+        <td style="text-align: right;" id="pdfIVA">$0.00</td>
+      </tr>
+      <tr style="border-top: 2px solid #0f172a; font-size: 1.1rem;">
+        <td><strong>Inversión Total:</strong></td>
+        <td style="text-align: right; font-weight: bold; color: #2563eb;" id="pdfTotal">$0.00</td>
+      </tr>
+    </table>
+
+    <!-- MENSAJES RELEVANTES AL PIE DEL PDF -->
+    <div class="pdf-no-break" style="margin-top: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; font-size: 0.78rem; color: #334155; line-height: 1.5;">
+      <p style="margin-bottom: 4px;">💳 <strong>Condiciones de Pago:</strong> Pregunta por la política de pago y facilidades corporativas disponibles para tu empresa.</p>
+      <p>⚠️️ <strong>Disponibilidad:</strong> Todos los servicios y fechas se encuentran sujetos a disponibilidad al momento de confirmar la reserva.</p>
+    </div>
+
+    <div class="pdf-no-break" style="margin-top: 16px; font-size: 0.68rem; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+      * Documento de propuesta económica generado digitalmente con consentimiento de tratamiento de datos personales de acuerdo con la LOPDP de la República del Ecuador.
+    </div>
+  </div>
+
+  <script>
+    // BASE DE DATOS NAVIDEÑA CON LAS NUEVAS ESTRUCTURAS Y NOMBRES SOLICITADOS
+    const STRATEGIC_CATALOG = {
+      regular: [
+        {
+          groupName: "Grandes Atracciones",
+          heroTitle: "1. Grandes Atracciones y Retos de Aventura",
+          heroSubtitle: "El núcleo visual y dinámico de mayor impacto para tu evento:",
+          items: [
+            {
+              id: "castillo_reg",
+              name: "Inflable Castillo Clásico",
+              specs: "5m largo × 4,5m ancho × 5m alto • Capacidad 6 niños (4 a 7 años)",
+              options: [ { label: "2 Horas", price: 70 }, { label: "3 Horas", price: 90 } ]
+            },
+            {
+              id: "barco_reg",
+              name: "Inflable Barco Pirata",
+              specs: "6m largo × 5,5m ancho × 5,5m alto • Capacidad 10 niños (8 a 10 años)",
+              options: [ { label: "2 Horas", price: 80 }, { label: "3 Horas", price: 100 } ]
+            },
+            {
+              id: "espuma_reg",
+              name: "Cañón de Fiesta de Espuma",
+              specs: "Líquido espumógeno no tóxico, máxima diversión para todas las edades",
+              options: [ { label: "1 Hora", price: 80 }, { label: "2 Horas", price: 120 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Espacios Infantiles",
+          heroTitle: "2. Bienestar Familiar y Estimulación Infantil",
+          heroSubtitle: "Espacios seguros y lúdicos pensados para la tranquilidad de los padres:",
+          items: [
+            {
+              id: "legos_reg",
+              name: "Zona de Bloques Legos Gigantes",
+              specs: "1.000 piezas gigantes de legos en área de 3m × 3m (3 a 9 años)",
+              options: [ { label: "3 Horas", price: 90 } ]
+            },
+            {
+              id: "babypark_reg",
+              name: "Baby Park de Estimulación",
+              specs: "Piscina de pelotas, kit estimulación, túnel gateo, carritos (0 a 4 años)",
+              options: [ { label: "2 Horas", price: 100 }, { label: "3 Horas", price: 120 } ]
+            },
+            {
+              id: "minicity_reg",
+              name: "Mini City de Oficios",
+              specs: "Salón de belleza, clínica veterinaria y supermercado (2 a 4 años)",
+              options: [ { label: "2 Horas", price: 100 }, { label: "3 Horas", price: 120 } ]
+            },
+            {
+              id: "juguetilandia_reg",
+              name: "Juguetilandia Interactiva",
+              specs: "Piano, batería, guitarras, peluches y autos • 4m × 4m (2 a 5 años)",
+              options: [ { label: "3 Horas", price: 100 } ]
+            },
+            {
+              id: "arte_reg",
+              name: "Estación de Arte Completa",
+              specs: "5 caballetes, 100 hojas A3, lápices de colores y 10 sillas (4 a 10 años)",
+              options: [ { label: "Paquete 100 hojas", price: 100 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Snacks & Delicias",
+          heroTitle: "3. Experiencia Sensorial: Snacks & Candy Bar",
+          heroSubtitle: "Aromas y sabores recién preparados para elevar el deleite de los asistentes:",
+          items: [
+            {
+              id: "hotdog_reg",
+              name: "Combo Hot Dog Clásico",
+              specs: "Hot dog con aderezos completos + gaseosa personal de 300ml",
+              options: [ { label: "Combo Unitario", price: 2.50 } ]
+            },
+            {
+              id: "canguil_reg",
+              name: "Máquina de Canguil (Palomitas)",
+              specs: "Máquina semi-industrial, operador calificado, insumos y fundas",
+              options: [ { label: "Ilimitado 2h", price: 80 }, { label: "Ilimitado 3h", price: 120 } ]
+            },
+            {
+              id: "algodon_reg",
+              name: "Máquina de Algodón de Azúcar",
+              specs: "Elaboración en vivo, operador calificado y palillos",
+              options: [ { label: "Ilimitado 2h", price: 90 }, { label: "Ilimitado 3h", price: 135 } ]
+            },
+            {
+              id: "granizado_reg",
+              name: "Máquina de Granizados",
+              specs: "Hielo triturado en vivo con variedad de jarabes dulces",
+              options: [ { label: "Ilimitado 2h", price: 100 }, { label: "Ilimitado 3h", price: 150 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Juegos Colectivos",
+          heroTitle: "4. Integración y Juegos Colectivos",
+          heroSubtitle: "Desafíos recreativos que integran a familias y equipos de trabajo:",
+          items: [
+            {
+              id: "cuatro_reg",
+              name: "Cuatro en Raya Gigante",
+              specs: "Lona gigante de suelo con fichas de coordinación",
+              options: [ { label: "2 a 3 Horas", price: 50 } ]
+            },
+            {
+              id: "jenga_reg",
+              name: "Jenga Gigante de Madera",
+              specs: "Bloques gigantes apilables de madera para destreza familiar",
+              options: [ { label: "2 a 3 Horas", price: 60 } ]
+            },
+            {
+              id: "feria_reg",
+              name: "Estaciones de Feria / Deportivas",
+              specs: "Fútbol de precisión, Gym, Tenis, Basket o Bolos con monitor (c/u)",
+              options: [ { label: "Alquiler 2 o 3 Horas", price: 70 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Logística y Transporte",
+          heroTitle: "5. Infraestructura, Logística y Montaje",
+          heroSubtitle: "Soporte técnico, transporte y mobiliario a medida de tu aforo:",
+          items: [
+            {
+              id: "sonido_reg",
+              name: "Sistema de Sonido y Microfonía",
+              specs: "Consola, parlantes activos y micrófonos según aforo del evento",
+              isCustomPrice: true,
+              options: [ { label: "Valor Personalizado", price: 0 } ]
+            },
+            {
+              id: "carpas_reg",
+              name: "Carpas, Tarimas, Sillas y Mesas Adultos",
+              specs: "Mobiliario estructural y carpas impermeables de alto estándar",
+              isCustomPrice: true,
+              options: [ { label: "Valor Personalizado", price: 0 } ]
+            },
+            {
+              id: "sillas_ninos",
+              name: "Mobiliario Infantil (Mesas y Sillas)",
+              specs: "Mobiliario temático diseñado a la escala de los niños",
+              isCustomPrice: true,
+              options: [ { label: "Valor Personalizado", price: 0 } ]
+            },
+            {
+              id: "transporte_reg",
+              name: "Transporte, Viáticos y Operación Logística",
+              specs: "Traslado seguro de equipos, montaje previo y desmontaje final",
+              isCustomPrice: true,
+              options: [ { label: "Valor Personalizado", price: 0 } ]
+            }
+          ]
+        }
+      ],
+      navidad: [
+        {
+          groupName: "Shows & Puesta en Escena",
+          heroTitle: "1. Shows Artísticos, Escenografía y Personajes Estelares",
+          heroSubtitle: "El impacto visual y artístico que cautiva a toda la empresa y sus familias:",
+          items: [
+            {
+              id: "trineo_nav_2026",
+              name: "Trineo Navideño de Fotografías",
+              specs: "Estructura temática de trineo navideño con renos para photocall corporativo",
+              options: [ { label: "Tarifa Evento", price: 50 } ]
+            },
+            {
+              id: "bastones_nav_2026",
+              name: "Set de Paletas y Bastones Navideños",
+              specs: "Set decorativo de 10 unidades gigantes para delimitación y ambientación",
+              options: [ { label: "Set 10 unidades", price: 60 } ]
+            },
+            {
+              id: "animacion_ludica_nav",
+              name: "Animación Lúdica Recreativa",
+              specs: "1 hora de animación interactiva: juegos, dinámicas, concursos y baile (no incluye premios)",
+              options: [ { label: "Servicio 1 hora", price: 120 } ]
+            },
+            {
+              id: "santa_nav_2026",
+              name: "Personaje Navideño: Santa Claus",
+              specs: "Actor caracterizado profesionalmente, sesión de fotos y entrega de regalos (3 horas)",
+              options: [ { label: "Actuación 3 Horas", price: 150 } ]
+            },
+            {
+              id: "deco_nav_2026",
+              name: "Decoración Navideña Temática",
+              specs: "Ambientación escenográfica con guirnaldas, árboles y detalles navideños",
+              options: [ { label: "Paquete Estándar", price: 150 } ]
+            },
+            {
+              id: "show_magia_nav",
+              name: "Show de Magia, Música y Ventriloquia",
+              specs: "Espectáculo dinámico y cómico de ilusionismo para todas las edades (40 minutos)",
+              options: [ { label: "Presentación 40 min", price: 200 } ]
+            },
+            {
+              id: "casa_santa_2026",
+              name: "Casa de Santa Claus",
+              specs: "Escenografía inmersiva premium para recuerdos y fotos con Santa",
+              options: [ { label: "Tarifa Evento", price: 225 } ]
+            },
+            {
+              id: "pueblo_nav_2026",
+              name: "Pueblo Navideño / Escenario Festivo",
+              specs: "Montaje temático de pueblo invernal a escala real para escenografía central",
+              options: [ { label: "Tarifa Evento", price: 250 } ]
+            },
+            {
+              id: "show_nav_2026",
+              name: "Show Navideño Artístico",
+              specs: "Puesta en escena teatral musical, elenco artístico, bailes y concursos festivos (40 minutos)",
+              options: [ { label: "Presentación 40 min", price: 694 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Inflables & Aventura",
+          heroTitle: "2. Inflables & Entretenimientos Interactivos",
+          heroSubtitle: "Atracciones de gran escala para adrenalina y diversión multitudinaria:",
+          items: [
+            {
+              id: "espuma_nav_2026",
+              name: "Cañón de Fiesta de Espuma",
+              specs: "Cañón de líquido espumógeno no tóxico, seguro para niños y adultos (1 hora)",
+              options: [ { label: "Servicio 1 Hora", price: 80 } ]
+            },
+            {
+              id: "castillo_nav_2026",
+              name: "Inflable Castillo Navideño",
+              specs: "Medidas: 4,5m largo × 4m ancho × 4m alto • Niños de 4 a 8 años (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 90 } ]
+            },
+            {
+              id: "barco_nav_2026",
+              name: "Inflable Barco Navideño",
+              specs: "Medidas: 6m largo × 4,5m ancho × 5,5m alto • Niños de 5 a 9 años (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 100 } ]
+            },
+            {
+              id: "gusanito_nav_2026",
+              name: "Tren Gusanito Rodante Navideño",
+              specs: "Paseo rodante mecánico para pasear por el recinto • Capacidad 40 personas simultáneas (1 hora)",
+              options: [ { label: "Paseo 1 Hora", price: 150 } ]
+            },
+            {
+              id: "futbol_burbuja_2026",
+              name: "Fútbol Burbuja Navideño",
+              specs: "Cancha delimitada con trajes de esferas inflables bumper para choques seguros (9 a 12 años)",
+              options: [ { label: "Alquiler 1 Hora", price: 150 } ]
+            },
+            {
+              id: "discoteca_ninos_nav",
+              name: "Discoteca Móvil Niños (Disco Kids)",
+              specs: "Efectos luminosos, animación musical infantil, bailes y coreografías (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 210 } ]
+            },
+            {
+              id: "discoteca_adultos_nav",
+              name: "Discoteca Móvil Adultos",
+              specs: "Sistema de luces profesionales, sonido de alta potencia y DJ con música variada (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 360 } ]
+            },
+            {
+              id: "hot_wheels_nav",
+              name: "Desafío Hot Wheels Inflable",
+              specs: "Pista de obstáculos extrema: 15m largo × 4m ancho × 5m alto • Niños desde 6 años (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 322 } ]
+            },
+            {
+              id: "oso_polar_nav",
+              name: "Mega Inflable Oso Polar",
+              specs: "Medidas colosales: 9m largo × 5m ancho × 7m alto • Para niños de 3 a 12 años (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 437 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Zonas Kids & Estaciones Creativas",
+          heroTitle: "3. Zonas Kids & Estaciones Creativas",
+          heroSubtitle: "Espacios seguros para tranquilidad de los padres y estimulación de los más pequeños:",
+          items: [
+            {
+              id: "legos_nav_2026",
+              name: "Pequeños Arquitectos (Zona LEGO)",
+              specs: "Miles de bloques gigantes de construcción tipo Lego con alfombra y panel temático (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 80 } ]
+            },
+            {
+              id: "juguetilandia_nav_2026",
+              name: "Juguetilandia Interactiva",
+              specs: "Piano de cola infantil, batería, guitarras, autos a batería y peluches gigantes",
+              options: [ { label: "Servicio 3 Horas", price: 120 } ]
+            },
+            {
+              id: "babypark_nav_2026",
+              name: "Baby Park de Estimulación Temprana",
+              specs: "Área protegida y acolchada de 6m × 2m para bebés de 1 a 3 años (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 125 } ]
+            },
+            {
+              id: "arenero_nav",
+              name: "Arenero Temático Sensorial",
+              specs: "Zona delimitada de 3m × 3m con arena tratada no tóxica y moldes lúdicos (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 130 } ]
+            },
+            {
+              id: "minicity_nav_2026",
+              name: "Minicity Navideña de Oficios",
+              specs: "Pueblo a escala de 6m × 4m: roles infantiles, salón de belleza, veterinaria (2 a 4 años - 3h)",
+              options: [ { label: "Servicio 3 Horas", price: 150 } ]
+            },
+            {
+              id: "arte_nav_2026",
+              name: "Estación de Arte Navideña",
+              specs: "Área de 6m × 6m con materiales para colorear y dibujar • Capacidad 100 niños (4 a 12 años)",
+              options: [ { label: "Capacidad 100 niños", price: 160 } ]
+            },
+            {
+              id: "lienzos_nav_2026",
+              name: "Estación de Pintura en Lienzos",
+              specs: "Área de 6m × 6m con caballetes y lienzos reales • Capacidad 80 niños (4 a 10 años)",
+              options: [ { label: "Capacidad 80 niños", price: 160 } ]
+            },
+            {
+              id: "huertos_nav_2026",
+              name: "Huertos Orgánicos / La Granja Karkajadas",
+              specs: "Escenografía de granja con animales, legumbres didácticas, materiales, 2 mesas y 10 sillas (60 niños)",
+              options: [ { label: "Paquete 60 niños", price: 180 } ]
+            },
+            {
+              id: "estacion_creativa_nav",
+              name: "Estación Creativa / Taller de Arte",
+              specs: "Incluye materiales didácticos para 100 niños, 2 mesas y 10 sillas completas",
+              options: [ { label: "Paquete 100 niños", price: 250 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Dinámicas & Integración",
+          heroTitle: "4. Dinámicas & Integración: Integración Corporativa",
+          heroSubtitle: "Actividades grupales de alta integración para colaboradores y familias:",
+          items: [
+            {
+              id: "deportivas_nav_2026",
+              name: "Estaciones Deportivas (Fútbol, Basket, Tenis, Gym, Bolos)",
+              specs: "Estación con monitor para niños de 3 a 12 años y adultos (3 horas - tarifa individual)",
+              options: [ { label: "Estación individual (3h)", price: 70 } ]
+            },
+            {
+              id: "rompecabezas_nav",
+              name: "Rompecabezas Gigante",
+              specs: "Juego de piso de coordinación y destreza en equipos (3 horas)",
+              options: [ { label: "Servicio 3 Horas", price: 75 } ]
+            },
+            {
+              id: "circuito_juegos_nav",
+              name: "Circuito de Juegos Padres e Hijos",
+              specs: "Estaciones de competencia e integración familiar con materiales para 100 participantes (1h 30m)",
+              options: [ { label: "100 part. (1h 30m)", price: 500 } ]
+            },
+            {
+              id: "master_chef_nav",
+              name: "Master Chef Corporativo / Familiar",
+              specs: "Gran competencia gastronómica lúdica: incluye logística, insumos y materiales para 100 participantes (2h)",
+              options: [ { label: "100 part. (2 horas)", price: 650 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Snacks & Candy Bar",
+          heroTitle: "5. Snacks & Candy Bar",
+          heroSubtitle: "Aromas y sabores preparados en vivo que elevan la hospitalidad del evento:",
+          items: [
+            {
+              id: "canguil_nav_2026",
+              name: "Máquina de Canguil / Palomitas Ilimitado",
+              specs: "Consumo libre de canguil caliente durante 2 horas con fundas e insumos completos",
+              options: [ { label: "Ilimitado 2 Horas", price: 80 } ]
+            },
+            {
+              id: "algodon_vaso_2026",
+              name: "Algodón de Azúcar en Vaso Sellado (16 oz)",
+              specs: "Paquete de 100 vasos higiénicamente sellados de 16 oz para entrega directa",
+              options: [ { label: "Paquete 100 unidades", price: 80 } ]
+            },
+            {
+              id: "algodon_nav_2026",
+              name: "Máquina de Algodón de Azúcar Ilimitado",
+              specs: "Elaboración en vivo ilimitada durante 2 horas con palillos y operador",
+              options: [ { label: "Ilimitado 2 Horas", price: 90 } ]
+            },
+            {
+              id: "granizado_nav_2026",
+              name: "Máquina de Granizados Ilimitados (6 oz)",
+              specs: "Entrega ilimitada durante 2 horas en vasos de 6 oz con operador e insumos",
+              options: [ { label: "Ilimitado 2 Horas", price: 100 } ]
+            },
+            {
+              id: "granizados_gigantes_2026",
+              name: "Granizados Gigantes en Vaso (12 oz)",
+              specs: "Paquete de 100 unidades de granizados gigantes con variedad de jarabes dulces",
+              options: [ { label: "Paquete 100 unidades", price: 120 } ]
+            },
+            {
+              id: "hotdog_nav_2026",
+              name: "Combo Hot Dogs + Gaseosas (Pack 50)",
+              specs: "50 hot dogs completos con salsas y papas trituradas + 50 gaseosas personales 300 ml",
+              options: [ { label: "Paquete 50 unidades", price: 125 } ]
+            }
+          ]
+        },
+        {
+          groupName: "Infraestructura & Logística",
+          heroTitle: "6. Infraestructura, Montaje, Sonido y Logística Integral",
+          heroSubtitle: "Soporte técnico y mobiliario estructural a medida de tu aforo:",
+          items: [
+            {
+              id: "sonido_nav_2026",
+              name: "Amplificación y Sonido Profesional",
+              specs: "Consola, parlantes activos y micrófonos inalámbricos según la acústica del recinto",
+              isCustomPrice: true,
+              options: [ { label: "Tarifa a Medida", price: 0 } ]
+            },
+            {
+              id: "carpas_nav_2026",
+              name: "Carpas, Tarimas, Sillas y Mesas",
+              specs: "Mobiliario estructural y carpas impermeables de alto estándar para adultos y niños",
+              isCustomPrice: true,
+              options: [ { label: "Tarifa a Medida", price: 0 } ]
+            },
+            {
+              id: "movilizacion_nav_2026",
+              name: "Montaje, Desmontaje y Movilización",
+              specs: "Cargos de transporte, cuadrilla de montaje previo y desmontaje final seguro",
+              isCustomPrice: true,
+              options: [ { label: "Tarifa a Medida", price: 0 } ]
+            }
+          ]
+        }
+      ]
+    };
+
+    let activeCatalog = 'regular';
+    let currentStepIndex = 0;
+    let selectedState = {};
+    let empathyData = { adults: 0, kids: 0, vegetarians: 0, specialNeeds: 0, allergies: '' };
+    let currentDistributionData = [];
+    const IVA_PERCENT = 0.15;
+
+    const CATEGORY_COLORS = [
+      "#f59e0b",
+      "#3b82f6",
+      "#10b981",
+      "#8b5cf6",
+      "#ec4899",
+      "#06b6d4"
+    ];
+
+    function startAppWithTransition(type) {
+      const hero = document.getElementById('heroView');
+      hero.classList.add('exit-animation');
+
+      setTimeout(() => {
+        hero.style.display = 'none';
+        hero.classList.remove('exit-animation');
+
+        const workspace = document.getElementById('appWorkspace');
+        workspace.style.display = 'flex';
+        setTimeout(() => workspace.classList.add('visible'), 30);
+
+        startApp(type);
+      }, 350);
+    }
+
+    function startApp(type) {
+      activeCatalog = type;
+      currentStepIndex = 0;
+      selectedState = {};
+      empathyData = { adults: 0, kids: 0, vegetarians: 0, specialNeeds: 0, allergies: '' };
+
+      document.getElementById('catalogBadge').textContent = (type === 'regular') ? 'Catálogo Regular' : 'Temporada Navideña 2026';
+
+      renderStepTrack();
+      loadStep(0);
+      updatePreview();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function goHome() {
+      const workspace = document.getElementById('appWorkspace');
+      workspace.classList.remove('visible');
+      setTimeout(() => {
+        workspace.style.display = 'none';
+        const hero = document.getElementById('heroView');
+        hero.style.display = 'block';
+      }, 350);
+    }
+
+    function renderStepTrack() {
+      const track = document.getElementById('stepTrack');
+      track.innerHTML = '';
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+
+      const empPill = document.createElement('div');
+      empPill.className = `step-pill ${currentStepIndex === 0 ? 'active' : ''}`;
+      empPill.id = `pill-0`;
+      empPill.innerHTML = `<span>0.</span> Perfil del Evento`;
+      empPill.onclick = () => loadStep(0);
+      track.appendChild(empPill);
+
+      groups.forEach((g, idx) => {
+        const stepNum = idx + 1;
+        const pill = document.createElement('div');
+        pill.className = `step-pill ${currentStepIndex === stepNum ? 'active' : ''}`;
+        pill.id = `pill-${stepNum}`;
+        pill.innerHTML = `<span>${stepNum}.</span> ${g.groupName}`;
+        pill.onclick = () => loadStep(stepNum);
+        track.appendChild(pill);
+      });
+
+      const finalIndex = groups.length + 1;
+      const finalPill = document.createElement('div');
+      finalPill.className = `step-pill ${currentStepIndex === finalIndex ? 'active' : ''}`;
+      finalPill.id = `pill-${finalIndex}`;
+      finalPill.innerHTML = `<span>${finalIndex}.</span> Confirmación`;
+      finalPill.onclick = () => loadStep(finalIndex);
+      track.appendChild(finalPill);
+    }
+
+    function loadStep(stepIndex) {
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+      currentStepIndex = stepIndex;
+
+      document.querySelectorAll('.step-pill').forEach((p, idx) => {
+        p.classList.toggle('active', idx === stepIndex);
+      });
+
+      const empathyStep = document.getElementById('empathyStep');
+      const groupContent = document.getElementById('groupContent');
+      const finalContactBox = document.getElementById('finalContactBox');
+      const btnNext = document.getElementById('btnNext');
+      const btnPrev = document.getElementById('btnPrev');
+
+      if (stepIndex === 0) {
+        btnPrev.style.display = 'none';
+      } else {
+        btnPrev.style.display = 'inline-flex';
+        btnPrev.textContent = '⬅ Paso Anterior';
+      }
+
+      if (stepIndex === 0) {
+        empathyStep.style.display = 'block';
+        groupContent.style.display = 'none';
+        finalContactBox.style.display = 'none';
+        btnNext.style.display = 'inline-flex';
+        btnNext.textContent = 'Ver Atracciones y Comenzar ➔';
+        return;
+      }
+
+      if (stepIndex === groups.length + 1) {
+        empathyStep.style.display = 'none';
+        groupContent.style.display = 'none';
+        finalContactBox.style.display = 'block';
+        btnNext.style.display = 'none';
+        btnPrev.style.display = 'inline-flex';
+        btnPrev.textContent = '⬅ Volver al Catálogo';
+        return;
+      }
+
+      empathyStep.style.display = 'none';
+      groupContent.style.display = 'block';
+      finalContactBox.style.display = 'none';
+      btnNext.style.display = 'inline-flex';
+
+      const groupIdx = stepIndex - 1;
+      const group = groups[groupIdx];
+
+      document.getElementById('groupTitle').textContent = group.heroTitle;
+      document.getElementById('groupSubtitle').textContent = group.heroSubtitle;
+
+      if (stepIndex === groups.length) {
+        btnNext.textContent = 'Finalizar y Datos de Cotización ➔';
+      } else {
+        btnNext.textContent = 'Siguiente Paso ➔';
+      }
+
+      const container = document.getElementById('itemsContainer');
+      container.innerHTML = '';
+
+      group.items.forEach(item => {
+        if (!selectedState[item.id]) {
+          selectedState[item.id] = { selected: false, optionIndex: 0, customPrice: 0 };
+        }
+
+        const isSelected = selectedState[item.id].selected;
+        const currentOpt = item.options[selectedState[item.id].optionIndex];
+
+        const card = document.createElement('div');
+        card.className = `item-card ${isSelected ? 'selected' : ''}`;
+        card.id = `card-${item.id}`;
+
+        let metabtnsHtml = '';
+        if (item.options.length > 1) {
+          metabtnsHtml = `<div class="metabtns-row">`;
+          item.options.forEach((opt, idx) => {
+            const activeClass = selectedState[item.id].optionIndex === idx ? 'active' : '';
+            metabtnsHtml += `<button type="button" class="metabtn ${activeClass}" onclick="selectMetaOption(event, '${item.id}', ${idx})">${opt.label}</button>`;
+          });
+          metabtnsHtml += `</div>`;
+        }
+
+        let customInputHtml = '';
+        let priceDisplay = 'A consultar';
+
+        if (item.isCustomPrice) {
+          const currentCustomVal = selectedState[item.id].customPrice || '';
+          if (isSelected && currentCustomVal > 0) {
+            priceDisplay = `$${parseFloat(currentCustomVal).toFixed(2)}`;
+          }
+          customInputHtml = `
+            <div class="custom-price-container" id="customBox-${item.id}" style="display: ${isSelected ? 'flex' : 'none'};" onclick="event.stopPropagation();">
+              <span class="custom-price-label">Valor cotizado ($):</span>
+              <input type="number" min="0" step="1" class="custom-price-input" id="inputCustom-${item.id}" 
+                     placeholder="Ej. 150" value="${currentCustomVal}" 
+                     oninput="updateCustomPrice('${item.id}', this.value)" 
+                     onclick="event.stopPropagation();">
+            </div>
+          `;
+        } else {
+          priceDisplay = currentOpt.price > 0 ? `$${currentOpt.price.toFixed(2)}` : 'A consultar';
+        }
+
+        card.innerHTML = `
+          <div class="item-header-row" onclick="toggleSelection('${item.id}')">
+            <div class="item-left">
+              <input type="checkbox" class="item-checkbox" ${isSelected ? 'checked' : ''}>
+              <div>
+                <div class="item-title">${item.name}</div>
+                <div class="item-specs">${item.specs}</div>
+              </div>
+            </div>
+            <div class="item-price" id="price-${item.id}">${priceDisplay}</div>
+          </div>
+          ${metabtnsHtml}
+          ${customInputHtml}
+        `;
+
+        container.appendChild(card);
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function navigateGroup(delta) {
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+      const totalSteps = groups.length + 2;
+      const newStep = currentStepIndex + delta;
+      if (newStep >= 0 && newStep < totalSteps) {
+        loadStep(newStep);
+      }
+    }
+
+    function updateEmpathyData() {
+      empathyData.adults = parseInt(document.getElementById('empAdults').value) || 0;
+      empathyData.kids = parseInt(document.getElementById('empKids').value) || 0;
+      empathyData.vegetarians = parseInt(document.getElementById('empVegetarians').value) || 0;
+      empathyData.specialNeeds = parseInt(document.getElementById('empSpecialNeeds').value) || 0;
+      empathyData.allergies = document.getElementById('empAllergies').value.trim();
+
+      const totalPeople = empathyData.adults + empathyData.kids;
+      const badge = document.getElementById('audienceBadge');
+      const vegBadge = document.getElementById('vegBadge');
+      const specialRow = document.getElementById('specialNeedsRow');
+      const specialBadge = document.getElementById('specialNeedsBadge');
+
+      if (totalPeople > 0) {
+        badge.querySelector('.audience-row span:first-child').textContent = `👥 ${totalPeople} Asistentes (${empathyData.adults} Ad. • ${empathyData.kids} Niños)`;
+      } else {
+        badge.querySelector('.audience-row span:first-child').textContent = `👥 Asistentes: Sin definir`;
+      }
+
+      if (empathyData.vegetarians > 0) {
+        vegBadge.textContent = `🌱 ${empathyData.vegetarians} Especiales`;
+        vegBadge.style.color = '#15803d';
+      } else {
+        vegBadge.textContent = `🌱 0 especiales`;
+        vegBadge.style.color = '#64748b';
+      }
+
+      if (empathyData.specialNeeds > 0 || empathyData.allergies) {
+        specialRow.style.display = 'flex';
+        let detailText = `♿ ${empathyData.specialNeeds} Cap. Especiales`;
+        if (empathyData.allergies) {
+          detailText += ` • Cuidados: ${empathyData.allergies.length > 25 ? empathyData.allergies.substring(0, 25) + '...' : empathyData.allergies}`;
+        }
+        specialBadge.textContent = detailText;
+      } else {
+        specialRow.style.display = 'none';
+      }
+    }
+
+    function toggleSelection(id) {
+      selectedState[id].selected = !selectedState[id].selected;
+      const card = document.getElementById(`card-${id}`);
+      const checkbox = card.querySelector('.item-checkbox');
+      
+      checkbox.checked = selectedState[id].selected;
+      card.classList.toggle('selected', selectedState[id].selected);
+
+      const customBox = document.getElementById(`customBox-${id}`);
+      if (customBox) {
+        customBox.style.display = selectedState[id].selected ? 'flex' : 'none';
+        if (selectedState[id].selected) {
+          const inputEl = document.getElementById(`inputCustom-${id}`);
+          if (inputEl) setTimeout(() => inputEl.focus(), 50);
+        }
+      }
+
+      updateItemCardPriceDisplay(id);
+      updatePreview();
+    }
+
+    function selectMetaOption(event, id, optionIndex) {
+      event.stopPropagation();
+      selectedState[id].optionIndex = optionIndex;
+      selectedState[id].selected = true;
+
+      const card = document.getElementById(`card-${id}`);
+      card.classList.add('selected');
+      card.querySelector('.item-checkbox').checked = true;
+
+      const buttons = card.querySelectorAll('.metabtn');
+      buttons.forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === optionIndex);
+      });
+
+      updateItemCardPriceDisplay(id);
+      updatePreview();
+    }
+
+    function updateCustomPrice(id, val) {
+      const parsedVal = parseFloat(val) || 0;
+      selectedState[id].customPrice = parsedVal;
+      updateItemCardPriceDisplay(id);
+      updatePreview();
+    }
+
+    function updateItemCardPriceDisplay(id) {
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+      let itemFound = null;
+      groups.forEach(g => {
+        const match = g.items.find(i => i.id === id);
+        if (match) itemFound = match;
+      });
+
+      const priceEl = document.getElementById(`price-${id}`);
+      if (!priceEl) return;
+
+      if (itemFound.isCustomPrice) {
+        const currentCustom = selectedState[id].customPrice;
+        if (selectedState[id].selected && currentCustom > 0) {
+          priceEl.textContent = `$${parseFloat(currentCustom).toFixed(2)}`;
+        } else {
+          priceEl.textContent = 'A consultar';
+        }
+      } else {
+        const opt = itemFound.options[selectedState[id].optionIndex];
+        priceEl.textContent = opt.price > 0 ? `$${opt.price.toFixed(2)}` : 'A consultar';
+      }
+    }
+
+    function updatePreview() {
+      const itemsListContainer = document.getElementById('itemsScrollList');
+      const groupsListContainer = document.getElementById('groupsScrollList');
+      
+      itemsListContainer.innerHTML = '';
+      groupsListContainer.innerHTML = '';
+
+      let subtotalGeneral = 0;
+      let totalSelectedCount = 0;
+      let hasTopAttraction = false;
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+
+      currentDistributionData = [];
+
+      groups.forEach((group, gIdx) => {
+        let groupTotal = 0;
+        let itemsInGroup = [];
+
+        group.items.forEach(item => {
+          const state = selectedState[item.id];
+          if (state && state.selected) {
+            totalSelectedCount++;
+
+            let itemPrice = 0;
+            let labelText = '';
+
+            if (item.isCustomPrice) {
+              itemPrice = state.customPrice || 0;
+              labelText = itemPrice > 0 ? 'Tarifa Asignada' : 'A consultar';
+            } else {
+              const opt = item.options[state.optionIndex];
+              itemPrice = opt.price;
+              labelText = opt.label;
+            }
+
+            subtotalGeneral += itemPrice;
+            groupTotal += itemPrice;
+
+            itemsInGroup.push({
+              name: item.name,
+              label: labelText,
+              price: itemPrice
+            });
+
+            if (item.id === 'show_nav_2026' || item.id === 'oso_polar_nav' || item.id === 'hot_wheels_nav' || item.id === 'master_chef_nav') {
+              hasTopAttraction = true;
+            }
+
+            const itemRow = document.createElement('div');
+            itemRow.className = 'item-spec-row';
+            const priceText = itemPrice > 0 ? `$${itemPrice.toFixed(2)}` : 'A consultar';
+            itemRow.innerHTML = `
+              <div>
+                <div class="item-spec-name">${item.name}</div>
+                <div class="item-spec-dur">${labelText}</div>
+              </div>
+              <div class="item-spec-price">${priceText}</div>
+            `;
+            itemsListContainer.appendChild(itemRow);
+          }
+        });
+
+        if (itemsInGroup.length > 0) {
+          const groupRow = document.createElement('div');
+          groupRow.className = 'group-stat-row';
+          const groupPriceText = groupTotal > 0 ? `$${groupTotal.toFixed(2)}` : 'A consultar';
+          groupRow.innerHTML = `
+            <span class="group-stat-name">${group.groupName} (${itemsInGroup.length})</span>
+            <span class="group-stat-val">${groupPriceText}</span>
+          `;
+          groupsListContainer.appendChild(groupRow);
+
+          currentDistributionData.push({
+            name: group.groupName,
+            total: groupTotal,
+            color: CATEGORY_COLORS[gIdx % CATEGORY_COLORS.length],
+            items: itemsInGroup
+          });
+        }
+      });
+
+      if (totalSelectedCount === 0) {
+        itemsListContainer.innerHTML = `<div class="empty-state">No has seleccionado ítems aún</div>`;
+        groupsListContainer.innerHTML = `<div class="empty-state">Sin grupos activos</div>`;
+      }
+
+      const smartBanner = document.getElementById('smartPackBanner');
+      const smartIcon = document.getElementById('smartIcon');
+      const smartText = document.getElementById('smartText');
+
+      if (totalSelectedCount === 0) {
+        smartBanner.style.borderLeftColor = "#cbd5e1";
+        smartIcon.textContent = "💡";
+        smartText.textContent = "Selecciona atracciones para visualizar el resumen por categorías.";
+      } else if (totalSelectedCount >= 5 || (totalSelectedCount >= 3 && hasTopAttraction)) {
+        smartBanner.style.borderLeftColor = "#10b981";
+        smartIcon.textContent = "🌟";
+        smartText.innerHTML = "<b>¡Tu paquete es el más completo con atracciones TOP!</b> Has configurado una experiencia premium de alto impacto.";
+      } else if (totalSelectedCount >= 3) {
+        smartBanner.style.borderLeftColor = "#3b82f6";
+        smartIcon.textContent = "🚀";
+        smartText.innerHTML = "<b>Paquete muy dinámico y equilibrado.</b> Cubre diversión y complementos clave para tu evento.";
+      } else {
+        smartBanner.style.borderLeftColor = "#f59e0b";
+        smartIcon.textContent = "🎯";
+        smartText.innerHTML = "<b>Excelente elección inicial.</b> Puedes sumar más servicios en los siguientes grupos.";
+      }
+
+      const iva = subtotalGeneral * IVA_PERCENT;
+      const total = subtotalGeneral + iva;
+
+      document.getElementById('subtotalVal').textContent = `$${subtotalGeneral.toFixed(2)}`;
+      document.getElementById('ivaVal').textContent = `$${iva.toFixed(2)}`;
+      document.getElementById('totalVal').textContent = `$${total.toFixed(2)}`;
+
+      renderBudgetAnalytics(subtotalGeneral);
+    }
+
+    function renderBudgetAnalytics(subtotalGeneral) {
+      const barsContainer = document.getElementById('chartBarsPreview');
+      const svg = document.getElementById('donutSvg');
+      const centerLabel = document.getElementById('donutCenterPct');
+
+      if (subtotalGeneral === 0 || currentDistributionData.length === 0) {
+        barsContainer.innerHTML = `<span style="font-size: 0.76rem; color: #94a3b8; font-style: italic;">Selecciona servicios para generar el gráfico.</span>`;
+        svg.innerHTML = `<circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"></circle>`;
+        centerLabel.textContent = "0%";
+        document.getElementById('chartSubtext').textContent = "¿Dónde se está destinando más tu inversión?";
+        return;
+      }
+
+      let accumulatedOffset = 0;
+      let svgCircles = `<circle cx="18" cy="18" r="15.9155" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"></circle>`;
+      let barsHtml = '';
+
+      const sorted = [...currentDistributionData].sort((a, b) => b.total - a.total);
+      const topCategory = sorted[0];
+      const topPct = Math.round((topCategory.total / subtotalGeneral) * 100);
+
+      sorted.forEach((cat) => {
+        const pct = Math.round((cat.total / subtotalGeneral) * 100) || 1;
+        const strokeDasharray = `${pct} ${100 - pct}`;
+
+        svgCircles += `
+          <circle cx="18" cy="18" r="15.9155" fill="none" 
+                  stroke="${cat.color}" stroke-width="4.5" 
+                  stroke-dasharray="${strokeDasharray}" 
+                  stroke-dashoffset="${-accumulatedOffset}">
+          </circle>
+        `;
+        accumulatedOffset += pct;
+
+        barsHtml += `
+          <div class="chart-bar-line">
+            <span class="chart-bar-name">${cat.name}</span>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width: ${pct}%; background: ${cat.color};"></div>
+            </div>
+            <span class="chart-bar-pct">${pct}%</span>
+          </div>
+        `;
+      });
+
+      svg.innerHTML = svgCircles;
+      centerLabel.textContent = `${topPct}%`;
+      document.getElementById('chartSubtext').innerHTML = `El <b>${topPct}%</b> de tu inversión se concentra en <b>${topCategory.name}</b>.`;
+      barsContainer.innerHTML = barsHtml;
+    }
+
+    function openAnalyticsModal() {
+      if (currentDistributionData.length === 0) {
+        alert("Selecciona al menos un servicio para visualizar la radiografía de tu inversión.");
+        return;
+      }
+
+      const modal = document.getElementById('analyticsModal');
+      const container = document.getElementById('expandedGroupsContainer');
+      container.innerHTML = '';
+
+      let subtotalGeneral = currentDistributionData.reduce((acc, c) => acc + c.total, 0);
+      const sorted = [...currentDistributionData].sort((a, b) => b.total - a.total);
+
+      sorted.forEach(cat => {
+        const pct = Math.round((cat.total / subtotalGeneral) * 100);
+        const card = document.createElement('div');
+        card.className = 'expanded-group-card';
+
+        let itemsRows = '';
+        cat.items.forEach(itm => {
+          itemsRows += `
+            <div class="expanded-item-row">
+              <span>• ${itm.name} <small style="color: #64748b;">(${itm.label})</small></span>
+              <strong>$${itm.price.toFixed(2)}</strong>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="expanded-group-header">
+            <div class="expanded-group-title">
+              <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background:${cat.color};"></span>
+              ${cat.name}
+            </div>
+            <div class="expanded-group-badge" style="background: rgba(15, 23, 42, 0.06); color: #0f172a;">
+              $${cat.total.toFixed(2)} • ${pct}% del presupuesto
+            </div>
+          </div>
+          <div style="height: 6px; width: 100%; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+            <div style="width: ${pct}%; height: 100%; background: ${cat.color}; border-radius: 6px;"></div>
+          </div>
+          <div class="expanded-items-sublist">
+            ${itemsRows}
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      modal.style.display = 'flex';
+    }
+
+    function closeAnalyticsModal(e) {
+      if (e && e.target !== e.currentTarget && !e.target.classList.contains('analytics-close-btn')) return;
+      document.getElementById('analyticsModal').style.display = 'none';
+    }
+
+    function openPrivacyModal(e) {
+      if (e) e.preventDefault();
+      document.getElementById('privacyModal').style.display = 'flex';
+    }
+
+    function closePrivacyModal(e) {
+      if (e && e.target !== e.currentTarget && !e.target.classList.contains('modal-close-btn')) return;
+      document.getElementById('privacyModal').style.display = 'none';
+    }
+
+    // ENVÍO FINAL Y GENERACIÓN DEL PDF
+    function handleFinalSubmit(e) {
+      e.preventDefault();
+
+      const consentCheck = document.getElementById('privacyConsent');
+      if (!consentCheck.checked) {
+        alert("Para emitir su propuesta formal, es necesario autorizar el tratamiento de datos personales.");
+        return;
+      }
+
+      const groups = STRATEGIC_CATALOG[activeCatalog];
+      const selectedList = [];
+      const detailedItemsArray = [];
+      let subtotal = 0;
+
+      const pdfTbody = document.getElementById('pdfTableBody');
+      pdfTbody.innerHTML = '';
+
+      groups.forEach(g => {
+        const groupSelected = [];
+        g.items.forEach(item => {
+          const state = selectedState[item.id];
+          if (state && state.selected) {
+            let itemPrice = item.isCustomPrice ? (state.customPrice || 0) : item.options[state.optionIndex].price;
+            groupSelected.push({ item, state, itemPrice });
+          }
+        });
+
+        groupSelected.sort((a, b) => a.itemPrice - b.itemPrice);
+
+        groupSelected.forEach(({ item, state, itemPrice }) => {
+          let labelText = item.isCustomPrice ? (itemPrice > 0 ? 'Tarifa Asignada' : 'A consultar') : item.options[state.optionIndex].label;
+
+          subtotal += itemPrice;
+          const priceFormatted = itemPrice > 0 ? `$${itemPrice.toFixed(2)}` : 'A consultar';
+          selectedList.push(`${item.name} (${labelText}) - ${priceFormatted}`);
+          detailedItemsArray.push({
+            name: item.name,
+            label: labelText,
+            price: itemPrice
+          });
+
+          const tr = document.createElement('tr');
+          tr.className = 'pdf-no-break';
+          tr.innerHTML = `
+            <td>
+              <strong>${item.name}</strong> (${labelText})<br>
+              <small style="color: #64748b;">${item.specs}</small>
+            </td>
+            <td style="text-align: right; font-weight: bold;">${priceFormatted}</td>
+          `;
+          pdfTbody.appendChild(tr);
+        });
+      });
+
+      if (selectedList.length === 0) {
+        alert("Por favor selecciona al menos un servicio antes de generar la propuesta.");
+        return;
+      }
+
+      const iva = subtotal * IVA_PERCENT;
+      const total = subtotal + iva;
+
+      // LLENADO DEL PDF
+      document.getElementById('pdfCatalogName').textContent = (activeCatalog === 'regular') ? 'Catálogo Regular Corporativo' : 'Catálogo Especial de Temporada Navideña 2026';
+      
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      document.getElementById('pdfDate').textContent = `${day}/${month}/${year}`;
+
+      document.getElementById('pdfClientName').textContent = document.getElementById('custName').value;
+      document.getElementById('pdfClientCompany').textContent = document.getElementById('custCompany').value;
+      document.getElementById('pdfClientPhone').textContent = document.getElementById('custPhone').value;
+      document.getElementById('pdfClientEmail').textContent = document.getElementById('custEmail').value;
+
+      const totalGuests = empathyData.adults + empathyData.kids;
+      document.getElementById('pdfTotalGuests').textContent = totalGuests > 0 ? `${totalGuests}` : 'No especificado';
+      document.getElementById('pdfAdultsKids').textContent = `${empathyData.adults} Adultos • ${empathyData.kids} Niños`;
+      document.getElementById('pdfDietNeeds').textContent = empathyData.vegetarians > 0 ? `${empathyData.vegetarians} personas con menú especial` : 'Ninguna requerida';
+      document.getElementById('pdfSpecialNeeds').textContent = empathyData.specialNeeds > 0 ? `${empathyData.specialNeeds} personas con capacidades especiales` : 'No registradas';
+      document.getElementById('pdfAllergies').textContent = empathyData.allergies ? empathyData.allergies : 'Sin alergias ni observaciones médicas reportadas';
+
+      document.getElementById('pdfSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('pdfIVA').textContent = `$${iva.toFixed(2)}`;
+      document.getElementById('pdfTotal').textContent = `$${total.toFixed(2)}`;
+
+      // GENERACIÓN DEL PDF
+      const pdfElement = document.getElementById('pdfOfficialTemplate');
+      pdfElement.style.opacity = '1';
+      pdfElement.style.position = 'static';
+      pdfElement.style.zIndex = 'auto';
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Cotizacion_Karkajadas_${document.getElementById('custCompany').value || 'Evento'}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      html2pdf().set(opt).from(pdfElement).save().then(() => {
+        pdfElement.style.opacity = '0';
+        pdfElement.style.position = 'fixed';
+        pdfElement.style.zIndex = '-9999';
+        alert("¡Tu propuesta formal en PDF ha sido generada y descargada con éxito!");
+      });
+
+      // CONEXIÓN A GOOGLE SHEETS
+      const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycby2q36z1fMr0VV6kUKJrH6iJxRchZLtnvsoKivVxlQSWcUyD1_KzeXJbLb0tqZBxBA7MQ/exec";
+      if (WEBHOOK_URL !== "TU_URL_AQUI") {
+        fetch(WEBHOOK_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fecha: `${day}/${month}/${year} ${now.toLocaleTimeString()}`,
+            tipoEvento: activeCatalog,
+            totalAsistentes: totalGuests,
+            adultos: empathyData.adults,
+            ninos: empathyData.kids,
+            dietasEspeciales: empathyData.vegetarians,
+            capacidadesEspeciales: empathyData.specialNeeds,
+            alergiasYCuidados: empathyData.allergies,
+            cliente: document.getElementById('custName').value,
+            empresa: document.getElementById('custCompany').value,
+            telefono: document.getElementById('custPhone').value,
+            correo: document.getElementById('custEmail').value,
+            consentimientoLOPDP: true,
+            servicios: selectedList.join(" | "),
+            itemsDetallados: detailedItemsArray,
+            subtotal: subtotal.toFixed(2),
+            iva: iva.toFixed(2),
+            total: total.toFixed(2)
+          })
+        });
+      }
+    }
+
+    // Arranque directo desde el ERP: salta la portada y abre el catálogo elegido
+    function iniciarEmbebido(type) {
+      document.getElementById('heroView').style.display = 'none';
+      const workspace = document.getElementById('appWorkspace');
+      workspace.style.display = 'flex';
+      workspace.classList.add('visible');
+      document.querySelectorAll('.btn-outline-back').forEach(b => b.style.display = 'none');
+      document.body.style.alignItems = 'flex-start';
+      startApp(type);
+    }
+  </script>
+</body>
+</html>
