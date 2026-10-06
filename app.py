@@ -15,11 +15,11 @@ from datetime import date, datetime
 ESTADOS = ["Aprobada", "Enviada", "Borrador", "Cancelada"]
 MENU_CLIENTES = "Directorio de clientes"
 MENU_PROVEEDORES = "Directorio de proveedores"
-COLORES = {
-    "Aprobada": "#059669",   # verde
-    "Enviada": "#1E3A8A",    # azul
-    "Borrador": "#64748B",   # gris
-    "Cancelada": "#EF4444",  # rojo
+COLORES = {   # paleta de datos: distinta a los botones (verde = confirmar, azul = neutro)
+    "Aprobada": "#0891B2",   # cian
+    "Enviada": "#7C3AED",    # violeta
+    "Borrador": "#C98A0B",   # ámbar
+    "Cancelada": "#DB2777",  # rosa
 }
 MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 CIUDADES = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
