@@ -1,5 +1,7 @@
 import json
 from html import escape as esc
+from pathlib import Path
+import streamlit.components.v1 as components
 import streamlit as st
 import pandas as pd
 import altair as alt
@@ -762,8 +764,12 @@ def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, cr
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
 MENU_PRINCIPAL = ["Panel de inicio", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
 MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
+CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
 
 for opcion in MENU_PRINCIPAL:
+    st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
+st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>COTIZADOR DE CATÁLOGOS</p>", unsafe_allow_html=True)
+for opcion in CATALOGOS:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
 for opcion in MENU_SOPORTE:
@@ -1104,6 +1110,18 @@ elif menu == "Nueva cotización":
                     ayuda = "Hay cambios sin guardar: guarda la cotización para actualizar el PDF."
                 c_pdf.download_button("Generar PDF", data=pdf or b"", file_name=f"{(guardada or {}).get('codigo', 'cotizacion')}.pdf",
                                       mime="application/pdf", disabled=pdf is None, use_container_width=True, key="btn_pdf", help=ayuda)
+
+# =============================================================================
+# COTIZADOR DE CATÁLOGOS (regular y navideño): página HTML incrustada
+# =============================================================================
+elif menu in CATALOGOS:
+    st.markdown(f"<h2 style='color:#0F172A; font-weight:800; margin-bottom:6px;'>Cotizador · {menu.replace('Catálogo ', 'catálogo ')}</h2>", unsafe_allow_html=True)
+    ruta_html = Path(__file__).parent / "cotizador_catalogos.html"
+    if not ruta_html.exists():
+        st.error("Falta el archivo cotizador_catalogos.html en el repositorio, junto a app.py. Súbelo en GitHub (Add file → Upload files).")
+    else:
+        pagina = ruta_html.read_text(encoding="utf-8").replace("</body>", f"<script>iniciarEmbebido('{CATALOGOS[menu]}');</script></body>")
+        components.html(pagina, height=1250, scrolling=True)
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
