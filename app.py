@@ -234,6 +234,9 @@ if "cotizaciones_guardadas" not in ss:
         {"codigo": "KG-20261020-003", "evento": "Cena de directivos", "cliente": "Hilton Colón Quito", "fecha": "2026-10-20", "estado": "Borrador", "total": 834.50, "items": [_item("Catering premium", "2026-10-20", 1, 25.0, 0.15, 20.0)]},
         {"codigo": "KG-20260905-004", "evento": "Capacitación anual", "cliente": "Siemens Ecuador S.A.", "fecha": "2026-09-05", "estado": "Aprobada", "total": 3150.00, "items": [_item("Logística", "2026-09-05", 1, 1000.0, 0.0, 15.0)]},
         {"codigo": "KG-20260812-005", "evento": "Activación BTL", "cliente": "Corrugadora Nacional Cransa S.A.", "fecha": "2026-08-12", "estado": "Aprobada", "total": 1850.00, "items": [_item("Animador corporativo", "2026-08-12", 5, 150.0, 0.15, 20.0)]},
+        {"codigo": "KG-20261006-007", "evento": "Feria cultural", "cliente": "Hilton Colón Quito", "fecha": "2026-10-06", "estado": "Aprobada", "total": 545.10, "items": [
+            {"servicio": "Carpa 6x6 con 4 paredes", "proveedor": "Mario Mora - Bizion", "ciudad": "Guayaquil", "fecha": "2026-10-06", "cantidad": 1, "costo": 300.0, "iva_prov": 0.15, "fee_pct": 20.0},
+            {"servicio": "Jenga gigante de madera", "proveedor": "Karkajadas Group", "ciudad": "Guayaquil", "fecha": "2026-10-06", "cantidad": 2, "costo": 30.0, "iva_prov": 0.0, "fee_pct": 0.0}]},
         {"codigo": "KG-20261005-006", "evento": "Feria de exposición", "cliente": "Hilton Colón Quito", "fecha": "2026-10-05", "estado": "Aprobada", "total": 2200.00, "items": [_item("Carpa", "2026-10-05", 2, 50.0, 0.15, 20.0)]},
     ]
 
@@ -274,7 +277,25 @@ def migrar_datos():
             p.setdefault(k, "")
 
 
+# --- Datos del módulo de órdenes de servicio: Karkajadas como proveedor propio, eventos, fichas y pedido a bodega
+EMPRESA_PROPIA = "Karkajadas Group"
+SERVICIOS_PROPIOS = [("Jenga gigante de madera", 60.0), ("Cuatro en raya gigante", 50.0), ("Rompecabezas gigante", 75.0)]
+ss.setdefault("fichas", {})
+ss.setdefault("eventos", {})
+ss.setdefault("bodega", {})
+
+def asegurar_proveedor_propio():
+    if not any(p["proveedor"] == EMPRESA_PROPIA for p in ss.proveedores):
+        ss.proveedores.append({"id": f"PRV-{len(ss.proveedores) + 1:03d}", "proveedor": EMPRESA_PROPIA, "ruc": "", "categoria": "Propio",
+                               "ciudad": "Quito", "observaciones": "Servicios propios (salen de bodega)", "contactos": [], "direcciones": [], "cuentas": []})
+    for nombre, precio in SERVICIOS_PROPIOS:
+        if not any(r["proveedor"] == EMPRESA_PROPIA and r["servicio"] == nombre for r in ss.proveedores_catalogo):
+            ss.proveedores_catalogo.append({"servicio": nombre, "proveedor": EMPRESA_PROPIA, "categoria": "Propio", "ciudad": "Quito",
+                                            "precio_base": precio, "iva": 0.15, "descripcion": "Servicio propio"})
+
+
 migrar_datos()
+asegurar_proveedor_propio()
 
 
 # =============================================================================
@@ -485,6 +506,261 @@ def generar_pdf(cot, cliente):
 
     doc.build(historia, onFirstPage=pie, onLaterPages=pie)
     return buf.getvalue()
+
+
+# =============================================================================
+# ÓRDENES DE SERVICIO: datos de la empresa, formatos y documentos PDF
+# =============================================================================
+EMPRESA = "Karkajadas Group"
+EMPRESA_DATOS = {"web": "www.karkajadasgroup.com", "ruc": "1713272845001", "telefono": "0998526514 / 02 3076303",
+                 "correo": "edwin.garcia@karkajadasgroup.com", "direccion": "La Victoria Baja, Calle D, Lote 50 B"}
+LOGO_B64 = "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"
+DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def fecha_larga(d):
+    """'miércoles, 30 de septiembre de 2026' a partir de una fecha o un texto AAAA-MM-DD."""
+    if not hasattr(d, "year"):
+        try:
+            d = datetime.strptime(str(d)[:10], "%Y-%m-%d")
+        except ValueError:
+            return str(d)
+    return f"{DIAS[d.weekday()]}, {d.day} de {MESES[d.month - 1]} de {d.year}"
+
+
+def dinero(x):
+    try:
+        v = float(str(x).replace("$", "").replace(" ", "").replace(",", "."))  if isinstance(x, str) else float(x)
+    except ValueError:
+        return str(x)
+    return "$" + f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def a_numero(x):
+    try:
+        return float(str(x).replace("$", "").replace(" ", "").replace(",", "."))
+    except ValueError:
+        return 0.0
+
+
+def _logo(ancho_cm):
+    import base64
+    from io import BytesIO
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Image
+    return Image(BytesIO(base64.b64decode(LOGO_B64)), width=ancho_cm * cm, height=ancho_cm * cm * 196 / 372)
+
+
+def pdf_documento(titulo, ref, subtitulo, bloques):
+    """PDF con el estilo del ERP. bloques: ("info", [(etiqueta, valor)]) | ("seccion", texto) | ("nota", texto) |
+    ("tabla", titulos, filas, anchos_relativos, columnas_casilla). En columnas de casilla, True = marcada."""
+    from io import BytesIO
+    from xml.sax.saxutils import escape
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_RIGHT
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    AZUL, VERDE = colors.HexColor("#1E3A8A"), colors.HexColor("#059669")
+    TINTA, GRIS = colors.HexColor("#0F172A"), colors.HexColor("#64748B")
+    LINEA, FONDO = colors.HexColor("#CBD5E1"), colors.HexColor("#F1F5F9")
+
+    def P(texto, size=9.5, bold=False, color=TINTA, align=0):
+        txt = escape(str(texto)).replace("\n", "<br/>")
+        return Paragraph(txt, ParagraphStyle("x", fontName="Helvetica-Bold" if bold else "Helvetica", fontSize=size,
+                                             leading=size * 1.3, textColor=color, alignment=align))
+
+    def casilla(marcada):
+        caja = Table([[P("X" if marcada else "", 8, True, colors.white, 1)]], colWidths=[0.5 * cm], rowHeights=[0.5 * cm])
+        caja.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 1, VERDE if marcada else GRIS),
+                                  ("BACKGROUND", (0, 0), (-1, -1), VERDE if marcada else colors.white),
+                                  ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                                  ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+                                  ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+        return caja
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.4 * cm,
+                            bottomMargin=2.0 * cm, title=titulo, author=EMPRESA)
+    ancho = doc.width
+    cab = Table([[_logo(3.6), [P(titulo.upper(), 9, True, GRIS, TA_RIGHT), P(ref, 15, True, TINTA, TA_RIGHT)]]], colWidths=[ancho * 0.5, ancho * 0.5])
+    cab.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LINEBELOW", (0, 0), (-1, 0), 2.5, VERDE),
+                             ("BOTTOMPADDING", (0, 0), (-1, -1), 8), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+    h = [cab]
+    if subtitulo:
+        h += [Spacer(1, 6), P(subtitulo, 10, False, GRIS)]
+    h += [Spacer(1, 12)]
+
+    for b in bloques:
+        if b[0] == "info":
+            filas = [(a, v) for a, v in b[1] if str(v).strip()]
+            t = Table([[P(a.upper(), 7, True, GRIS), P(v, 9.5)] for a, v in filas], colWidths=[4.0 * cm, None])
+            t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("TOPPADDING", (0, 0), (-1, -1), 2.5),
+                                   ("BOTTOMPADDING", (0, 0), (-1, -1), 2.5), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+            h += [t, Spacer(1, 12)]
+        elif b[0] == "seccion":
+            h += [Spacer(1, 4), P(b[1], 11, True, AZUL), Spacer(1, 4)]
+        elif b[0] == "nota":
+            h += [Spacer(1, 6), P(b[1], 8, False, GRIS)]
+        elif b[0] == "tabla":
+            _, titulos, filas, rel, cols_cas = b
+            datos = [[P(x, 7.5, True, colors.white) for x in titulos]]
+            for f in filas:
+                datos.append([casilla(v) if i in cols_cas else P(v, 9) for i, v in enumerate(f)])
+            tot = sum(rel)
+            t = Table(datos, colWidths=[ancho * r / tot for r in rel], repeatRows=1)
+            t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), AZUL), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                   ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, FONDO]),
+                                   ("LINEBELOW", (0, 0), (-1, -1), 0.4, LINEA),
+                                   ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+            h += [t, Spacer(1, 10)]
+
+    def pie(canvas, d):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(GRIS)
+        canvas.drawString(1.8 * cm, 1.0 * cm, f"{EMPRESA} · {ref}")
+        canvas.drawRightString(A4[0] - 1.8 * cm, 1.0 * cm, f"Página {d.page}")
+        canvas.restoreState()
+
+    doc.build(h, onFirstPage=pie, onLaterPages=pie)
+    return buf.getvalue()
+
+
+def agrupar_por_proveedor(cot):
+    grupos = {}
+    for it in cot["items"]:
+        grupos.setdefault(it["proveedor"], []).append(it)
+    return dict(sorted(grupos.items(), key=lambda kv: (kv[0] != EMPRESA, kv[0].lower())))   # Karkajadas primero
+
+
+def cliente_de(cot):
+    return next((c for c in ss.clientes_catalogo if c["empresa"] == cot["cliente"]), {})
+
+
+def proveedor_de(nombre):
+    return next((p for p in ss.proveedores if p["proveedor"] == nombre), {})
+
+
+OBS_BASE = ("El equipo de Karkajadas Group estará en constante coordinación con el cliente y el proveedor.\n\n"
+            "El personal debe llevar los implementos de seguridad industrial básicos para el montaje.")
+
+
+def evento_inicial(cot):
+    """Datos del evento: se llenan una sola vez y alimentan todas las fichas y el pedido a bodega."""
+    cli = cliente_de(cot)
+    dirs, con = cli.get("direcciones", []), cli.get("contactos", [])
+    return {
+        "fecha_entrega": min(i["fecha"] for i in cot["items"]), "invitados": "", "lugar": "",
+        "direccion": dirs[0]["direccion"] if dirs else "", "ubicacion": "Pendiente", "horario": "", "tematica": cot["evento"],
+        "recibe": con[0]["nombre"] if con else "", "telefono_recibe": con[0]["telefono"] if con else "",
+        "montaje": "Sí", "hora_montaje": "", "desmontaje": "", "documento": "Cédula de identidad", "otros": "No aplica",
+        "observacion": OBS_BASE,
+    }
+
+
+def proveedor_inicial(cot, prov, items):
+    """Datos propios de cada proveedor en su ficha: servicio requerido, valores y condiciones."""
+    cli = cliente_de(cot)
+    lineas = []
+    for i in items:
+        desc = next((r["descripcion"] for r in ss.proveedores_catalogo if r["proveedor"] == prov and r["servicio"] == i["servicio"]), "")
+        desc = "" if desc in ("", "Estándar", "Manual") else f"\n{desc}"
+        lineas.append(f"{i['servicio']} - {i['ciudad']} - {fecha_larga(i['fecha'])}:\n{i['cantidad']} x {i['servicio']}{desc}")
+    return {"servicio": "\n\n".join(lineas), "total": dinero(sum(calcular_linea(i)[0] for i in items)), "abono": dinero(0),
+            "garantia": dinero(0), "transporte": "Incluido",
+            "pago": f"A {cli['dias_credito']} días crédito" if cli.get("dias_credito") else "", "factura": "Factura"}
+
+
+def pdf_ficha(cot, prov, ev, fp):
+    """Ficha de contratación con el formato de la empresa (rosado, como el Excel)."""
+    from io import BytesIO
+    from xml.sax.saxutils import escape
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    ROSA, ROSA_CLARO, NAVY = colors.HexColor("#D66BCB"), colors.HexColor("#F3D1EF"), colors.HexColor("#0F2740")
+
+    def P(t, size=10, bold=False, color=colors.black, align=0):
+        return Paragraph(escape(str(t)).replace("\n", "<br/>"), ParagraphStyle("x", fontName="Helvetica-Bold" if bold else "Helvetica",
+                                                                              fontSize=size, leading=size * 1.3, textColor=color, alignment=align))
+    saldo = a_numero(fp["total"]) - a_numero(fp["abono"])
+    nombre_cli = f"{EMPRESA.upper()} - {cot['cliente'].upper()}"
+    filas = [
+        ("FECHA DE EMISIÓN", fecha_larga(datetime.now())), ("CLIENTE:", nombre_cli),
+        ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
+        ("LUGAR", ev["lugar"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
+        ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
+        ("UBICACIÓN:", ev["ubicacion"]), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
+        ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
+        ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
+        ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
+        ("DESMONTAJE", ev["desmontaje"]), ("DOCUMENTO REQUERIDO PARA EL INGRESO", ev["documento"]), ("OTROS", ev["otros"]),
+    ]
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm, topMargin=1.0 * cm, bottomMargin=0.8 * cm,
+                            title=f"Contratación {cot['codigo']} - {prov}", author=EMPRESA)
+    w = doc.width
+    d = EMPRESA_DATOS
+    caja = Table([[[P(d["web"], 9.5), P(f"Ruc: {d['ruc']}", 9.5), P(f"Telf.: {d['telefono']}", 9.5),
+                    P(f"Correo: {d['correo']}", 9.5), P(f"Dirección: {d['direccion']}", 9.5)]]], colWidths=[w * 0.58],
+                 style=[("BACKGROUND", (0, 0), (-1, -1), ROSA), ("BOX", (0, 0), (-1, -1), 2, colors.black),
+                        ("ROUNDEDCORNERS", [10, 10, 10, 10]), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6)])
+    cab = Table([[_logo(4.6), caja]], colWidths=[w * 0.38, w * 0.62], style=[("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (0, 0), 0)])
+    titulo = Table([[P("CONTRATACIÓN DEL SERVICIO", 14, True, colors.white, 1)]], colWidths=[w],
+                   style=[("BACKGROUND", (0, 0), (-1, -1), ROSA), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)])
+    barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
+    datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
+    for k, v in filas:
+        txt = v if str(v).strip() else " "
+        color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
+        datos.append([P(k, 9), P(txt, 9, color=color)])
+    tabla = Table(datos, colWidths=[w * 0.40, w * 0.60], repeatRows=1)
+    tabla.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), ROSA), ("BACKGROUND", (0, 1), (0, -1), ROSA), ("BACKGROUND", (1, 1), (1, -1), ROSA_CLARO),
+                               ("GRID", (0, 0), (-1, -1), 0.5, colors.black), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                               ("TOPPADDING", (0, 0), (-1, -1), 1.8), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8)]))
+    aviso = Table([[P("SU SERVICIO ES CONTRATADO POR KARKAJADAS GROUP, USTED NO ESTÁ AUTORIZADO A DAR NINGUNA INFORMACIÓN DE PRECIOS, "
+                      "NÚMEROS DE TELÉFONO, CORREOS ELECTRÓNICOS, NINGUNA INFORMACIÓN REFERENTE A SU SERVICIO.", 10, False, colors.white)]],
+                  colWidths=[w], style=[("BACKGROUND", (0, 0), (-1, -1), NAVY), ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                                        ("LEFTPADDING", (0, 0), (-1, -1), 8)])
+    doc.build([cab, Spacer(1, 6), titulo, barra, tabla, aviso])
+    return buf.getvalue()
+
+
+def pdf_orden(cot, prov, items):
+    p = proveedor_de(prov)
+    con = p.get("contactos", [])
+    filas = [[False, i["servicio"], fecha_larga(i["fecha"]), i["ciudad"], str(i["cantidad"]), ""] for i in items]
+    bloques = [("info", [("Proveedor", prov), ("Contacto", f"{con[0]['nombre']} - {con[0]['telefono']}" if con else ""),
+                         ("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
+                         ("Fecha de emisión", fecha_larga(datetime.now()))]),
+               ("seccion", "Servicios a contratar"),
+               ("tabla", ["", "SERVICIO", "FECHA", "CIUDAD", "CANT.", "OBSERVACIONES"], filas, [0.5, 3.6, 2.8, 1.5, 0.9, 2.4], {0}),
+               ("nota", "Marque cada servicio al confirmarlo con el proveedor.")]
+    return pdf_documento("Orden de servicios", cot["codigo"], None, bloques)
+
+
+def pdf_bodega(cot, items, ev):
+    """Pedido a bodega: solo lo que necesita el bodeguero (sin datos de proveedor ni precios)."""
+    info = [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
+            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]),
+            ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
+            ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")), ("Observación", ev["observacion"])]
+    filas = []
+    for it in items:
+        e = ss.bodega.get(f"{cot['codigo']}|{it['servicio']}", {})
+        filas.append([it["servicio"], str(it["cantidad"]), bool(e.get("salida")), bool(e.get("retorno")), ""])
+    bloques = [("info", info), ("seccion", "Servicios a despachar"),
+               ("tabla", ["SERVICIO", "CANT.", "SALIDA", "RETORNO", "OBSERVACIONES"], filas, [4.2, 1.0, 1.1, 1.1, 3.0], {2, 3}),
+               ("nota", "El detalle de piezas de cada servicio lo elabora bodega en su documento de inventario (entradas y salidas).")]
+    return pdf_documento("Pedido a bodega", cot["codigo"], None, bloques)
 
 
 def encabezados(cols, titulos):
@@ -765,16 +1041,15 @@ st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_all
 MENU_PRINCIPAL = ["Panel de inicio", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
 MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
 CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
-MENU_INVENTARIO = "Inventario 2026"
-URL_INVENTARIO = "https://www.appsheet.com/start/bcfda4e4-a502-4065-bd69-44c14980e97e"   # app de AppSheet publicada
+MENU_ORDENES = "Órdenes de servicio"
 
 for opcion in MENU_PRINCIPAL:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>COTIZADOR DE CATÁLOGOS</p>", unsafe_allow_html=True)
 for opcion in CATALOGOS:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
-st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>INVENTARIO</p>", unsafe_allow_html=True)
-st.sidebar.button(MENU_INVENTARIO, use_container_width=True, key=f"nav_{MENU_INVENTARIO}", on_click=navegar, args=(MENU_INVENTARIO,))
+st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>OPERACIONES</p>", unsafe_allow_html=True)
+st.sidebar.button(MENU_ORDENES, use_container_width=True, key=f"nav_{MENU_ORDENES}", on_click=navegar, args=(MENU_ORDENES,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
 for opcion in MENU_SOPORTE:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
@@ -1143,19 +1418,115 @@ elif menu in CATALOGOS:
         components.html(pagina, height=700, scrolling=False)
 
 # =============================================================================
-# INVENTARIO (AppSheet incrustado)
+# ÓRDENES DE SERVICIO (cotizaciones aprobadas -> datos del evento, fichas por proveedor y pedido a bodega)
 # =============================================================================
-elif menu == MENU_INVENTARIO:
+elif menu == MENU_ORDENES:
     st.markdown(
-        "<style>.block-container{padding-top:2.4rem !important; padding-bottom:0 !important;}</style>"
-        "<div style='background:#14532D; border-radius:14px; padding:12px 24px; margin:0 0 10px 0;'>"
-        "<div style='font-size:0.78rem; font-weight:600; color:#86EFAC;'>Karkajadas Group</div>"
-        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Inventario 2026</div></div>",
+        "<style>.block-container{padding-top:2.4rem !important;}</style>"
+        "<div style='background:#134E4A; border-radius:14px; padding:12px 24px; margin:0 0 12px 0;'>"
+        "<div style='font-size:0.78rem; font-weight:600; color:#99F6E4;'>Operaciones</div>"
+        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Órdenes de servicio</div></div>",
         unsafe_allow_html=True)
-    c1, c2 = st.columns([5, 1.6])
-    c1.caption("Si el inventario no se muestra aquí abajo (AppSheet a veces bloquea mostrarse dentro de otra página), usa el botón de la derecha.")
-    c2.link_button("Abrir en pestaña nueva", URL_INVENTARIO, use_container_width=True)
-    components.iframe(URL_INVENTARIO, height=680, scrolling=True)
+    aprobadas = [c for c in ss.cotizaciones_guardadas if c["estado"] == "Aprobada"]
+    if not aprobadas:
+        st.info("Aún no hay cotizaciones aprobadas. Cuando apruebes una, aparecerá aquí.")
+    else:
+        etiquetas = {f"{c['codigo']} · {c['evento']} · {c['cliente']}": c for c in aprobadas}
+        cot = etiquetas[st.selectbox("Cotización aprobada", list(etiquetas), key="ord_cot")]
+        cod, cli = cot["codigo"], cliente_de(cot)
+        grupos = agrupar_por_proveedor(cot)
+        ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+
+        # ---- 1. Datos del evento (una sola vez; los usan todas las fichas y bodega)
+        with st.expander("1. Datos del evento (se llenan una vez y se usan en todas las fichas y en bodega)", expanded=cod not in ss.eventos):
+            contactos = cli.get("contactos", [])
+            with st.form(f"form_evento_{cod}"):
+                a, b = st.columns(2)
+                f_ent = a.date_input("Fecha de entrega del servicio", value=datetime.strptime(ev["fecha_entrega"][:10], "%Y-%m-%d"), key=f"ev_f_{cod}")
+                inv = b.text_input("Cantidad de invitados", ev["invitados"], placeholder="Ej. 100 aproximadamente", key=f"ev_i_{cod}")
+                lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{cod}")
+                tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{cod}")
+                direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{cod}")
+                horario = st.text_area("Horario", ev["horario"], height=90, key=f"ev_h_{cod}",
+                                       placeholder="Montaje 06/10/2026 - A partir de las 05h00\nEvento 06/10/2026 - 06:00 - 08:30")
+                c1, c2, c3 = st.columns(3)
+                nombres = ["(escribir otra persona)"] + [f"{x['nombre']} - {x['cargo']}".strip(" -") for x in contactos]
+                elegido = c1.selectbox("Persona que recibe (contactos del cliente)", nombres, key=f"ev_c_{cod}")
+                otro_n = c2.text_input("Si es otra persona: nombre", ev["recibe"] if elegido == nombres[0] else "", key=f"ev_n_{cod}")
+                otro_t = c3.text_input("Si es otra persona: teléfono", ev["telefono_recibe"] if elegido == nombres[0] else "", key=f"ev_p_{cod}")
+                d1, d2, d3, d4 = st.columns(4)
+                ubic = d1.selectbox("Ubicación enviada", ["Pendiente", "Enviada"], index=["Pendiente", "Enviada"].index(ev["ubicacion"]) if ev["ubicacion"] in ("Pendiente", "Enviada") else 0, key=f"ev_u_{cod}")
+                mon = d2.selectbox("Montaje", ["Sí", "No"], index=0 if ev["montaje"] == "Sí" else 1, key=f"ev_m_{cod}")
+                hmon = d3.text_input("Hora del montaje", ev["hora_montaje"], placeholder="Ej. 06 de octubre a partir de las 4 AM", key=f"ev_hm_{cod}")
+                desm = d4.text_input("Desmontaje", ev["desmontaje"], placeholder="Ej. 08 de octubre a partir de las 8:30 AM", key=f"ev_ds_{cod}")
+                e1, e2 = st.columns(2)
+                doc_in = e1.text_input("Documento requerido para el ingreso", ev["documento"], key=f"ev_di_{cod}")
+                otros = e2.text_input("Otros", ev["otros"], key=f"ev_o_{cod}")
+                obs = st.text_area("Observación", ev["observacion"], height=120, key=f"ev_ob_{cod}")
+                if st.form_submit_button("Guardar datos del evento"):
+                    if elegido != nombres[0]:
+                        x = contactos[nombres.index(elegido) - 1]
+                        recibe, tel = x["nombre"], x["telefono"]
+                    else:
+                        recibe, tel = otro_n, otro_t
+                    ss.eventos[cod] = {"fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": inv, "lugar": lugar, "direccion": direccion,
+                                       "ubicacion": ubic, "horario": horario, "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
+                                       "montaje": mon, "hora_montaje": hmon, "desmontaje": desm, "documento": doc_in, "otros": otros, "observacion": obs}
+                    st.rerun()
+        ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+        st.caption(f"{len(cot['items'])} servicio(s) con {len(grupos)} proveedor(es). Cada proveedor tiene su ficha de contratación; los servicios de {EMPRESA} van a bodega.")
+
+        # ---- 2. Un bloque por proveedor
+        for n, (prov, items) in enumerate(grupos.items()):
+            propio = prov == EMPRESA
+            clave = f"{cod}|{prov}"
+            with st.container(border=True, key=f"orden_{n}"):
+                cab1, cab2 = st.columns([4, 1.5], vertical_alignment="center")
+                marca = ("<span class='badge-estado' style='color:#134E4A; background:#CCFBF1;'>PROPIO · BODEGA</span>" if propio
+                         else "<span class='badge-estado' style='color:#1E3A8A; background:#E3E9F1;'>PROVEEDOR</span>")
+                cab1.markdown(f"<div style='font-size:1.15rem; font-weight:800; color:#0F172A;'>{prov} &nbsp;{marca}</div>", unsafe_allow_html=True)
+                if not propio:
+                  st.dataframe(pd.DataFrame([{"Servicio": i["servicio"], "Fecha": fmt_fecha(i["fecha"]), "Ciudad": i["ciudad"], "Cantidad": i["cantidad"]} for i in items]),
+                             hide_index=True, use_container_width=True, height=min(35 * (len(items) + 1) + 3, 240))
+
+                if propio:
+                    cab2.download_button("Pedido a bodega (PDF)", data=pdf_bodega(cot, items, ev), file_name=f"Bodega_{cod}.pdf",
+                                         mime="application/pdf", use_container_width=True, key=f"dl_{n}_{cod}")
+                    base = pd.DataFrame([{"Servicio": i["servicio"], "Cantidad": i["cantidad"],
+                                          "Salida": bool(ss.bodega.get(f"{cod}|{i['servicio']}", {}).get("salida")),
+                                          "Retorno": bool(ss.bodega.get(f"{cod}|{i['servicio']}", {}).get("retorno"))} for i in items])
+                    ed = st.data_editor(base, hide_index=True, use_container_width=True, disabled=["Servicio", "Cantidad"], key=f"bod_{cod}",
+                                        height=min(35 * (len(base) + 1) + 3, 300),
+                                        column_config={"Salida": st.column_config.CheckboxColumn("Salió de bodega", width="small"),
+                                                       "Retorno": st.column_config.CheckboxColumn("Regresó a bodega", width="small")})
+                    for _, r in ed.iterrows():
+                        ss.bodega[f"{cod}|{r['Servicio']}"] = {"salida": bool(r["Salida"]), "retorno": bool(r["Retorno"])}
+                    st.caption("El detalle de piezas de cada servicio lo hace bodega en su propio documento de inventario (módulo que viene después).")
+                else:
+                    fp = {**proveedor_inicial(cot, prov, items), **ss.fichas.get(clave, {})}
+                    with st.expander("Ficha de contratación"):
+                        con = proveedor_de(prov).get("contactos", [])
+                        if con:
+                            st.caption("Contacto del proveedor en el directorio: " + " · ".join(f"{x['nombre']} {x['telefono']}".strip() for x in con))
+                        with st.form(f"form_ficha_{n}_{cod}"):
+                            serv = st.text_area("Servicio requerido", fp["servicio"], height=150, key=f"fp_s_{n}_{cod}")
+                            g1, g2, g3, g4 = st.columns(4)
+                            tot = g1.text_input("Total", fp["total"], key=f"fp_t_{n}_{cod}")
+                            abo = g2.text_input("Abono", fp["abono"], key=f"fp_a_{n}_{cod}")
+                            gar = g3.text_input("Garantía", fp["garantia"], key=f"fp_g_{n}_{cod}")
+                            tra = g4.text_input("Transporte", fp["transporte"], key=f"fp_tr_{n}_{cod}")
+                            h1, h2 = st.columns(2)
+                            pago = h1.text_input("Forma de pago", fp["pago"], key=f"fp_p_{n}_{cod}")
+                            fac = h2.text_input("Factura", fp["factura"], key=f"fp_f_{n}_{cod}")
+                            if st.form_submit_button("Guardar ficha"):
+                                ss.fichas[clave] = {"servicio": serv, "total": tot, "abono": abo, "garantia": gar, "transporte": tra, "pago": pago, "factura": fac}
+                                st.rerun()
+                        st.caption("Los datos del evento (fecha, lugar, horario, quien recibe, montaje...) vienen de la sección 1.")
+                    c_a, c_b = cab2, st
+                    cab2.download_button("Ficha de contratación (PDF)", data=pdf_ficha(cot, prov, ev, fp), file_name=f"Ficha_{cod}_{prov.replace(' ', '_')}.pdf",
+                                         mime="application/pdf", use_container_width=True, key=f"dlf_{n}_{cod}")
+                    st.download_button("Orden de servicios - checklist (PDF)", data=pdf_orden(cot, prov, items),
+                                       file_name=f"Orden_{cod}_{prov.replace(' ', '_')}.pdf", mime="application/pdf", key=f"dl_{n}_{cod}")
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
