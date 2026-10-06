@@ -1116,14 +1116,19 @@ elif menu == "Nueva cotización":
 # =============================================================================
 elif menu in CATALOGOS:
     _nav = CATALOGOS[menu] == "navidad"
-    _color = "#B91C1C" if _nav else "#1E3A8A"
-    _fondo = "#FEE2E2" if _nav else "#E3E9F1"
-    _tipo = "navideño" if _nav else "regular"
+    _fondo = "#7F1D1D" if _nav else "#14305E"
+    _acento = "#FCA5A5" if _nav else "#93C5FD"
+    _titulo = "Catálogo navideño" if _nav else "Catálogo regular"
+    _lema = "Shows, inflables y experiencias para la temporada" if _nav else "Atracciones y servicios para tus eventos corporativos"
+    _icono = "🎄" if _nav else "🎪"
     st.markdown(
-        "<style>.block-container{padding-top:2.2rem !important; padding-bottom:0 !important;}</style>"
-        "<div style='display:flex; align-items:center; gap:14px; margin:0 0 8px 0;'>"
-        "<span style='font-size:1.55rem; font-weight:800; color:#0F172A; letter-spacing:-0.01em;'>Cotizador de catálogos</span>"
-        f"<span style='font-size:0.82rem; font-weight:700; color:{_color}; background:{_fondo}; border:1px solid {_color}33; padding:4px 14px; border-radius:999px;'>Catálogo {_tipo}</span>"
+        "<style>.block-container{padding-top:2.4rem !important; padding-bottom:0 !important; min-height:0 !important;}</style>"
+        f"<div style='display:flex; align-items:center; justify-content:space-between; gap:18px; background:{_fondo}; border-radius:14px; padding:12px 24px; margin:0 0 10px 0; box-shadow:0 1px 2px rgba(15,23,42,.10);'>"
+        f"<div style='display:flex; align-items:center; gap:16px;'>"
+        f"<span style='font-size:2rem; line-height:1;'>{_icono}</span>"
+        f"<div><div style='font-size:0.78rem; font-weight:600; color:{_acento}; letter-spacing:0.02em;'>Cotizador Karkajadas Group</div>"
+        f"<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>{_titulo}</div></div></div>"
+        f"<div style='font-size:0.92rem; font-weight:600; color:{_acento}; text-align:right;'>{_lema}</div>"
         "</div>",
         unsafe_allow_html=True)
     ruta_html = Path(__file__).parent / "cotizador_catalogos.html"
