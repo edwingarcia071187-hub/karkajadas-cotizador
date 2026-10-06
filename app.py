@@ -81,9 +81,9 @@ div.st-key-clear_btn button:hover { color: #1E3A8A !important; text-decoration: 
 .total-general b { color: #0F172A; }
 
 /* Botones compactos de la tabla de costos */
-[class*="st-key-mv_"] button, [class*="st-key-del_"] button { padding: 0 !important; min-height: 26px !important; height: 26px !important; width: 100% !important; font-size: 13px !important; line-height: 1 !important; }
-[class*="st-key-mv_"] button { background: #E9EEF5 !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: none !important; border-radius: 6px !important; }
-[class*="st-key-mv_"] button:hover { background: #DCE5F0 !important; color: #1E3A8A !important; border-color: #94A3B8 !important; }
+[class*="st-key-mv_"] button, [class*="st-key-del_"] button, [class*="st-key-edit_"] button { padding: 0 !important; min-height: 26px !important; height: 26px !important; width: 100% !important; font-size: 13px !important; line-height: 1 !important; }
+[class*="st-key-mv_"] button, [class*="st-key-edit_"] button { background: #E9EEF5 !important; border: 1px solid #CBD5E1 !important; color: #475569 !important; box-shadow: none !important; border-radius: 6px !important; }
+[class*="st-key-mv_"] button:hover, [class*="st-key-edit_"] button:hover { background: #DCE5F0 !important; color: #1E3A8A !important; border-color: #94A3B8 !important; }
 [class*="st-key-mv_"] button:disabled { opacity: .35; }
 [class*="st-key-del_"] button { background: #EF4444 !important; border: 1px solid #EF4444 !important; color: #FFF !important; font-weight: 700 !important; border-radius: 6px !important; box-shadow: none !important; }
 [class*="st-key-del_"] button:hover { background: #DC2626 !important; }
@@ -343,6 +343,41 @@ def dialogo_salida():
         st.rerun()
     if c2.button("Cancelar", key="exit_cancel", use_container_width=True):
         ss.pop("destino_salida", None)
+        st.rerun()
+
+
+@st.dialog("Editar servicio de la cotización", width="large")
+def dialogo_editar(idx):
+    it = ss.items_cot[idx]
+    nombres = sorted({p["proveedor"] for p in ss.proveedores} | {it["proveedor"]})
+    c1, c2 = st.columns(2)
+    prov = c1.selectbox("Proveedor", nombres, index=nombres.index(it["proveedor"]), key=f"ed_prov_{idx}")
+    serv = c2.text_input("Servicio", it["servicio"], key=f"ed_serv_{idx}")
+    c3, c4, c5 = st.columns(3)
+    ciudades = CIUDADES if it["ciudad"] in CIUDADES else CIUDADES + [it["ciudad"]]
+    ciudad = c3.selectbox("Ciudad", ciudades, index=ciudades.index(it["ciudad"]), key=f"ed_ciu_{idx}")
+    try:
+        f0 = datetime.strptime(str(it["fecha"])[:10], "%Y-%m-%d")
+    except ValueError:
+        f0 = datetime.now()
+    fecha = c4.date_input("Fecha de servicio", f0, key=f"ed_fec_{idx}")
+    cant = c5.number_input("Cantidad", min_value=1, value=int(it["cantidad"]), step=1, key=f"ed_can_{idx}")
+    c6, c7, c8 = st.columns(3)
+    costo = c6.number_input("Costo unit. ($)", value=float(it["costo"]), format="%.2f", key=f"ed_cos_{idx}")
+    ivas = [0.0, 0.15] if it["iva_prov"] in (0.0, 0.15) else [0.0, 0.15, it["iva_prov"]]
+    iva = c7.selectbox("IVA prov.", ivas, index=ivas.index(it["iva_prov"]), format_func=lambda x: f"{int(x * 100)}%", key=f"ed_iva_{idx}")
+    fee = c8.number_input("Margen (%)", value=float(it["fee_pct"]), step=5.0, format="%.2f", key=f"ed_fee_{idx}")
+    base = cant * costo * (1 + iva)
+    st.caption(f"Con estos valores: costo \\${base:,.2f} · margen \\${base * fee / 100:,.2f} · precio de venta \\${base * (1 + fee / 100):,.2f}")
+    b1, b2 = st.columns(2)
+    if b1.button("Guardar cambios", type="primary", use_container_width=True, key=f"ed_ok_{idx}"):
+        if not serv.strip():
+            st.error("El servicio no puede quedar vacío.")
+        else:
+            it.update({"proveedor": prov, "servicio": serv.strip(), "ciudad": ciudad, "fecha": fecha.strftime("%Y-%m-%d"),
+                       "cantidad": int(cant), "costo": float(costo), "iva_prov": float(iva), "fee_pct": float(fee)})
+            st.rerun()
+    if b2.button("Cancelar", use_container_width=True, key=f"ed_no_{idx}"):
         st.rerun()
 
 
@@ -1012,6 +1047,9 @@ def actualizar_cliente(cid, nuevo):
 
 
 def validar_proveedor(d, pid=None):
+    actual = next((x for x in ss.proveedores if x["id"] == pid), None)
+    if actual and actual["proveedor"] == EMPRESA and d["proveedor"].strip() != EMPRESA:
+        return f"«{EMPRESA}» es la empresa propia (sus servicios salen de bodega); no se puede cambiar su nombre."
     if any(p["id"] != pid and p["proveedor"].lower() == d["proveedor"].lower() for p in ss.proveedores):
         return "Ya existe un proveedor con ese nombre."
     return None
@@ -1029,6 +1067,12 @@ def actualizar_proveedor(pid, nuevo):
     viejo = p["proveedor"]
     servicios = nuevo.pop("servicios", None)
     p.update(nuevo)
+    if p["proveedor"] != viejo:   # el cambio de nombre llega a las cotizaciones, a las fichas guardadas y a los servicios
+        for lista in [c["items"] for c in ss.cotizaciones_guardadas] + [ss.items_cot]:
+            for it in lista:
+                if it["proveedor"] == viejo:
+                    it["proveedor"] = p["proveedor"]
+        ss.fichas = {(k.rsplit("|", 1)[0] + "|" + p["proveedor"] if k.endswith("|" + viejo) else k): v for k, v in ss.fichas.items()}
     if servicios is not None:   # los servicios del formulario reemplazan a los anteriores de este proveedor
         ss.proveedores_catalogo = [r for r in ss.proveedores_catalogo if r["proveedor"] != viejo] + [{**sv, "proveedor": p["proveedor"]} for sv in servicios]
 
@@ -1396,9 +1440,9 @@ elif menu == "Nueva cotización":
     if items:
         with st.container(border=True, key="card_8"):
             st.markdown("<div class='section-title'>Estructura de costos</div>", unsafe_allow_html=True)
-            # Una línea por servicio, una columna por dato. Los 3 últimos anchos son ↑ ↓ ✕ (botones compactos)
-            ANCHOS = [2.0, 2.2, 1.15, 0.95, 0.6, 1.0, 0.6, 0.8, 1.0, 1.1, 0.38, 0.38, 0.38]
-            TITULOS = ["PROVEEDOR", "SERVICIO", "FECHA", "CIUDAD", "CANT.", "COSTO U.", "IVA", "MARGEN %", "MARGEN $", "SUBTOTAL", "", "", ""]
+            # Una línea por servicio, una columna por dato. Los 4 últimos anchos son ✎ ↑ ↓ ✕ (botones compactos)
+            ANCHOS = [2.0, 2.2, 1.15, 0.95, 0.6, 1.0, 0.6, 0.8, 1.0, 1.1, 0.38, 0.38, 0.38, 0.38]
+            TITULOS = ["PROVEEDOR", "SERVICIO", "FECHA", "CIUDAD", "CANT.", "COSTO U.", "IVA", "MARGEN %", "MARGEN $", "SUBTOTAL", "", "", "", ""]
             NUM = {4, 5, 6, 7, 8, 9}   # columnas numéricas: alineadas a la derecha
 
             s_prov = t_fee = s_com = 0.0
@@ -1421,14 +1465,18 @@ elif menu == "Nueva cotización":
                     cx = st.columns(ANCHOS, vertical_alignment="center")
                     for i, v in enumerate(valores):
                         cx[i].markdown(f"<div class='cell{' num' if i in NUM else ''}'>{v}</div>", unsafe_allow_html=True)
-                    if cx[10].button("↑", key=f"mv_up_{idx}", disabled=idx == 0, help="Subir"):
+                    if cx[10].button("✎", key=f"edit_{idx}", help="Editar este servicio"):
+                        accion = ("edit", idx)
+                    if cx[11].button("↑", key=f"mv_up_{idx}", disabled=idx == 0, help="Subir"):
                         accion = ("up", idx)
-                    if cx[11].button("↓", key=f"mv_dn_{idx}", disabled=idx == len(items) - 1, help="Bajar"):
+                    if cx[12].button("↓", key=f"mv_dn_{idx}", disabled=idx == len(items) - 1, help="Bajar"):
                         accion = ("dn", idx)
-                    if cx[12].button("✕", key=f"del_{idx}", help="Eliminar"):
+                    if cx[13].button("✕", key=f"del_{idx}", help="Eliminar"):
                         accion = ("del", idx)
 
-            if accion:
+            if accion and accion[0] == "edit":
+                dialogo_editar(accion[1])
+            elif accion:
                 tipo, i = accion
                 if tipo == "del":
                     items.pop(i)
