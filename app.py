@@ -50,11 +50,11 @@ CSS_BASE = """
 }
 
 /* Botones globales: verde = avanzar, azul = neutro */
-button[kind="primary"], button[data-testid="stBaseButton-primary"] {
+button[kind="primary"], button[data-testid="stBaseButton-primary"], button[kind="primaryFormSubmit"], button[data-testid="stBaseButton-primaryFormSubmit"] {
     background-color: #059669 !important; border: 1px solid #059669 !important; color: #FFFFFF !important;
     border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
 }
-button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
+button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover, button[kind="primaryFormSubmit"]:hover, button[data-testid="stBaseButton-primaryFormSubmit"]:hover { background-color: #047857 !important; transform: translateY(-1px); }
 button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
     background-color: #1E3A8A !important; border: 1px solid #1E3A8A !important; color: #FFFFFF !important;
     border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
@@ -282,7 +282,8 @@ EMPRESA_PROPIA = "Karkajadas Group"
 SERVICIOS_PROPIOS = [("Jenga gigante de madera", 60.0), ("Cuatro en raya gigante", 50.0), ("Rompecabezas gigante", 75.0)]
 ss.setdefault("fichas", {})
 ss.setdefault("eventos", {})
-ss.setdefault("bodega", {})
+ss.setdefault("hojas", {})        # checklist del bodeguero: {cotización: {servicio: [piezas]}}
+ss.setdefault("plantillas", {})   # piezas por servicio (por unidad), para no escribirlas otra vez
 
 def asegurar_proveedor_propio():
     if not any(p["proveedor"] == EMPRESA_PROPIA for p in ss.proveedores):
@@ -747,20 +748,91 @@ def pdf_orden(cot, prov, items):
     return pdf_documento("Orden de servicios", cot["codigo"], None, bloques)
 
 
-def pdf_bodega(cot, items, ev):
-    """Pedido a bodega: solo lo que necesita el bodeguero (sin datos de proveedor ni precios)."""
-    info = [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
+def _info_evento(cot, ev):
+    return [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
             ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]),
             ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
             ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")), ("Observación", ev["observacion"])]
-    filas = []
-    for it in items:
-        e = ss.bodega.get(f"{cot['codigo']}|{it['servicio']}", {})
-        filas.append([it["servicio"], str(it["cantidad"]), bool(e.get("salida")), bool(e.get("retorno")), ""])
-    bloques = [("info", info), ("seccion", "Servicios a despachar"),
-               ("tabla", ["SERVICIO", "CANT.", "SALIDA", "RETORNO", "OBSERVACIONES"], filas, [4.2, 1.0, 1.1, 1.1, 3.0], {2, 3}),
-               ("nota", "El detalle de piezas de cada servicio lo elabora bodega en su documento de inventario (entradas y salidas).")]
+
+
+def pdf_pedido_bodega(cot, items, ev):
+    """Pedido a bodega generado desde la cotización: solo servicios propios, sin proveedores ni precios."""
+    filas = [[i["servicio"], str(i["cantidad"]), fmt_fecha(i["fecha"]), i["ciudad"], ""] for i in items]
+    bloques = [("info", _info_evento(cot, ev)), ("seccion", "Servicios a despachar"),
+               ("tabla", ["SERVICIO", "CANT.", "FECHA", "CIUDAD", "OBSERVACIONES"], filas, [4.2, 1.0, 1.8, 1.8, 2.8], set()),
+               ("nota", "El bodeguero detalla las piezas de cada servicio en su checklist.")]
     return pdf_documento("Pedido a bodega", cot["codigo"], None, bloques)
+
+
+def pdf_hoja_bodega(cot, items, ev):
+    """Checklist detallado del bodeguero: piezas de cada servicio, con salida y retorno."""
+    bloques = [("info", _info_evento(cot, ev))]
+    for it in items:
+        bloques.append(("seccion", f"{it['servicio']} - {it['cantidad']} unidad(es) - {fmt_fecha(it['fecha'])}"))
+        hoja = ss.hojas.get(cot["codigo"], {}).get(it["servicio"], [])
+        if not hoja:
+            bloques.append(("nota", "El bodeguero aún no ha detallado las piezas de este servicio."))
+            continue
+        filas = [[p["pieza"], str(p["cantidad"]), bool(p["salio"]), bool(p["regreso"]), p.get("obs", "")] for p in hoja]
+        bloques.append(("tabla", ["PIEZA", "CANT.", "SALIÓ", "REGRESÓ", "OBSERVACIONES"], filas, [3.8, 0.9, 1.0, 1.1, 3.2], {2, 3}))
+    return pdf_documento("Checklist de bodega", cot["codigo"], "Revisión de piezas a la salida y al regreso", bloques)
+
+
+def firma_items(items):
+    """Huella de los servicios de una cotización: sirve para avisar si cambió después de guardar una ficha."""
+    return [[i["servicio"], i["cantidad"], i["fecha"], i["costo"]] for i in items]
+
+
+def aprobadas_con(propio):
+    """Cotizaciones aprobadas que tienen servicios propios (bodega) o de proveedores externos."""
+    return [c for c in ss.cotizaciones_guardadas if c["estado"] == "Aprobada"
+            and any((i["proveedor"] == EMPRESA) == propio for i in c["items"])]
+
+
+def bloque_evento(cot, sufijo):
+    """Formulario de datos del evento. Se llena una vez por cotización y lo usan las fichas y bodega."""
+    cod, cli = cot["codigo"], cliente_de(cot)
+    ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+    contactos = cli.get("contactos", [])
+    k = f"{sufijo}_{cod}"
+    if contactos:
+        def _rellenar(k=k, contactos=contactos):
+            x = next((c for c in contactos if _nom_contacto(c) == ss[f"pick_{k}"]), None)
+            if x:
+                ss[f"ev_n_{k}"], ss[f"ev_p_{k}"] = x["nombre"], x["telefono"]
+        st.selectbox("Atajo: rellenar «Persona que recibe» con un contacto registrado del cliente", [_nom_contacto(c) for c in contactos],
+                     index=None, placeholder="Elige un contacto (opcional)", key=f"pick_{k}", on_change=_rellenar)
+    with st.form(f"form_evento_{k}"):
+        a, b = st.columns(2)
+        f_ent = a.date_input("Fecha de entrega del servicio", value=datetime.strptime(ev["fecha_entrega"][:10], "%Y-%m-%d"), key=f"ev_f_{k}")
+        inv = b.text_input("Cantidad de invitados", ev["invitados"], placeholder="Ej. 100 aproximadamente", key=f"ev_i_{k}")
+        lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{k}")
+        tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}")
+        direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{k}")
+        horario = st.text_area("Horario", ev["horario"], height=90, key=f"ev_h_{k}",
+                               placeholder="Montaje 06/10/2026 - A partir de las 05h00\nEvento 06/10/2026 - 06:00 - 08:30")
+        c2, c3 = st.columns(2)
+        recibe = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{k}")
+        tel = c3.text_input("Teléfono de quien recibe", ev["telefono_recibe"], key=f"ev_p_{k}")
+        d1, d2, d3, d4 = st.columns(4)
+        ubic = d1.selectbox("Ubicación enviada", ["Pendiente", "Enviada"], index=1 if ev["ubicacion"] == "Enviada" else 0, key=f"ev_u_{k}")
+        mon = d2.selectbox("Montaje", ["Sí", "No"], index=0 if ev["montaje"] == "Sí" else 1, key=f"ev_m_{k}")
+        hmon = d3.text_input("Hora del montaje", ev["hora_montaje"], placeholder="Ej. 06 de octubre a partir de las 4 AM", key=f"ev_hm_{k}")
+        desm = d4.text_input("Desmontaje", ev["desmontaje"], placeholder="Ej. 08 de octubre a partir de las 8:30 AM", key=f"ev_ds_{k}")
+        e1, e2 = st.columns(2)
+        doc_in = e1.text_input("Documento requerido para el ingreso", ev["documento"], key=f"ev_di_{k}")
+        otros = e2.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
+        obs = st.text_area("Observación", ev["observacion"], height=120, key=f"ev_ob_{k}")
+        if st.form_submit_button("Guardar datos del evento", type="primary"):
+            ss.eventos[cod] = {"fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": inv, "lugar": lugar, "direccion": direccion,
+                               "ubicacion": ubic, "horario": horario, "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
+                               "montaje": mon, "hora_montaje": hmon, "desmontaje": desm, "documento": doc_in, "otros": otros, "observacion": obs}
+            st.rerun()
+    return {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+
+
+def _nom_contacto(c):
+    return f"{c['nombre']} - {c['cargo']}" if c.get("cargo") else c["nombre"]
 
 
 def encabezados(cols, titulos):
@@ -1041,7 +1113,8 @@ st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_all
 MENU_PRINCIPAL = ["Panel de inicio", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
 MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
 CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
-MENU_ORDENES = "Órdenes de servicio"
+MENU_PROV = "Órdenes a proveedores"
+MENU_BODEGA = "Bodega"
 
 for opcion in MENU_PRINCIPAL:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
@@ -1049,7 +1122,8 @@ st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; m
 for opcion in CATALOGOS:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>OPERACIONES</p>", unsafe_allow_html=True)
-st.sidebar.button(MENU_ORDENES, use_container_width=True, key=f"nav_{MENU_ORDENES}", on_click=navegar, args=(MENU_ORDENES,))
+for _op in (MENU_PROV, MENU_BODEGA):
+    st.sidebar.button(_op, use_container_width=True, key=f"nav_{_op}", on_click=navegar, args=(_op,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
 for opcion in MENU_SOPORTE:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
@@ -1418,97 +1492,57 @@ elif menu in CATALOGOS:
         components.html(pagina, height=700, scrolling=False)
 
 # =============================================================================
-# ÓRDENES DE SERVICIO (cotizaciones aprobadas -> datos del evento, fichas por proveedor y pedido a bodega)
+# ÓRDENES A PROVEEDORES (cotización aprobada -> datos del evento -> una ficha de contratación por proveedor)
 # =============================================================================
-elif menu == MENU_ORDENES:
+elif menu == MENU_PROV:
     st.markdown(
         "<style>.block-container{padding-top:2.4rem !important;}</style>"
         "<div style='background:#134E4A; border-radius:14px; padding:12px 24px; margin:0 0 12px 0;'>"
         "<div style='font-size:0.78rem; font-weight:600; color:#99F6E4;'>Operaciones</div>"
-        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Órdenes de servicio</div></div>",
+        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Órdenes a proveedores</div></div>",
         unsafe_allow_html=True)
-    aprobadas = [c for c in ss.cotizaciones_guardadas if c["estado"] == "Aprobada"]
-    if not aprobadas:
-        st.info("Aún no hay cotizaciones aprobadas. Cuando apruebes una, aparecerá aquí.")
+    lista = aprobadas_con(propio=False)
+    if not lista:
+        st.info("No hay cotizaciones aprobadas con servicios de proveedores externos. Cuando apruebes una, aparecerá aquí.")
     else:
-        etiquetas = {f"{c['codigo']} · {c['evento']} · {c['cliente']}": c for c in aprobadas}
-        cot = etiquetas[st.selectbox("Cotización aprobada", list(etiquetas), key="ord_cot")]
-        cod, cli = cot["codigo"], cliente_de(cot)
-        grupos = agrupar_por_proveedor(cot)
-        ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+        etiquetas = {f"{c['codigo']} · {c['evento']} · {c['cliente']}": c for c in lista}
+        cot = etiquetas[st.selectbox("Cotización aprobada", list(etiquetas), key="prov_cot")]
+        cod = cot["codigo"]
+        externos = {p: its for p, its in agrupar_por_proveedor(cot).items() if p != EMPRESA}
+        listo_evento = cod in ss.eventos
+        n_fichas = sum(1 for p in externos if f"{cod}|{p}" in ss.fichas)
+        st.caption(f"{len(externos)} proveedor(es) en esta cotización · {n_fichas} ficha(s) guardada(s) · "
+                   + ("datos del evento listos" if listo_evento else "faltan los datos del evento"))
+        tab_ev, tab_fi = st.tabs(["1. Datos del evento", "2. Fichas de proveedores"])
 
-        # ---- 1. Datos del evento (una sola vez; los usan todas las fichas y bodega)
-        with st.expander("1. Datos del evento (se llenan una vez y se usan en todas las fichas y en bodega)", expanded=cod not in ss.eventos):
-            contactos = cli.get("contactos", [])
-            if contactos:
-                def _rellenar(cod=cod, contactos=contactos):
-                    x = next((c for c in contactos if f"{c['nombre']} {('- ' + c['cargo']) if c['cargo'] else ''}".strip() == ss[f"ev_pick_{cod}"]), None)
-                    if x:
-                        ss[f"ev_n_{cod}"], ss[f"ev_p_{cod}"] = x["nombre"], x["telefono"]
-                st.selectbox("Atajo: rellenar «Persona que recibe» con un contacto registrado del cliente", [f"{c['nombre']} {('- ' + c['cargo']) if c['cargo'] else ''}".strip() for c in contactos],
-                             index=None, placeholder="Elige un contacto (opcional)", key=f"ev_pick_{cod}", on_change=_rellenar)
-            with st.form(f"form_evento_{cod}"):
-                a, b = st.columns(2)
-                f_ent = a.date_input("Fecha de entrega del servicio", value=datetime.strptime(ev["fecha_entrega"][:10], "%Y-%m-%d"), key=f"ev_f_{cod}")
-                inv = b.text_input("Cantidad de invitados", ev["invitados"], placeholder="Ej. 100 aproximadamente", key=f"ev_i_{cod}")
-                lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{cod}")
-                tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{cod}")
-                direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{cod}")
-                horario = st.text_area("Horario", ev["horario"], height=90, key=f"ev_h_{cod}",
-                                       placeholder="Montaje 06/10/2026 - A partir de las 05h00\nEvento 06/10/2026 - 06:00 - 08:30")
-                c2, c3 = st.columns(2)
-                otro_n = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{cod}")
-                otro_t = c3.text_input("Teléfono de quien recibe", ev["telefono_recibe"], key=f"ev_p_{cod}")
-                d1, d2, d3, d4 = st.columns(4)
-                ubic = d1.selectbox("Ubicación enviada", ["Pendiente", "Enviada"], index=["Pendiente", "Enviada"].index(ev["ubicacion"]) if ev["ubicacion"] in ("Pendiente", "Enviada") else 0, key=f"ev_u_{cod}")
-                mon = d2.selectbox("Montaje", ["Sí", "No"], index=0 if ev["montaje"] == "Sí" else 1, key=f"ev_m_{cod}")
-                hmon = d3.text_input("Hora del montaje", ev["hora_montaje"], placeholder="Ej. 06 de octubre a partir de las 4 AM", key=f"ev_hm_{cod}")
-                desm = d4.text_input("Desmontaje", ev["desmontaje"], placeholder="Ej. 08 de octubre a partir de las 8:30 AM", key=f"ev_ds_{cod}")
-                e1, e2 = st.columns(2)
-                doc_in = e1.text_input("Documento requerido para el ingreso", ev["documento"], key=f"ev_di_{cod}")
-                otros = e2.text_input("Otros", ev["otros"], key=f"ev_o_{cod}")
-                obs = st.text_area("Observación", ev["observacion"], height=120, key=f"ev_ob_{cod}")
-                if st.form_submit_button("Guardar datos del evento"):
-                    recibe, tel = otro_n, otro_t
-                    ss.eventos[cod] = {"fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": inv, "lugar": lugar, "direccion": direccion,
-                                       "ubicacion": ubic, "horario": horario, "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                                       "montaje": mon, "hora_montaje": hmon, "desmontaje": desm, "documento": doc_in, "otros": otros, "observacion": obs}
-                    st.rerun()
-        ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
-        st.caption(f"{len(cot['items'])} servicio(s) con {len(grupos)} proveedor(es). Cada proveedor tiene su ficha de contratación; los servicios de {EMPRESA} van a bodega.")
-
-        # ---- 2. Un bloque por proveedor
-        for n, (prov, items) in enumerate(grupos.items()):
-            propio = prov == EMPRESA
-            clave = f"{cod}|{prov}"
-            with st.container(border=True, key=f"orden_{n}"):
-                cab1, cab2 = st.columns([4, 1.5], vertical_alignment="center")
-                marca = ("<span class='badge-estado' style='color:#134E4A; background:#CCFBF1;'>PROPIO · BODEGA</span>" if propio
-                         else "<span class='badge-estado' style='color:#1E3A8A; background:#E3E9F1;'>PROVEEDOR</span>")
-                cab1.markdown(f"<div style='font-size:1.15rem; font-weight:800; color:#0F172A;'>{prov} &nbsp;{marca}</div>", unsafe_allow_html=True)
-                if not propio:
-                  st.dataframe(pd.DataFrame([{"Servicio": i["servicio"], "Fecha": fmt_fecha(i["fecha"]), "Ciudad": i["ciudad"], "Cantidad": i["cantidad"]} for i in items]),
-                             hide_index=True, use_container_width=True, height=min(35 * (len(items) + 1) + 3, 240))
-
-                if propio:
-                    cab2.download_button("Pedido a bodega (PDF)", data=pdf_bodega(cot, items, ev), file_name=f"Bodega_{cod}.pdf",
-                                         mime="application/pdf", use_container_width=True, key=f"dl_{n}_{cod}")
-                    base = pd.DataFrame([{"Servicio": i["servicio"], "Cantidad": i["cantidad"],
-                                          "Salida": bool(ss.bodega.get(f"{cod}|{i['servicio']}", {}).get("salida")),
-                                          "Retorno": bool(ss.bodega.get(f"{cod}|{i['servicio']}", {}).get("retorno"))} for i in items])
-                    ed = st.data_editor(base, hide_index=True, use_container_width=True, disabled=["Servicio", "Cantidad"], key=f"bod_{cod}",
-                                        height=min(35 * (len(base) + 1) + 3, 300),
-                                        column_config={"Salida": st.column_config.CheckboxColumn("Salió de bodega", width="small"),
-                                                       "Retorno": st.column_config.CheckboxColumn("Regresó a bodega", width="small")})
-                    for _, r in ed.iterrows():
-                        ss.bodega[f"{cod}|{r['Servicio']}"] = {"salida": bool(r["Salida"]), "retorno": bool(r["Retorno"])}
-                    st.caption("El detalle de piezas de cada servicio lo hace bodega en su propio documento de inventario (módulo que viene después).")
-                else:
-                    fp = {**proveedor_inicial(cot, prov, items), **ss.fichas.get(clave, {})}
-                    with st.expander("Ficha de contratación"):
-                        con = proveedor_de(prov).get("contactos", [])
-                        if con:
-                            st.caption("Contacto del proveedor en el directorio: " + " · ".join(f"{x['nombre']} {x['telefono']}".strip() for x in con))
+        with tab_ev:
+            st.caption("Fecha, lugar, horario, quién recibe, montaje... Se escriben una sola vez y salen en la ficha de cada proveedor y en el pedido a bodega.")
+            ev = bloque_evento(cot, "prov")
+        with tab_fi:
+            ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
+            if not listo_evento:
+                st.warning("Primero guarda los datos del evento (pestaña 1). Sin ellos no se pueden descargar las fichas.")
+            for n, (prov, items) in enumerate(externos.items()):
+                clave = f"{cod}|{prov}"
+                guardada = ss.fichas.get(clave)
+                with st.container(border=True, key=f"orden_{n}"):
+                    cab1, cab2 = st.columns([4, 1.6], vertical_alignment="center")
+                    estado = ("<span class='badge-estado' style='color:#047857; background:#D1FAE5;'>FICHA GUARDADA</span>" if guardada
+                              else "<span class='badge-estado' style='color:#B45309; background:#FEF3C7;'>PENDIENTE</span>")
+                    cab1.markdown(f"<div style='font-size:1.15rem; font-weight:800; color:#0F172A;'>{prov} &nbsp;{estado}</div>", unsafe_allow_html=True)
+                    if guardada and guardada.get("firma") != firma_items(items):
+                        w1, w2 = st.columns([4, 1.4], vertical_alignment="center")
+                        w1.warning("La cotización cambió después de guardar esta ficha. Actualízala para que coincida.")
+                        if w2.button("Actualizar desde la cotización", key=f"act_{n}_{cod}", type="primary", use_container_width=True):
+                            ss.fichas.pop(clave, None)
+                            st.rerun()
+                    fp = {**proveedor_inicial(cot, prov, items), **{k: v for k, v in (guardada or {}).items() if k != "firma"}}
+                    st.dataframe(pd.DataFrame([{"Servicio": i["servicio"], "Fecha": fmt_fecha(i["fecha"]), "Ciudad": i["ciudad"], "Cantidad": i["cantidad"]} for i in items]),
+                                 hide_index=True, use_container_width=True, height=min(35 * (len(items) + 1) + 3, 240))
+                    con = proveedor_de(prov).get("contactos", [])
+                    if con:
+                        st.caption("Contacto en el directorio: " + " · ".join(f"{x['nombre']} {x['telefono']}".strip() for x in con))
+                    with st.expander("Completar ficha de contratación"):
                         with st.form(f"form_ficha_{n}_{cod}"):
                             serv = st.text_area("Servicio requerido", fp["servicio"], height=150, key=f"fp_s_{n}_{cod}")
                             g1, g2, g3, g4 = st.columns(4)
@@ -1519,15 +1553,92 @@ elif menu == MENU_ORDENES:
                             h1, h2 = st.columns(2)
                             pago = h1.text_input("Forma de pago", fp["pago"], key=f"fp_p_{n}_{cod}")
                             fac = h2.text_input("Factura", fp["factura"], key=f"fp_f_{n}_{cod}")
-                            if st.form_submit_button("Guardar ficha"):
-                                ss.fichas[clave] = {"servicio": serv, "total": tot, "abono": abo, "garantia": gar, "transporte": tra, "pago": pago, "factura": fac}
+                            if st.form_submit_button("Guardar ficha", type="primary"):
+                                ss.fichas[clave] = {"servicio": serv, "total": tot, "abono": abo, "garantia": gar, "transporte": tra,
+                                                    "pago": pago, "factura": fac, "firma": firma_items(items)}
                                 st.rerun()
-                        st.caption("Los datos del evento (fecha, lugar, horario, quien recibe, montaje...) vienen de la sección 1.")
-                    c_a, c_b = cab2, st
-                    cab2.download_button("Ficha de contratación (PDF)", data=pdf_ficha(cot, prov, ev, fp), file_name=f"Ficha_{cod}_{prov.replace(' ', '_')}.pdf",
-                                         mime="application/pdf", use_container_width=True, key=f"dlf_{n}_{cod}")
-                    st.download_button("Orden de servicios - checklist (PDF)", data=pdf_orden(cot, prov, items),
-                                       file_name=f"Orden_{cod}_{prov.replace(' ', '_')}.pdf", mime="application/pdf", key=f"dl_{n}_{cod}")
+                    d1, d2 = st.columns(2)
+                    d1.download_button("Ficha de contratación (PDF)", data=pdf_ficha(cot, prov, ev, fp) if listo_evento else b"", disabled=not listo_evento,
+                                       file_name=f"Ficha_{cod}_{prov.replace(' ', '_')}.pdf", mime="application/pdf", use_container_width=True, key=f"dlf_{n}_{cod}")
+                    d2.download_button("Orden de servicios - checklist (PDF)", data=pdf_orden(cot, prov, items),
+                                       file_name=f"Orden_{cod}_{prov.replace(' ', '_')}.pdf", mime="application/pdf", use_container_width=True, key=f"dl_{n}_{cod}")
+
+# =============================================================================
+# BODEGA (pedido generado desde la cotización + checklist detallado del bodeguero)
+# =============================================================================
+elif menu == MENU_BODEGA:
+    st.markdown(
+        "<style>.block-container{padding-top:2.4rem !important;}</style>"
+        "<div style='background:#134E4A; border-radius:14px; padding:12px 24px; margin:0 0 12px 0;'>"
+        "<div style='font-size:0.78rem; font-weight:600; color:#99F6E4;'>Operaciones</div>"
+        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Bodega</div></div>",
+        unsafe_allow_html=True)
+    lista = aprobadas_con(propio=True)
+    if not lista:
+        st.info(f"No hay cotizaciones aprobadas con servicios de {EMPRESA}. Cuando apruebes una, aparecerá aquí.")
+    else:
+        etiquetas = {f"{c['codigo']} · {c['evento']} · {c['cliente']}": c for c in lista}
+        cot = etiquetas[st.selectbox("Cotización aprobada", list(etiquetas), key="bod_cot")]
+        cod = cot["codigo"]
+        items = [i for i in cot["items"] if i["proveedor"] == EMPRESA]
+        hojas = ss.hojas.setdefault(cod, {})
+        if cod not in ss.eventos:
+            st.warning("Faltan los datos del evento (fecha, lugar, horario, quién recibe...). Complétalos aquí para generar el pedido.")
+            with st.expander("Datos del evento", expanded=True):
+                bloque_evento(cot, "bod")
+        else:
+            ev = {**evento_inicial(cot), **ss.eventos[cod]}
+            with st.expander("Datos del evento"):
+                ev = bloque_evento(cot, "bod")
+            tab_ped, tab_chk = st.tabs(["Pedido a bodega", "Checklist del bodeguero"])
+
+            with tab_ped:
+                st.caption("Pedido generado desde la cotización aprobada: los servicios de Karkajadas Group que deben salir de bodega.")
+                filas = []
+                for i in items:
+                    hoja = hojas.get(i["servicio"], [])
+                    if not hoja:
+                        est = "Sin checklist"
+                    else:
+                        est = f"Salió {sum(p['salio'] for p in hoja)}/{len(hoja)} · Regresó {sum(p['regreso'] for p in hoja)}/{len(hoja)}"
+                    filas.append({"Servicio": i["servicio"], "Cantidad": i["cantidad"], "Fecha": fmt_fecha(i["fecha"]), "Ciudad": i["ciudad"], "Estado en bodega": est})
+                st.dataframe(pd.DataFrame(filas), hide_index=True, use_container_width=True, height=min(35 * (len(filas) + 1) + 3, 300))
+                st.download_button("Pedido a bodega (PDF)", data=pdf_pedido_bodega(cot, items, ev), file_name=f"Pedido_bodega_{cod}.pdf", mime="application/pdf", key=f"dlp_{cod}")
+
+            with tab_chk:
+                st.caption("El bodeguero detalla las piezas de cada servicio y marca cuando salen y cuando regresan. Lo que guardas aquí queda como plantilla para la próxima vez.")
+                for j, it in enumerate(items):
+                    s_ = it["servicio"]
+                    with st.container(border=True, key=f"chk_{j}"):
+                        st.markdown(f"<div style='font-size:1.05rem; font-weight:800; color:#0F172A;'>{s_} <span style='font-weight:600; color:#64748B;'>· {it['cantidad']} unidad(es) · {fmt_fecha(it['fecha'])} · {it['ciudad']}</span></div>", unsafe_allow_html=True)
+                        actual = hojas.get(s_)
+                        if actual is None and ss.plantillas.get(s_):
+                            if st.button("Usar las piezas de la última vez", key=f"plt_{j}_{cod}", type="primary"):
+                                hojas[s_] = [{"pieza": p["pieza"], "cantidad": p["cantidad"] * int(it["cantidad"]), "salio": False, "regreso": False, "obs": ""} for p in ss.plantillas[s_]]
+                                st.rerun()
+                        df = pd.DataFrame(actual or [], columns=["pieza", "cantidad", "salio", "regreso", "obs"])
+                        if df.empty:
+                            df = pd.DataFrame([{"pieza": "", "cantidad": 1, "salio": False, "regreso": False, "obs": ""}])
+                        ver = ss.get(f"hoja_ver_{cod}_{j}", 0)
+                        with st.form(f"form_hoja_{cod}_{j}_{ver}"):
+                            ed = st.data_editor(df, num_rows="dynamic", hide_index=True, use_container_width=True, key=f"hoja_{cod}_{j}_{ver}",
+                                                column_config={"pieza": st.column_config.TextColumn("Pieza", required=True),
+                                                               "cantidad": st.column_config.NumberColumn("Cantidad", min_value=1, step=1, default=1),
+                                                               "salio": st.column_config.CheckboxColumn("Salió", default=False),
+                                                               "regreso": st.column_config.CheckboxColumn("Regresó", default=False),
+                                                               "obs": st.column_config.TextColumn("Observación")})
+                            if st.form_submit_button("Guardar checklist", type="primary"):
+                                filas = [{"pieza": str(r["pieza"]).strip(), "cantidad": int(r["cantidad"] or 1), "salio": bool(r["salio"]),
+                                          "regreso": bool(r["regreso"]), "obs": "" if str(r["obs"]) == "nan" else str(r["obs"])}
+                                         for _, r in ed.iterrows() if str(r["pieza"]).strip() and str(r["pieza"]) != "nan"]
+                                hojas[s_] = filas
+                                q = max(int(it["cantidad"]), 1)
+                                ss.plantillas[s_] = [{"pieza": p["pieza"], "cantidad": max(round(p["cantidad"] / q), 1)} for p in filas]
+                                st.rerun()
+                        hoja = hojas.get(s_, [])
+                        if hoja:
+                            st.caption(f"Salió {sum(p['salio'] for p in hoja)} de {len(hoja)} · Regresó {sum(p['regreso'] for p in hoja)} de {len(hoja)}")
+                st.download_button("Checklist de bodega (PDF)", data=pdf_hoja_bodega(cot, items, ev), file_name=f"Checklist_bodega_{cod}.pdf", mime="application/pdf", key=f"dlh_{cod}")
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
