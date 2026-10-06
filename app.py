@@ -1121,7 +1121,7 @@ elif menu in CATALOGOS:
         st.error("Falta el archivo cotizador_catalogos.html en el repositorio, junto a app.py. Súbelo en GitHub (Add file → Upload files).")
     else:
         pagina = ruta_html.read_text(encoding="utf-8").replace("</body>", f"<script>iniciarEmbebido('{CATALOGOS[menu]}');</script></body>")
-        components.html(pagina, height=1250, scrolling=True)
+        components.html(pagina, height=900, scrolling=True)
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
