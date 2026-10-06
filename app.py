@@ -15,11 +15,11 @@ from datetime import date, datetime
 ESTADOS = ["Aprobada", "Enviada", "Borrador", "Cancelada"]
 MENU_CLIENTES = "Directorio de clientes"
 MENU_PROVEEDORES = "Directorio de proveedores"
-COLORES = {   # paleta de datos: distinta a los botones (verde = confirmar, azul = neutro)
-    "Aprobada": "#0891B2",   # cian
-    "Enviada": "#7C3AED",    # violeta
-    "Borrador": "#C98A0B",   # ámbar
-    "Cancelada": "#DB2777",  # rosa
+COLORES = {   # paleta de datos sobria: distinta a los botones (verde = confirmar, azul = neutro)
+    "Aprobada": "#2C8C84",   # verde azulado
+    "Enviada": "#7A68B5",    # lavanda
+    "Borrador": "#B8913F",   # arena
+    "Cancelada": "#B85C78",  # rosa antiguo
 }
 MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 CIUDADES = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
@@ -66,11 +66,11 @@ button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hov
 /* Tarjetas KPI (el color de cada una, incluido hover/focus, se agrega por código según su estado) */
 [class*="st-key-kpi_"] button {
     width: 100% !important; min-height: 85px !important; padding: 12px 10px !important; border-radius: 8px !important;
-    justify-content: flex-start !important; text-align: left !important; box-shadow: 0 3px 5px rgba(0,0,0,.15) !important;
+    justify-content: flex-start !important; text-align: left !important; box-shadow: 0 1px 2px rgba(15,23,42,.06) !important;
 }
-[class*="st-key-kpi_"] button * { color: #FFFFFF !important; }
+[class*="st-key-kpi_"] button * { color: #0F172A !important; }
 [class*="st-key-kpi_"] button p { font-size: 15px !important; font-weight: 800 !important; white-space: pre-wrap !important; margin: 0 !important; line-height: 1.3 !important; }
-[class*="st-key-kpi_"] button:hover { filter: brightness(.9); transform: translateY(-3px) !important; }
+[class*="st-key-kpi_"] button:hover { transform: translateY(-2px) !important; }
 
 /* "Borrar filtros": enlace de texto discreto, sin aspecto de botón */
 div.st-key-clear_btn button, div.st-key-clear_btn button:hover, div.st-key-clear_btn button:focus, div.st-key-clear_btn button:active {
@@ -176,22 +176,24 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 
 
 def css_kpi():
-    """Un color por tarjeta, tomado de COLORES. Se fija también en :hover/:focus/:active
-    (con mayor especificidad que el estilo global de botones) para que el hover no la pinte de azul."""
+    """Tarjetas sobrias: fondo blanco, borde fino y franja izquierda del color del estado.
+    Se repite en :hover/:focus/:active para ganar en especificidad al estilo global de botones."""
     reglas = []
     for e in ESTADOS:
         c = COLORES[e]
-        sel = ", ".join(f"div.st-key-kpi_{e} button{p}" for p in ("", ":hover", ":focus", ":active"))
-        reglas.append(f"{sel}{{background:{c} !important;border:1px solid {c} !important;color:#FFFFFF !important;}}")
+        for p, fondo in (("", "#FFFFFF"), (":hover", c + "12"), (":focus", "#FFFFFF"), (":active", c + "12")):
+            reglas.append(f"div.st-key-kpi_{e} button{p}{{background:{fondo} !important;border:1px solid #DCE3EC !important;"
+                          f"border-left:4px solid {c} !important;color:#0F172A !important;}}")
     return "".join(reglas)
 
 
 def css_tarjeta_activa(estado):
-    """Anillo del color de la tarjeta seleccionada (se mantiene también con hover/focus)."""
+    """Tarjeta seleccionada: fondo tenue del color del estado y borde más marcado."""
     if estado not in COLORES:
         return ""
+    c = COLORES[estado]
     sel = ", ".join(f"div.st-key-kpi_{estado} button{p}" for p in ("", ":hover", ":focus", ":active"))
-    return f"{sel}{{box-shadow:0 0 0 2px #FFFFFF, 0 0 0 5px {COLORES[estado]} !important;}}"
+    return f"{sel}{{background:{c}1A !important;border:1px solid {c} !important;border-left:4px solid {c} !important;}}"
 
 
 st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
