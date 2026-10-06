@@ -765,12 +765,16 @@ st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_all
 MENU_PRINCIPAL = ["Panel de inicio", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
 MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
 CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
+MENU_INVENTARIO = "Inventario 2026"
+URL_INVENTARIO = "https://www.appsheet.com/start/bcfda4e4-a502-4065-bd69-44c14980e97e"   # app de AppSheet publicada
 
 for opcion in MENU_PRINCIPAL:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>COTIZADOR DE CATÁLOGOS</p>", unsafe_allow_html=True)
 for opcion in CATALOGOS:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
+st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>INVENTARIO</p>", unsafe_allow_html=True)
+st.sidebar.button(MENU_INVENTARIO, use_container_width=True, key=f"nav_{MENU_INVENTARIO}", on_click=navegar, args=(MENU_INVENTARIO,))
 st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
 for opcion in MENU_SOPORTE:
     st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
@@ -1137,6 +1141,21 @@ elif menu in CATALOGOS:
     else:
         pagina = ruta_html.read_text(encoding="utf-8").replace("</body>", f"<script>iniciarEmbebido('{CATALOGOS[menu]}');</script></body>")
         components.html(pagina, height=700, scrolling=False)
+
+# =============================================================================
+# INVENTARIO (AppSheet incrustado)
+# =============================================================================
+elif menu == MENU_INVENTARIO:
+    st.markdown(
+        "<style>.block-container{padding-top:2.4rem !important; padding-bottom:0 !important;}</style>"
+        "<div style='background:#14532D; border-radius:14px; padding:12px 24px; margin:0 0 10px 0;'>"
+        "<div style='font-size:0.78rem; font-weight:600; color:#86EFAC;'>Karkajadas Group</div>"
+        "<div style='font-size:1.9rem; font-weight:900; color:#FFFFFF; line-height:1.05; letter-spacing:-0.02em;'>Inventario 2026</div></div>",
+        unsafe_allow_html=True)
+    c1, c2 = st.columns([5, 1.6])
+    c1.caption("Si el inventario no se muestra aquí abajo (AppSheet a veces bloquea mostrarse dentro de otra página), usa el botón de la derecha.")
+    c2.link_button("Abrir en pestaña nueva", URL_INVENTARIO, use_container_width=True)
+    components.iframe(URL_INVENTARIO, height=680, scrolling=True)
 
 # =============================================================================
 # VISTA 3: DIRECTORIOS
