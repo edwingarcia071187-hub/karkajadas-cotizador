@@ -183,7 +183,7 @@ def css_kpi():
         c = COLORES[e]
         for p, fondo in (("", "#FFFFFF"), (":hover", c + "12"), (":focus", "#FFFFFF"), (":active", c + "12")):
             reglas.append(f"div.st-key-kpi_{e} button{p}{{background:{fondo} !important;border:1px solid #DCE3EC !important;"
-                          f"border-left:4px solid {c} !important;color:#0F172A !important;}}")
+                          f"border-left:10px solid {c} !important;color:#0F172A !important;}}")
     return "".join(reglas)
 
 
@@ -193,7 +193,7 @@ def css_tarjeta_activa(estado):
         return ""
     c = COLORES[estado]
     sel = ", ".join(f"div.st-key-kpi_{estado} button{p}" for p in ("", ":hover", ":focus", ":active"))
-    return f"{sel}{{background:{c}1A !important;border:1px solid {c} !important;border-left:4px solid {c} !important;}}"
+    return f"{sel}{{background:{c}1A !important;border:1px solid {c} !important;border-left:10px solid {c} !important;}}"
 
 
 st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
