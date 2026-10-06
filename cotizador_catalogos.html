@@ -1252,6 +1252,34 @@
     body.embebido .chart-bar-name { color: #475569; }
     body.embebido .chart-bar-track { background: #E2E8F0; }
     body.embebido .chart-expand-badge { color: #1E3A8A; background: #E3E9F1; border-color: #B4C0D0; }
+
+    /* Sin mayúsculas innecesarias */
+    body.embebido * { text-transform: none !important; letter-spacing: normal; }
+    body.embebido .preview-tag { letter-spacing: .02em; }
+
+    /* ===== Una sola pantalla: la página no se desplaza, solo lo hacen las tarjetas por dentro ===== */
+    @media (min-width: 960px) {
+      html:has(body.embebido) { height: 100%; overflow: hidden; }
+      body.embebido { height: 100vh; overflow: hidden; padding: 2px 2px 8px; box-sizing: border-box; }
+      body.embebido .app-workspace { height: 100%; min-height: 0; max-height: none; grid-template-rows: minmax(0, 1fr) auto; }
+      body.embebido .config-panel, body.embebido .panel-preview-items, body.embebido .panel-preview-groups {
+        min-height: 0; max-height: none; overflow: hidden; display: flex; flex-direction: column; }
+      body.embebido .config-panel { padding: 16px 20px; }
+      body.embebido .stepper-header, body.embebido .step-track, body.embebido .step-actions { flex: 0 0 auto; }
+      body.embebido #empathyStep, body.embebido #groupContent, body.embebido #finalContactBox {
+        flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; }
+      body.embebido #groupContent .items-grid { max-height: none; min-height: 0; overflow: visible; }
+      body.embebido .step-actions { margin-top: 10px; padding-top: 10px; }
+      body.embebido .panel-preview-items .items-scroll-list { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; }
+      body.embebido .panel-preview-groups > div:first-child { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+      body.embebido .panel-preview-groups .groups-scroll-list { flex: 1 1 auto; min-height: 0; max-height: none; overflow-y: auto; }
+      body.embebido .totals-box { flex: 0 0 auto; }
+      body.embebido .budget-analytics-card { flex: 0 0 auto; }
+    }
+    @media (max-width: 959px) {
+      body.embebido .items-scroll-list, body.embebido .groups-scroll-list { max-height: 320px; }
+      body.embebido .items-grid { max-height: none; }
+    }
   </style>
 </head>
 <body>
@@ -1267,19 +1295,19 @@
   <div class="hero-view" id="heroView">
     <span class="brand-tag">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-      Experiencias Corporativas de Alto Impacto
+      Experiencias corporativas de alto impacto
     </span>
     <h1 class="hero-title">Karkajadas Group</h1>
     <p class="hero-slogan">Construimos experiencias felices en la vida de los seres humanos.</p>
 
     <div class="hero-buttons">
       <div class="big-btn big-btn-regular" onclick="startAppWithTransition('regular')">
-        <span class="big-btn-title">🎪 Cotiza tu Evento</span>
+        <span class="big-btn-title">🎪 Cotiza tu evento</span>
         <span class="big-btn-desc">Catálogo corporativo e institucional regular (2h y 3h)</span>
       </div>
 
       <div class="big-btn big-btn-navidad" onclick="startAppWithTransition('navidad')">
-        <span class="big-btn-title">🎄 Cotiza tu Evento Navideño</span>
+        <span class="big-btn-title">🎄 Cotiza tu evento navideño</span>
         <span class="big-btn-desc">Shows artísticos, Santa Claus, ferias temáticas y temporada festiva 2026</span>
       </div>
     </div>
@@ -1291,7 +1319,7 @@
     <!-- COLUMNA IZQUIERDA: CONFIGURADOR (46%) -->
     <div class="config-panel">
       <div class="stepper-header">
-        <button class="btn-outline-back" onclick="goHome()">⬅ Cambiar Catálogo</button>
+        <button class="btn-outline-back" onclick="goHome()">⬅ Cambiar catálogo</button>
         <div id="catalogBadge" style="font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: #fbbf24;"></div>
       </div>
 
@@ -1306,23 +1334,23 @@
 
         <div class="empathy-grid">
           <div class="empathy-card">
-            <label>N° Estimado de Adultos</label>
+            <label>N.º estimado de adultos</label>
             <input type="number" id="empAdults" class="empathy-input" min="0" placeholder="Ej. 100" oninput="updateEmpathyData()">
           </div>
           <div class="empathy-card">
-            <label>N° Estimado de Niños</label>
+            <label>N.º estimado de niños</label>
             <input type="number" id="empKids" class="empathy-input" min="0" placeholder="Ej. 40" oninput="updateEmpathyData()">
           </div>
           <div class="empathy-card">
-            <label>Vegetarianos / Dietas Especiales</label>
+            <label>Vegetarianos y dietas especiales</label>
             <input type="number" id="empVegetarians" class="empathy-input" min="0" placeholder="Ej. 10" oninput="updateEmpathyData()">
           </div>
           <div class="empathy-card">
-            <label>♿ Personas con Capacidades Especiales</label>
+            <label>♿ Personas con capacidades especiales</label>
             <input type="number" id="empSpecialNeeds" class="empathy-input" min="0" placeholder="Ej. 3" oninput="updateEmpathyData()">
           </div>
           <div class="empathy-card" style="grid-column: 1 / -1;">
-            <label>Alergias o Cuidados Específicos (Maní, Gluten, Movilidad, Sensibilidad Auditiva, etc.)</label>
+            <label>Alergias o cuidados específicos (maní, gluten, movilidad, sensibilidad auditiva, etc.)</label>
             <input type="text" id="empAllergies" class="empathy-input" placeholder="Ej. 1 persona en silla de ruedas (requiere rampa), 2 celíacos" oninput="updateEmpathyData()">
           </div>
         </div>
@@ -1344,19 +1372,19 @@
 
         <form id="finalQuoteForm" onsubmit="handleFinalSubmit(event)">
           <div class="form-group">
-            <label>Nombre y Apellido del Responsable *</label>
+            <label>Nombre y apellido del responsable *</label>
             <input type="text" id="custName" placeholder="Ej. Ing. Carlos Mendoza" required>
           </div>
           <div class="form-group">
-            <label>Empresa / Organización *</label>
+            <label>Empresa u organización *</label>
             <input type="text" id="custCompany" placeholder="Ej. Banco Pichincha / CNT EP" required>
           </div>
           <div class="form-group">
-            <label>Teléfono Celular / WhatsApp *</label>
+            <label>Teléfono celular o WhatsApp *</label>
             <input type="tel" id="custPhone" placeholder="Ej. 0991234567" required>
           </div>
           <div class="form-group">
-            <label>Correo Electrónico Corporativo *</label>
+            <label>Correo electrónico corporativo *</label>
             <input type="email" id="custEmail" placeholder="cmendoza@empresa.com" required>
           </div>
 
@@ -1369,17 +1397,17 @@
           </div>
 
           <button type="submit" class="btn-finish-download">
-            📥 Descargar Propuesta en PDF & Enviar Cotización
+            📥 Descargar propuesta en PDF y enviar cotización
           </button>
           <button type="button" class="btn-reset-hero" onclick="goHome()">
-            🔄 Iniciar Nueva Cotización
+            🔄 Iniciar nueva cotización
           </button>
         </form>
       </div>
 
       <div class="step-actions" id="stepActions">
-        <button type="button" class="btn-step-nav btn-step-prev" id="btnPrev" onclick="navigateGroup(-1)">⬅ Paso Anterior</button>
-        <button type="button" class="btn-step-nav btn-step-next" id="btnNext" onclick="navigateGroup(1)">Siguiente Paso ➔</button>
+        <button type="button" class="btn-step-nav btn-step-prev" id="btnPrev" onclick="navigateGroup(-1)">⬅ Paso anterior</button>
+        <button type="button" class="btn-step-nav btn-step-next" id="btnNext" onclick="navigateGroup(1)">Siguiente paso ➔</button>
       </div>
     </div>
 
@@ -1390,11 +1418,11 @@
         <!-- PREVISUALIZADOR 1 -->
         <div class="panel-preview-items">
           <span class="preview-tag tag-blue">Previsualizador 1</span>
-          <div class="preview-card-title">Detalle de Ítems</div>
+          <div class="preview-card-title">Detalle de ítems</div>
 
           <div class="audience-badge" id="audienceBadge">
             <div class="audience-row">
-              <span>👥 Asistentes: Sin definir</span>
+              <span>👥 Asistentes: sin definir</span>
               <span id="vegBadge" style="color: #64748b;">🌱 0 especiales</span>
             </div>
             <div class="audience-row" id="specialNeedsRow" style="display: none; border-top: 1px dashed #cbd5e1; padding-top: 3px; margin-top: 2px;">
@@ -1403,11 +1431,11 @@
           </div>
           
           <div class="items-scroll-list" id="itemsScrollList">
-            <div class="empty-state">No has seleccionado ítems aún</div>
+            <div class="empty-state">Aún no has seleccionado ítems</div>
           </div>
 
           <div style="font-size: 0.75rem; color: #64748b; margin-top: 10px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
-            * Modifica la duración usando los metabotones de cada servicio.
+            * Modifica la duración con los botones de cada servicio.
           </div>
         </div>
 
@@ -1415,7 +1443,7 @@
         <div class="panel-preview-groups">
           <div>
             <span class="preview-tag tag-amber">Previsualizador 2</span>
-            <div class="preview-card-title">Resumen por Grupos</div>
+            <div class="preview-card-title">Resumen por grupos</div>
 
             <div class="smart-pack-banner" id="smartPackBanner">
               <span class="smart-pack-icon" id="smartIcon">💡</span>
@@ -1429,7 +1457,7 @@
 
           <div class="totals-box">
             <div class="total-line subtotal">
-              <span>Subtotal Servicios:</span>
+              <span>Subtotal de servicios:</span>
               <span id="subtotalVal">$0.00</span>
             </div>
             <div class="total-line iva">
@@ -1437,7 +1465,7 @@
               <span id="ivaVal">$0.00</span>
             </div>
             <div class="total-line final">
-              <span class="final-label">INVERSIÓN TOTAL:</span>
+              <span class="final-label">Inversión total:</span>
               <span class="final-number" id="totalVal">$0.00</span>
             </div>
           </div>
@@ -1454,7 +1482,7 @@
             <div class="donut-center-label" id="donutCenterPct">0%</div>
           </div>
           <div class="chart-titles">
-            <h4>Distribución del Presupuesto</h4>
+            <h4>Distribución del presupuesto</h4>
             <p id="chartSubtext">¿Dónde se está destinando más tu inversión?</p>
           </div>
         </div>
@@ -1464,7 +1492,7 @@
         </div>
 
         <div class="chart-expand-badge">
-          <span>🔍 Ver Detalle</span>
+          <span>🔍 Ver detalle</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg>
         </div>
       </div>
@@ -1476,7 +1504,7 @@
   <!-- MODAL DE ANÁLISIS EXPANDIDO -->
   <div class="modal-expanded-analytics" id="analyticsModal" onclick="closeAnalyticsModal(event)">
     <div class="analytics-dialog" onclick="event.stopPropagation();">
-      <h3>Radiografía Estratégica de Inversión</h3>
+      <h3>Radiografía estratégica de inversión</h3>
       <p class="analytics-dialog-subtitle">Visualiza exactamente cómo se distribuyen los fondos en cada aspecto de tu evento:</p>
       
       <div class="expanded-groups-grid" id="expandedGroupsContainer"></div>
@@ -1488,7 +1516,7 @@
   <!-- MODAL LEGAL LOPDP -->
   <div class="modal-overlay" id="privacyModal" onclick="closePrivacyModal(event)">
     <div class="modal-box" onclick="event.stopPropagation();">
-      <h3>Política de Tratamiento de Datos Personales (Ecuador)</h3>
+      <h3>Política de tratamiento de datos personales (Ecuador)</h3>
       <p>
         En cumplimiento con lo dispuesto en la <b>Ley Orgánica de Protección de Datos Personales (Registro Oficial N° 459)</b> y su Reglamento General en la República del Ecuador, <b>Karkajadas Group</b> le informa que los datos personales consignados en este cotizador serán tratados bajo principios de licitud, consentimiento, lealtad y confidencialidad.
       </p>
@@ -1515,9 +1543,9 @@
           <p style="color: #d97706; font-weight: bold; font-size: 0.8rem; margin-top: 4px;" id="pdfCatalogName">Catálogo de Servicios</p>
         </td>
         <td style="width: 40%; text-align: right; vertical-align: top; font-size: 0.8rem; color: #475569; line-height: 1.45;">
-          <p><strong>Fecha de Emisión:</strong> <span id="pdfDate"></span></p>
+          <p><strong>Fecha de emisión:</strong> <span id="pdfDate"></span></p>
           <p><strong>Validez:</strong> 15 días calendario</p>
-          <p><strong>Lugar:</strong> Quito / Pichincha - Ecuador</p>
+          <p><strong>Lugar:</strong> Quito, Pichincha, Ecuador</p>
         </td>
       </tr>
     </table>
@@ -1526,19 +1554,19 @@
       <table style="width: 100%; border-collapse: collapse;">
         <tr>
           <td style="width: 48%; vertical-align: top; padding-right: 10px;">
-            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; text-transform: uppercase; font-size: 0.78rem;">Datos Comerciales del Cliente:</p>
+            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; font-size: 0.8rem;">Datos comerciales del cliente:</p>
             <p><strong>Responsable:</strong> <span id="pdfClientName"></span></p>
-            <p><strong>Empresa / Org:</strong> <span id="pdfClientCompany"></span></p>
+            <p><strong>Empresa u organización:</strong> <span id="pdfClientCompany"></span></p>
             <p><strong>Teléfono:</strong> <span id="pdfClientPhone"></span></p>
             <p><strong>Correo:</strong> <span id="pdfClientEmail"></span></p>
           </td>
           <td style="width: 52%; vertical-align: top; border-left: 1px solid #cbd5e1; padding-left: 12px;">
-            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; text-transform: uppercase; font-size: 0.78rem;">Ficha Técnica & Empatía del Evento:</p>
-            <p><strong>Aforo Total:</strong> <span id="pdfTotalGuests"></span> asistentes</p>
+            <p style="font-weight: bold; color: #0f172a; margin-bottom: 5px; font-size: 0.8rem;">Ficha técnica y empatía del evento:</p>
+            <p><strong>Aforo total:</strong> <span id="pdfTotalGuests"></span> asistentes</p>
             <p><strong>Composición:</strong> <span id="pdfAdultsKids"></span></p>
-            <p><strong>Alimentación Especial:</strong> <span id="pdfDietNeeds"></span></p>
-            <p><strong>Inclusión & Accesibilidad:</strong> <span id="pdfSpecialNeeds"></span></p>
-            <p><strong>Observaciones / Cuidados:</strong> <span id="pdfAllergies"></span></p>
+            <p><strong>Alimentación especial:</strong> <span id="pdfDietNeeds"></span></p>
+            <p><strong>Inclusión y accesibilidad:</strong> <span id="pdfSpecialNeeds"></span></p>
+            <p><strong>Observaciones y cuidados:</strong> <span id="pdfAllergies"></span></p>
           </td>
         </tr>
       </table>
@@ -1548,8 +1576,8 @@
     <table class="pdf-table" id="pdfGroupsTableContainer">
       <thead>
         <tr>
-          <th style="width: 72%;">Descripción del Servicio / Atracción</th>
-          <th style="text-align: right; width: 28%;">Valor Total</th>
+          <th style="width: 72%;">Descripción del servicio o atracción</th>
+          <th style="text-align: right; width: 28%;">Valor total</th>
         </tr>
       </thead>
       <tbody id="pdfTableBody"></tbody>
@@ -1557,7 +1585,7 @@
 
     <table class="pdf-totals-table pdf-no-break">
       <tr>
-        <td><strong>Subtotal Servicios:</strong></td>
+        <td><strong>Subtotal de servicios:</strong></td>
         <td style="text-align: right;" id="pdfSubtotal">$0.00</td>
       </tr>
       <tr>
@@ -1565,14 +1593,14 @@
         <td style="text-align: right;" id="pdfIVA">$0.00</td>
       </tr>
       <tr style="border-top: 2px solid #0f172a; font-size: 1.1rem;">
-        <td><strong>Inversión Total:</strong></td>
+        <td><strong>Inversión total:</strong></td>
         <td style="text-align: right; font-weight: bold; color: #2563eb;" id="pdfTotal">$0.00</td>
       </tr>
     </table>
 
     <!-- MENSAJES RELEVANTES AL PIE DEL PDF -->
     <div class="pdf-no-break" style="margin-top: 24px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; font-size: 0.78rem; color: #334155; line-height: 1.5;">
-      <p style="margin-bottom: 4px;">💳 <strong>Condiciones de Pago:</strong> Pregunta por la política de pago y facilidades corporativas disponibles para tu empresa.</p>
+      <p style="margin-bottom: 4px;">💳 <strong>Condiciones de pago:</strong> Pregunta por la política de pago y facilidades corporativas disponibles para tu empresa.</p>
       <p>⚠️️ <strong>Disponibilidad:</strong> Todos los servicios y fechas se encuentran sujetos a disponibilidad al momento de confirmar la reserva.</p>
     </div>
 
@@ -1586,442 +1614,442 @@
     const STRATEGIC_CATALOG = {
       regular: [
         {
-          groupName: "Grandes Atracciones",
-          heroTitle: "1. Grandes Atracciones y Retos de Aventura",
+          groupName: "Grandes atracciones",
+          heroTitle: "1. Grandes atracciones y retos de aventura",
           heroSubtitle: "El núcleo visual y dinámico de mayor impacto para tu evento:",
           items: [
             {
               id: "castillo_reg",
-              name: "Inflable Castillo Clásico",
-              specs: "5m largo × 4,5m ancho × 5m alto • Capacidad 6 niños (4 a 7 años)",
-              options: [ { label: "2 Horas", price: 70 }, { label: "3 Horas", price: 90 } ]
+              name: "Inflable castillo clásico",
+              specs: "5 m largo × 4,5 m ancho × 5 m alto • capacidad para 6 niños (4 a 7 años)",
+              options: [ { label: "2 horas", price: 70 }, { label: "3 horas", price: 90 } ]
             },
             {
               id: "barco_reg",
-              name: "Inflable Barco Pirata",
-              specs: "6m largo × 5,5m ancho × 5,5m alto • Capacidad 10 niños (8 a 10 años)",
-              options: [ { label: "2 Horas", price: 80 }, { label: "3 Horas", price: 100 } ]
+              name: "Inflable barco pirata",
+              specs: "6 m largo × 5,5 m ancho × 5,5 m alto • capacidad para 10 niños (8 a 10 años)",
+              options: [ { label: "2 horas", price: 80 }, { label: "3 horas", price: 100 } ]
             },
             {
               id: "espuma_reg",
-              name: "Cañón de Fiesta de Espuma",
+              name: "Cañón de fiesta de espuma",
               specs: "Líquido espumógeno no tóxico, máxima diversión para todas las edades",
-              options: [ { label: "1 Hora", price: 80 }, { label: "2 Horas", price: 120 } ]
+              options: [ { label: "1 hora", price: 80 }, { label: "2 horas", price: 120 } ]
             }
           ]
         },
         {
-          groupName: "Espacios Infantiles",
-          heroTitle: "2. Bienestar Familiar y Estimulación Infantil",
+          groupName: "Espacios infantiles",
+          heroTitle: "2. Bienestar familiar y estimulación infantil",
           heroSubtitle: "Espacios seguros y lúdicos pensados para la tranquilidad de los padres:",
           items: [
             {
               id: "legos_reg",
-              name: "Zona de Bloques Legos Gigantes",
-              specs: "1.000 piezas gigantes de legos en área de 3m × 3m (3 a 9 años)",
-              options: [ { label: "3 Horas", price: 90 } ]
+              name: "Zona de bloques Lego gigantes",
+              specs: "1.000 piezas gigantes de Lego en área de 3 m × 3 m (3 a 9 años)",
+              options: [ { label: "3 horas", price: 90 } ]
             },
             {
               id: "babypark_reg",
-              name: "Baby Park de Estimulación",
+              name: "Baby park de estimulación",
               specs: "Piscina de pelotas, kit estimulación, túnel gateo, carritos (0 a 4 años)",
-              options: [ { label: "2 Horas", price: 100 }, { label: "3 Horas", price: 120 } ]
+              options: [ { label: "2 horas", price: 100 }, { label: "3 horas", price: 120 } ]
             },
             {
               id: "minicity_reg",
-              name: "Mini City de Oficios",
+              name: "Mini city de oficios",
               specs: "Salón de belleza, clínica veterinaria y supermercado (2 a 4 años)",
-              options: [ { label: "2 Horas", price: 100 }, { label: "3 Horas", price: 120 } ]
+              options: [ { label: "2 horas", price: 100 }, { label: "3 horas", price: 120 } ]
             },
             {
               id: "juguetilandia_reg",
-              name: "Juguetilandia Interactiva",
-              specs: "Piano, batería, guitarras, peluches y autos • 4m × 4m (2 a 5 años)",
-              options: [ { label: "3 Horas", price: 100 } ]
+              name: "Juguetilandia interactiva",
+              specs: "Piano, batería, guitarras, peluches y autos • 4 m × 4 m (2 a 5 años)",
+              options: [ { label: "3 horas", price: 100 } ]
             },
             {
               id: "arte_reg",
-              name: "Estación de Arte Completa",
+              name: "Estación de arte completa",
               specs: "5 caballetes, 100 hojas A3, lápices de colores y 10 sillas (4 a 10 años)",
               options: [ { label: "Paquete 100 hojas", price: 100 } ]
             }
           ]
         },
         {
-          groupName: "Snacks & Delicias",
-          heroTitle: "3. Experiencia Sensorial: Snacks & Candy Bar",
+          groupName: "Snacks y delicias",
+          heroTitle: "3. Experiencia sensorial: snacks y candy bar",
           heroSubtitle: "Aromas y sabores recién preparados para elevar el deleite de los asistentes:",
           items: [
             {
               id: "hotdog_reg",
-              name: "Combo Hot Dog Clásico",
-              specs: "Hot dog con aderezos completos + gaseosa personal de 300ml",
-              options: [ { label: "Combo Unitario", price: 2.50 } ]
+              name: "Combo hot dog clásico",
+              specs: "Hot dog con aderezos completos y gaseosa personal de 300 ml",
+              options: [ { label: "Combo unitario", price: 2.50 } ]
             },
             {
               id: "canguil_reg",
-              name: "Máquina de Canguil (Palomitas)",
+              name: "Máquina de canguil (palomitas)",
               specs: "Máquina semi-industrial, operador calificado, insumos y fundas",
-              options: [ { label: "Ilimitado 2h", price: 80 }, { label: "Ilimitado 3h", price: 120 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 80 }, { label: "Ilimitado 3 horas", price: 120 } ]
             },
             {
               id: "algodon_reg",
-              name: "Máquina de Algodón de Azúcar",
+              name: "Máquina de algodón de azúcar",
               specs: "Elaboración en vivo, operador calificado y palillos",
-              options: [ { label: "Ilimitado 2h", price: 90 }, { label: "Ilimitado 3h", price: 135 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 90 }, { label: "Ilimitado 3 horas", price: 135 } ]
             },
             {
               id: "granizado_reg",
-              name: "Máquina de Granizados",
+              name: "Máquina de granizados",
               specs: "Hielo triturado en vivo con variedad de jarabes dulces",
-              options: [ { label: "Ilimitado 2h", price: 100 }, { label: "Ilimitado 3h", price: 150 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 100 }, { label: "Ilimitado 3 horas", price: 150 } ]
             }
           ]
         },
         {
-          groupName: "Juegos Colectivos",
-          heroTitle: "4. Integración y Juegos Colectivos",
+          groupName: "Juegos colectivos",
+          heroTitle: "4. Integración y juegos colectivos",
           heroSubtitle: "Desafíos recreativos que integran a familias y equipos de trabajo:",
           items: [
             {
               id: "cuatro_reg",
-              name: "Cuatro en Raya Gigante",
+              name: "Cuatro en raya gigante",
               specs: "Lona gigante de suelo con fichas de coordinación",
-              options: [ { label: "2 a 3 Horas", price: 50 } ]
+              options: [ { label: "2 a 3 horas", price: 50 } ]
             },
             {
               id: "jenga_reg",
-              name: "Jenga Gigante de Madera",
+              name: "Jenga gigante de madera",
               specs: "Bloques gigantes apilables de madera para destreza familiar",
-              options: [ { label: "2 a 3 Horas", price: 60 } ]
+              options: [ { label: "2 a 3 horas", price: 60 } ]
             },
             {
               id: "feria_reg",
-              name: "Estaciones de Feria / Deportivas",
-              specs: "Fútbol de precisión, Gym, Tenis, Basket o Bolos con monitor (c/u)",
-              options: [ { label: "Alquiler 2 o 3 Horas", price: 70 } ]
+              name: "Estaciones de feria y deportivas",
+              specs: "Fútbol de precisión, gimnasio, tenis, básquet o bolos con monitor (precio por estación)",
+              options: [ { label: "Alquiler 2 o 3 horas", price: 70 } ]
             }
           ]
         },
         {
-          groupName: "Logística y Transporte",
-          heroTitle: "5. Infraestructura, Logística y Montaje",
+          groupName: "Logística y transporte",
+          heroTitle: "5. Infraestructura, logística y montaje",
           heroSubtitle: "Soporte técnico, transporte y mobiliario a medida de tu aforo:",
           items: [
             {
               id: "sonido_reg",
-              name: "Sistema de Sonido y Microfonía",
+              name: "Sistema de sonido y microfonía",
               specs: "Consola, parlantes activos y micrófonos según aforo del evento",
               isCustomPrice: true,
-              options: [ { label: "Valor Personalizado", price: 0 } ]
+              options: [ { label: "Valor personalizado", price: 0 } ]
             },
             {
               id: "carpas_reg",
-              name: "Carpas, Tarimas, Sillas y Mesas Adultos",
+              name: "Carpas, tarimas, sillas y mesas para adultos",
               specs: "Mobiliario estructural y carpas impermeables de alto estándar",
               isCustomPrice: true,
-              options: [ { label: "Valor Personalizado", price: 0 } ]
+              options: [ { label: "Valor personalizado", price: 0 } ]
             },
             {
               id: "sillas_ninos",
-              name: "Mobiliario Infantil (Mesas y Sillas)",
+              name: "Mobiliario infantil (mesas y sillas)",
               specs: "Mobiliario temático diseñado a la escala de los niños",
               isCustomPrice: true,
-              options: [ { label: "Valor Personalizado", price: 0 } ]
+              options: [ { label: "Valor personalizado", price: 0 } ]
             },
             {
               id: "transporte_reg",
-              name: "Transporte, Viáticos y Operación Logística",
+              name: "Transporte, viáticos y operación logística",
               specs: "Traslado seguro de equipos, montaje previo y desmontaje final",
               isCustomPrice: true,
-              options: [ { label: "Valor Personalizado", price: 0 } ]
+              options: [ { label: "Valor personalizado", price: 0 } ]
             }
           ]
         }
       ],
       navidad: [
         {
-          groupName: "Shows & Puesta en Escena",
-          heroTitle: "1. Shows Artísticos, Escenografía y Personajes Estelares",
+          groupName: "Shows y puesta en escena",
+          heroTitle: "1. Shows artísticos, escenografía y personajes estelares",
           heroSubtitle: "El impacto visual y artístico que cautiva a toda la empresa y sus familias:",
           items: [
             {
               id: "trineo_nav_2026",
-              name: "Trineo Navideño de Fotografías",
+              name: "Trineo navideño de fotografías",
               specs: "Estructura temática de trineo navideño con renos para photocall corporativo",
-              options: [ { label: "Tarifa Evento", price: 50 } ]
+              options: [ { label: "Tarifa por evento", price: 50 } ]
             },
             {
               id: "bastones_nav_2026",
-              name: "Set de Paletas y Bastones Navideños",
+              name: "Set de paletas y bastones navideños",
               specs: "Set decorativo de 10 unidades gigantes para delimitación y ambientación",
               options: [ { label: "Set 10 unidades", price: 60 } ]
             },
             {
               id: "animacion_ludica_nav",
-              name: "Animación Lúdica Recreativa",
+              name: "Animación lúdica recreativa",
               specs: "1 hora de animación interactiva: juegos, dinámicas, concursos y baile (no incluye premios)",
               options: [ { label: "Servicio 1 hora", price: 120 } ]
             },
             {
               id: "santa_nav_2026",
-              name: "Personaje Navideño: Santa Claus",
+              name: "Personaje navideño: Santa Claus",
               specs: "Actor caracterizado profesionalmente, sesión de fotos y entrega de regalos (3 horas)",
-              options: [ { label: "Actuación 3 Horas", price: 150 } ]
+              options: [ { label: "Actuación 3 horas", price: 150 } ]
             },
             {
               id: "deco_nav_2026",
-              name: "Decoración Navideña Temática",
+              name: "Decoración navideña temática",
               specs: "Ambientación escenográfica con guirnaldas, árboles y detalles navideños",
-              options: [ { label: "Paquete Estándar", price: 150 } ]
+              options: [ { label: "Paquete estándar", price: 150 } ]
             },
             {
               id: "show_magia_nav",
-              name: "Show de Magia, Música y Ventriloquia",
+              name: "Show de magia, música y ventriloquia",
               specs: "Espectáculo dinámico y cómico de ilusionismo para todas las edades (40 minutos)",
               options: [ { label: "Presentación 40 min", price: 200 } ]
             },
             {
               id: "casa_santa_2026",
               name: "Casa de Santa Claus",
-              specs: "Escenografía inmersiva premium para recuerdos y fotos con Santa",
-              options: [ { label: "Tarifa Evento", price: 225 } ]
+              specs: "Escenografía inmersiva premium para recuerdos y fotos con Santa Claus",
+              options: [ { label: "Tarifa por evento", price: 225 } ]
             },
             {
               id: "pueblo_nav_2026",
-              name: "Pueblo Navideño / Escenario Festivo",
+              name: "Pueblo navideño y escenario festivo",
               specs: "Montaje temático de pueblo invernal a escala real para escenografía central",
-              options: [ { label: "Tarifa Evento", price: 250 } ]
+              options: [ { label: "Tarifa por evento", price: 250 } ]
             },
             {
               id: "show_nav_2026",
-              name: "Show Navideño Artístico",
+              name: "Show navideño artístico",
               specs: "Puesta en escena teatral musical, elenco artístico, bailes y concursos festivos (40 minutos)",
               options: [ { label: "Presentación 40 min", price: 694 } ]
             }
           ]
         },
         {
-          groupName: "Inflables & Aventura",
-          heroTitle: "2. Inflables & Entretenimientos Interactivos",
+          groupName: "Inflables y aventura",
+          heroTitle: "2. Inflables y entretenimientos interactivos",
           heroSubtitle: "Atracciones de gran escala para adrenalina y diversión multitudinaria:",
           items: [
             {
               id: "espuma_nav_2026",
-              name: "Cañón de Fiesta de Espuma",
+              name: "Cañón de fiesta de espuma",
               specs: "Cañón de líquido espumógeno no tóxico, seguro para niños y adultos (1 hora)",
-              options: [ { label: "Servicio 1 Hora", price: 80 } ]
+              options: [ { label: "Servicio 1 hora", price: 80 } ]
             },
             {
               id: "castillo_nav_2026",
-              name: "Inflable Castillo Navideño",
-              specs: "Medidas: 4,5m largo × 4m ancho × 4m alto • Niños de 4 a 8 años (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 90 } ]
+              name: "Inflable castillo navideño",
+              specs: "Medidas: 4,5 m largo × 4 m ancho × 4 m alto • niños de 4 a 8 años (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 90 } ]
             },
             {
               id: "barco_nav_2026",
-              name: "Inflable Barco Navideño",
-              specs: "Medidas: 6m largo × 4,5m ancho × 5,5m alto • Niños de 5 a 9 años (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 100 } ]
+              name: "Inflable barco navideño",
+              specs: "Medidas: 6 m largo × 4,5 m ancho × 5,5 m alto • niños de 5 a 9 años (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 100 } ]
             },
             {
               id: "gusanito_nav_2026",
-              name: "Tren Gusanito Rodante Navideño",
-              specs: "Paseo rodante mecánico para pasear por el recinto • Capacidad 40 personas simultáneas (1 hora)",
-              options: [ { label: "Paseo 1 Hora", price: 150 } ]
+              name: "Tren gusanito rodante navideño",
+              specs: "Paseo mecánico rodante por el recinto • capacidad para 40 personas simultáneas (1 hora)",
+              options: [ { label: "Paseo 1 hora", price: 150 } ]
             },
             {
               id: "futbol_burbuja_2026",
-              name: "Fútbol Burbuja Navideño",
+              name: "Fútbol burbuja navideño",
               specs: "Cancha delimitada con trajes de esferas inflables bumper para choques seguros (9 a 12 años)",
-              options: [ { label: "Alquiler 1 Hora", price: 150 } ]
+              options: [ { label: "Alquiler 1 hora", price: 150 } ]
             },
             {
               id: "discoteca_ninos_nav",
-              name: "Discoteca Móvil Niños (Disco Kids)",
+              name: "Discoteca móvil para niños (disco kids)",
               specs: "Efectos luminosos, animación musical infantil, bailes y coreografías (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 210 } ]
+              options: [ { label: "Servicio 3 horas", price: 210 } ]
             },
             {
               id: "discoteca_adultos_nav",
-              name: "Discoteca Móvil Adultos",
+              name: "Discoteca móvil para adultos",
               specs: "Sistema de luces profesionales, sonido de alta potencia y DJ con música variada (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 360 } ]
+              options: [ { label: "Servicio 3 horas", price: 360 } ]
             },
             {
               id: "hot_wheels_nav",
-              name: "Desafío Hot Wheels Inflable",
-              specs: "Pista de obstáculos extrema: 15m largo × 4m ancho × 5m alto • Niños desde 6 años (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 322 } ]
+              name: "Desafío Hot Wheels inflable",
+              specs: "Pista de obstáculos extrema: 15 m largo × 4 m ancho × 5 m alto • niños desde 6 años (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 322 } ]
             },
             {
               id: "oso_polar_nav",
-              name: "Mega Inflable Oso Polar",
-              specs: "Medidas colosales: 9m largo × 5m ancho × 7m alto • Para niños de 3 a 12 años (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 437 } ]
+              name: "Mega inflable oso polar",
+              specs: "Medidas colosales: 9 m largo × 5 m ancho × 7 m alto • para niños de 3 a 12 años (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 437 } ]
             }
           ]
         },
         {
-          groupName: "Zonas Kids & Estaciones Creativas",
-          heroTitle: "3. Zonas Kids & Estaciones Creativas",
+          groupName: "Zonas kids y estaciones creativas",
+          heroTitle: "3. Zonas kids y estaciones creativas",
           heroSubtitle: "Espacios seguros para tranquilidad de los padres y estimulación de los más pequeños:",
           items: [
             {
               id: "legos_nav_2026",
-              name: "Pequeños Arquitectos (Zona LEGO)",
+              name: "Pequeños arquitectos (zona Lego)",
               specs: "Miles de bloques gigantes de construcción tipo Lego con alfombra y panel temático (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 80 } ]
+              options: [ { label: "Servicio 3 horas", price: 80 } ]
             },
             {
               id: "juguetilandia_nav_2026",
-              name: "Juguetilandia Interactiva",
+              name: "Juguetilandia interactiva",
               specs: "Piano de cola infantil, batería, guitarras, autos a batería y peluches gigantes",
-              options: [ { label: "Servicio 3 Horas", price: 120 } ]
+              options: [ { label: "Servicio 3 horas", price: 120 } ]
             },
             {
               id: "babypark_nav_2026",
-              name: "Baby Park de Estimulación Temprana",
-              specs: "Área protegida y acolchada de 6m × 2m para bebés de 1 a 3 años (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 125 } ]
+              name: "Baby park de estimulación temprana",
+              specs: "Área protegida y acolchada de 6 m × 2 m para bebés de 1 a 3 años (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 125 } ]
             },
             {
               id: "arenero_nav",
-              name: "Arenero Temático Sensorial",
-              specs: "Zona delimitada de 3m × 3m con arena tratada no tóxica y moldes lúdicos (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 130 } ]
+              name: "Arenero temático sensorial",
+              specs: "Zona delimitada de 3 m × 3 m con arena tratada no tóxica y moldes lúdicos (3 horas)",
+              options: [ { label: "Servicio 3 horas", price: 130 } ]
             },
             {
               id: "minicity_nav_2026",
-              name: "Minicity Navideña de Oficios",
-              specs: "Pueblo a escala de 6m × 4m: roles infantiles, salón de belleza, veterinaria (2 a 4 años - 3h)",
-              options: [ { label: "Servicio 3 Horas", price: 150 } ]
+              name: "Minicity navideña de oficios",
+              specs: "Pueblo a escala de 6 m × 4 m: roles infantiles, salón de belleza, veterinaria (2 a 4 años - 3 h)",
+              options: [ { label: "Servicio 3 horas", price: 150 } ]
             },
             {
               id: "arte_nav_2026",
-              name: "Estación de Arte Navideña",
-              specs: "Área de 6m × 6m con materiales para colorear y dibujar • Capacidad 100 niños (4 a 12 años)",
-              options: [ { label: "Capacidad 100 niños", price: 160 } ]
+              name: "Estación de arte navideña",
+              specs: "Área de 6 m × 6 m con materiales para colorear y dibujar • capacidad para 100 niños (4 a 12 años)",
+              options: [ { label: "Capacidad para 100 niños", price: 160 } ]
             },
             {
               id: "lienzos_nav_2026",
-              name: "Estación de Pintura en Lienzos",
-              specs: "Área de 6m × 6m con caballetes y lienzos reales • Capacidad 80 niños (4 a 10 años)",
-              options: [ { label: "Capacidad 80 niños", price: 160 } ]
+              name: "Estación de pintura en lienzos",
+              specs: "Área de 6 m × 6 m con caballetes y lienzos reales • capacidad para 80 niños (4 a 10 años)",
+              options: [ { label: "Capacidad para 80 niños", price: 160 } ]
             },
             {
               id: "huertos_nav_2026",
-              name: "Huertos Orgánicos / La Granja Karkajadas",
+              name: "Huertos orgánicos y la granja Karkajadas",
               specs: "Escenografía de granja con animales, legumbres didácticas, materiales, 2 mesas y 10 sillas (60 niños)",
               options: [ { label: "Paquete 60 niños", price: 180 } ]
             },
             {
               id: "estacion_creativa_nav",
-              name: "Estación Creativa / Taller de Arte",
+              name: "Estación creativa y taller de arte",
               specs: "Incluye materiales didácticos para 100 niños, 2 mesas y 10 sillas completas",
               options: [ { label: "Paquete 100 niños", price: 250 } ]
             }
           ]
         },
         {
-          groupName: "Dinámicas & Integración",
-          heroTitle: "4. Dinámicas & Integración: Integración Corporativa",
+          groupName: "Dinámicas e integración",
+          heroTitle: "4. Dinámicas e integración corporativa",
           heroSubtitle: "Actividades grupales de alta integración para colaboradores y familias:",
           items: [
             {
               id: "deportivas_nav_2026",
-              name: "Estaciones Deportivas (Fútbol, Basket, Tenis, Gym, Bolos)",
+              name: "Estaciones deportivas (fútbol, básquet, tenis, gimnasio y bolos)",
               specs: "Estación con monitor para niños de 3 a 12 años y adultos (3 horas - tarifa individual)",
-              options: [ { label: "Estación individual (3h)", price: 70 } ]
+              options: [ { label: "Estación individual (3 h)", price: 70 } ]
             },
             {
               id: "rompecabezas_nav",
-              name: "Rompecabezas Gigante",
+              name: "Rompecabezas gigante",
               specs: "Juego de piso de coordinación y destreza en equipos (3 horas)",
-              options: [ { label: "Servicio 3 Horas", price: 75 } ]
+              options: [ { label: "Servicio 3 horas", price: 75 } ]
             },
             {
               id: "circuito_juegos_nav",
-              name: "Circuito de Juegos Padres e Hijos",
-              specs: "Estaciones de competencia e integración familiar con materiales para 100 participantes (1h 30m)",
-              options: [ { label: "100 part. (1h 30m)", price: 500 } ]
+              name: "Circuito de juegos padres e hijos",
+              specs: "Estaciones de competencia e integración familiar con materiales para 100 participantes (1 h 30 min)",
+              options: [ { label: "100 participantes (1 h 30 min)", price: 500 } ]
             },
             {
               id: "master_chef_nav",
-              name: "Master Chef Corporativo / Familiar",
-              specs: "Gran competencia gastronómica lúdica: incluye logística, insumos y materiales para 100 participantes (2h)",
-              options: [ { label: "100 part. (2 horas)", price: 650 } ]
+              name: "Master Chef corporativo y familiar",
+              specs: "Gran competencia gastronómica lúdica: incluye logística, insumos y materiales para 100 participantes (2 h)",
+              options: [ { label: "100 participantes (2 horas)", price: 650 } ]
             }
           ]
         },
         {
-          groupName: "Snacks & Candy Bar",
-          heroTitle: "5. Snacks & Candy Bar",
+          groupName: "Snacks y candy bar",
+          heroTitle: "5. Snacks y candy bar",
           heroSubtitle: "Aromas y sabores preparados en vivo que elevan la hospitalidad del evento:",
           items: [
             {
               id: "canguil_nav_2026",
-              name: "Máquina de Canguil / Palomitas Ilimitado",
+              name: "Máquina de canguil y palomitas ilimitado",
               specs: "Consumo libre de canguil caliente durante 2 horas con fundas e insumos completos",
-              options: [ { label: "Ilimitado 2 Horas", price: 80 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 80 } ]
             },
             {
               id: "algodon_vaso_2026",
-              name: "Algodón de Azúcar en Vaso Sellado (16 oz)",
+              name: "Algodón de azúcar en vaso sellado (16 oz)",
               specs: "Paquete de 100 vasos higiénicamente sellados de 16 oz para entrega directa",
               options: [ { label: "Paquete 100 unidades", price: 80 } ]
             },
             {
               id: "algodon_nav_2026",
-              name: "Máquina de Algodón de Azúcar Ilimitado",
+              name: "Máquina de algodón de azúcar ilimitado",
               specs: "Elaboración en vivo ilimitada durante 2 horas con palillos y operador",
-              options: [ { label: "Ilimitado 2 Horas", price: 90 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 90 } ]
             },
             {
               id: "granizado_nav_2026",
-              name: "Máquina de Granizados Ilimitados (6 oz)",
+              name: "Máquina de granizados ilimitados (6 oz)",
               specs: "Entrega ilimitada durante 2 horas en vasos de 6 oz con operador e insumos",
-              options: [ { label: "Ilimitado 2 Horas", price: 100 } ]
+              options: [ { label: "Ilimitado 2 horas", price: 100 } ]
             },
             {
               id: "granizados_gigantes_2026",
-              name: "Granizados Gigantes en Vaso (12 oz)",
+              name: "Granizados gigantes en vaso (12 oz)",
               specs: "Paquete de 100 unidades de granizados gigantes con variedad de jarabes dulces",
               options: [ { label: "Paquete 100 unidades", price: 120 } ]
             },
             {
               id: "hotdog_nav_2026",
-              name: "Combo Hot Dogs + Gaseosas (Pack 50)",
-              specs: "50 hot dogs completos con salsas y papas trituradas + 50 gaseosas personales 300 ml",
+              name: "Combo de hot dogs y gaseosas (pack de 50)",
+              specs: "50 hot dogs completos con salsas y papas trituradas y 50 gaseosas personales 300 ml",
               options: [ { label: "Paquete 50 unidades", price: 125 } ]
             }
           ]
         },
         {
-          groupName: "Infraestructura & Logística",
-          heroTitle: "6. Infraestructura, Montaje, Sonido y Logística Integral",
+          groupName: "Infraestructura y logística",
+          heroTitle: "6. Infraestructura, montaje, sonido y logística integral",
           heroSubtitle: "Soporte técnico y mobiliario estructural a medida de tu aforo:",
           items: [
             {
               id: "sonido_nav_2026",
-              name: "Amplificación y Sonido Profesional",
+              name: "Amplificación y sonido profesional",
               specs: "Consola, parlantes activos y micrófonos inalámbricos según la acústica del recinto",
               isCustomPrice: true,
-              options: [ { label: "Tarifa a Medida", price: 0 } ]
+              options: [ { label: "Tarifa a medida", price: 0 } ]
             },
             {
               id: "carpas_nav_2026",
-              name: "Carpas, Tarimas, Sillas y Mesas",
+              name: "Carpas, tarimas, sillas y mesas",
               specs: "Mobiliario estructural y carpas impermeables de alto estándar para adultos y niños",
               isCustomPrice: true,
-              options: [ { label: "Tarifa a Medida", price: 0 } ]
+              options: [ { label: "Tarifa a medida", price: 0 } ]
             },
             {
               id: "movilizacion_nav_2026",
-              name: "Montaje, Desmontaje y Movilización",
+              name: "Montaje, desmontaje y movilización",
               specs: "Cargos de transporte, cuadrilla de montaje previo y desmontaje final seguro",
               isCustomPrice: true,
-              options: [ { label: "Tarifa a Medida", price: 0 } ]
+              options: [ { label: "Tarifa a medida", price: 0 } ]
             }
           ]
         }
@@ -2066,7 +2094,7 @@
       selectedState = {};
       empathyData = { adults: 0, kids: 0, vegetarians: 0, specialNeeds: 0, allergies: '' };
 
-      document.getElementById('catalogBadge').textContent = (type === 'regular') ? 'Catálogo Regular' : 'Temporada Navideña 2026';
+      document.getElementById('catalogBadge').textContent = (type === 'regular') ? 'Catálogo regular' : 'Temporada navideña 2026';
 
       renderStepTrack();
       loadStep(0);
@@ -2092,7 +2120,7 @@
       const empPill = document.createElement('div');
       empPill.className = `step-pill ${currentStepIndex === 0 ? 'active' : ''}`;
       empPill.id = `pill-0`;
-      empPill.innerHTML = `<span>0.</span> Perfil del Evento`;
+      empPill.innerHTML = `<span>0.</span> Perfil del evento`;
       empPill.onclick = () => loadStep(0);
       track.appendChild(empPill);
 
@@ -2133,7 +2161,7 @@
         btnPrev.style.display = 'none';
       } else {
         btnPrev.style.display = 'inline-flex';
-        btnPrev.textContent = '⬅ Paso Anterior';
+        btnPrev.textContent = '⬅ Paso anterior';
       }
 
       if (stepIndex === 0) {
@@ -2141,7 +2169,7 @@
         groupContent.style.display = 'none';
         finalContactBox.style.display = 'none';
         btnNext.style.display = 'inline-flex';
-        btnNext.textContent = 'Ver Atracciones y Comenzar ➔';
+        btnNext.textContent = 'Ver atracciones y comenzar ➔';
         return;
       }
 
@@ -2151,7 +2179,7 @@
         finalContactBox.style.display = 'block';
         btnNext.style.display = 'none';
         btnPrev.style.display = 'inline-flex';
-        btnPrev.textContent = '⬅ Volver al Catálogo';
+        btnPrev.textContent = '⬅ Volver al catálogo';
         return;
       }
 
@@ -2167,9 +2195,9 @@
       document.getElementById('groupSubtitle').textContent = group.heroSubtitle;
 
       if (stepIndex === groups.length) {
-        btnNext.textContent = 'Finalizar y Datos de Cotización ➔';
+        btnNext.textContent = 'Finalizar y datos de cotización ➔';
       } else {
-        btnNext.textContent = 'Siguiente Paso ➔';
+        btnNext.textContent = 'Siguiente paso ➔';
       }
 
       const container = document.getElementById('itemsContainer');
@@ -2264,7 +2292,7 @@
       if (totalPeople > 0) {
         badge.querySelector('.audience-row span:first-child').textContent = `👥 ${totalPeople} Asistentes (${empathyData.adults} Ad. • ${empathyData.kids} Niños)`;
       } else {
-        badge.querySelector('.audience-row span:first-child').textContent = `👥 Asistentes: Sin definir`;
+        badge.querySelector('.audience-row span:first-child').textContent = `👥 Asistentes: sin definir`;
       }
 
       if (empathyData.vegetarians > 0) {
@@ -2385,7 +2413,7 @@
 
             if (item.isCustomPrice) {
               itemPrice = state.customPrice || 0;
-              labelText = itemPrice > 0 ? 'Tarifa Asignada' : 'A consultar';
+              labelText = itemPrice > 0 ? 'Tarifa asignada' : 'A consultar';
             } else {
               const opt = item.options[state.optionIndex];
               itemPrice = opt.price;
@@ -2439,7 +2467,7 @@
       });
 
       if (totalSelectedCount === 0) {
-        itemsListContainer.innerHTML = `<div class="empty-state">No has seleccionado ítems aún</div>`;
+        itemsListContainer.innerHTML = `<div class="empty-state">Aún no has seleccionado ítems</div>`;
         groupsListContainer.innerHTML = `<div class="empty-state">Sin grupos activos</div>`;
       }
 
@@ -2454,7 +2482,7 @@
       } else if (totalSelectedCount >= 5 || (totalSelectedCount >= 3 && hasTopAttraction)) {
         smartBanner.style.borderLeftColor = "#10b981";
         smartIcon.textContent = "🌟";
-        smartText.innerHTML = "<b>¡Tu paquete es el más completo con atracciones TOP!</b> Has configurado una experiencia premium de alto impacto.";
+        smartText.innerHTML = "<b>¡Tu paquete es el más completo, con atracciones top!</b> Has configurado una experiencia premium de alto impacto.";
       } else if (totalSelectedCount >= 3) {
         smartBanner.style.borderLeftColor = "#3b82f6";
         smartIcon.textContent = "🚀";
@@ -2624,7 +2652,7 @@
         groupSelected.sort((a, b) => a.itemPrice - b.itemPrice);
 
         groupSelected.forEach(({ item, state, itemPrice }) => {
-          let labelText = item.isCustomPrice ? (itemPrice > 0 ? 'Tarifa Asignada' : 'A consultar') : item.options[state.optionIndex].label;
+          let labelText = item.isCustomPrice ? (itemPrice > 0 ? 'Tarifa asignada' : 'A consultar') : item.options[state.optionIndex].label;
 
           subtotal += itemPrice;
           const priceFormatted = itemPrice > 0 ? `$${itemPrice.toFixed(2)}` : 'A consultar';
@@ -2657,7 +2685,7 @@
       const total = subtotal + iva;
 
       // LLENADO DEL PDF
-      document.getElementById('pdfCatalogName').textContent = (activeCatalog === 'regular') ? 'Catálogo Regular Corporativo' : 'Catálogo Especial de Temporada Navideña 2026';
+      document.getElementById('pdfCatalogName').textContent = (activeCatalog === 'regular') ? 'Catálogo regular corporativo' : 'Catálogo especial de temporada navideña 2026';
       
       const now = new Date();
       const day = String(now.getDate()).padStart(2, '0');
@@ -2740,7 +2768,26 @@
     }
 
     // Arranque directo desde el ERP: salta la portada, aplica el tema del ERP y abre el catálogo elegido
-    function iniciarEmbebido(type) {
+    
+  // Ajusta el cotizador al alto visible de la pantalla para que la página no tenga scroll
+  function ajustarAlto() {
+    try {
+      const f = window.frameElement; if (!f) return;
+      const wide = f.clientWidth >= 960;
+      if (wide) {
+        const top = f.getBoundingClientRect().top;
+        const alto = Math.max(520, window.parent.innerHeight - top - 12);
+        f.style.height = alto + 'px';
+      } else {
+        f.style.height = (document.documentElement.scrollHeight + 4) + 'px';
+      }
+    } catch (e) {}
+  }
+  window.addEventListener('resize', ajustarAlto);
+  try { window.parent.addEventListener('resize', ajustarAlto); } catch (e) {}
+  window.addEventListener('load', function () { ajustarAlto(); setTimeout(ajustarAlto, 400); setTimeout(ajustarAlto, 1200); });
+
+  function iniciarEmbebido(type) {
       document.body.classList.add('embebido');
       const fuente = document.createElement('link');
       fuente.rel = 'stylesheet';
@@ -2755,6 +2802,7 @@
       // "Iniciar nueva cotización" reinicia el mismo catálogo en lugar de volver a la portada
       window.goHome = function () { document.getElementById('finalQuoteForm').reset(); iniciarEmbebido(type); };
       startApp(type);
+      ajustarAlto();
     }
   </script>
 </body>
