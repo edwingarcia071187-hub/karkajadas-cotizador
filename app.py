@@ -73,9 +73,13 @@ button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
 
-/* Etiquetas de los filtros múltiples: gris azulado, no rojo */
-[data-baseweb="tag"] { background-color: #E3E9F1 !important; border: 1px solid #B4C0D0 !important; color: #334155 !important; }
-[data-baseweb="tag"] span, [data-baseweb="tag"] svg { color: #334155 !important; fill: #334155 !important; }
+/* Filtros de selección: botones tipo "píldora" y etiquetas, en gris azulado; lo elegido va en azul (igual que las pestañas) */
+button[data-variant="pills"] { background: #E3E9F1 !important; border: 1px solid #B4C0D0 !important; color: #475569 !important; border-radius: 8px !important; box-shadow: none !important; }
+button[data-variant="pills"] p { color: inherit !important; font-weight: 600 !important; }
+button[data-variant="pills"]:hover { background: #D3DCE8 !important; color: #1E3A8A !important; }
+button[data-variant="pills"][aria-pressed="true"], button[data-variant="pills"][data-selected="true"] { background: #1E3A8A !important; border-color: #1E3A8A !important; color: #FFFFFF !important; }
+[data-testid="stMultiSelectTagsContainer"] [data-tag] { background: #1E3A8A !important; color: #FFFFFF !important; border-radius: 6px !important; }
+[data-testid="stMultiSelectTagsContainer"] [data-tag] * { color: #FFFFFF !important; }
 
 /* Tarjetas KPI (el color de cada una, incluido hover/focus, se agrega por código según su estado) */
 [class*="st-key-kpi_"] button {
@@ -448,7 +452,7 @@ def encabezado_estandar(clave, titulo, subtitulo="", volver=True, derecha=None):
 
 
 def excel_cotizaciones(cots):
-    """Libro de Excel con tres hojas: cotizaciones, detalle de ítems y resumen por estado (con fórmulas)."""
+    """Libro de Excel con tres hojas: cotizaciones, detalle de ítems y resumen por estado."""
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
@@ -493,7 +497,7 @@ def excel_cotizaciones(cots):
          [18, 30, 36, 13, 12, 11, 18], cols_dinero=(7,), cols_fecha=(4,))
     n = len(cots) + 1
     ws1.append([])
-    ws1.append(["Total", "", "", "", "", f"=SUM(F2:F{n})", f"=SUM(G2:G{n})"])
+    ws1.append(["Total", "", "", "", "", sum(len(c["items"]) for c in cots), round(sum(c["total"] for c in cots), 2)])
     for c in ws1[n + 2]:
         c.font = Font(bold=True)
         c.fill = PatternFill("solid", fgColor=gris)
@@ -515,10 +519,12 @@ def excel_cotizaciones(cots):
 
     ws3 = wb.create_sheet("Resumen por estado")
     ws3.append(["Estado", "Cotizaciones", "Total con IVA ($)", "% del total"])
-    for e in ESTADOS:
-        r = ws3.max_row + 1
-        ws3.append([e, f'=COUNTIF(Cotizaciones!E:E,A{r})', f'=SUMIF(Cotizaciones!E:E,A{r},Cotizaciones!G:G)', f"=IF(C{len(ESTADOS) + 2}=0,0,C{r}/C{len(ESTADOS) + 2})"])
-    ws3.append(["Total", f"=SUM(B2:B{len(ESTADOS) + 1})", f"=SUM(C2:C{len(ESTADOS) + 1})", f"=SUM(D2:D{len(ESTADOS) + 1})"])
+    gran = sum(c["total"] for c in cots)
+    for e in ESTADOS:   # valores calculados aquí (no fórmulas): se ven también en la vista protegida de Excel
+        de = [c for c in cots if c["estado"] == e]
+        tot_e = round(sum(c["total"] for c in de), 2)
+        ws3.append([e, len(de), tot_e, (tot_e / gran) if gran else 0])
+    ws3.append(["Total", len(cots), round(gran, 2), 1 if gran else 0])
     for c in ws3[1]:
         c.font = Font(bold=True, color="FFFFFF")
         c.fill = PatternFill("solid", fgColor=azul)
@@ -537,6 +543,18 @@ def excel_cotizaciones(cots):
     buf = BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+def normalizar_multi(clave, todo):
+    """Filtro múltiple con una opción "todo": al elegirla se desmarcan las demás; al elegir otra, se desmarca "todo"; si queda vacío, vuelve a "todo"."""
+    val = list(ss.get(clave, []))
+    antes = ss.get(clave + "_antes", [todo])
+    if not val:
+        val = [todo]
+    elif todo in val and len(val) > 1:
+        val = [v for v in val if v != todo] if todo in antes else [todo]
+    ss[clave] = val
+    ss[clave + "_antes"] = val
 
 
 def fijar_estado(estado):
@@ -1403,15 +1421,19 @@ elif menu == MENU_REPORTES:
     cots_all = ss.cotizaciones_guardadas
     with st.container(border=True, key="card_rep1"):
         st.markdown("<div class='section-title' style='border:none; margin-bottom:0;'>Filtros del reporte</div>", unsafe_allow_html=True)
-        r1, r2, r3, r4, r5 = st.columns([2, 2, 1.6, 1.3, 1.3])
-        f_est = r1.multiselect("Estado", ESTADOS, default=ESTADOS, key="rep_est")
-        f_cli = r2.selectbox("Cliente", ["Todos"] + sorted({c["cliente"] for c in cots_all}), key="rep_cli")
+        ss.setdefault("rep_est", ["Todas"])
+        ss.setdefault("rep_cli", ["Todos"])
+        st.pills("Estado", ["Todas"] + ESTADOS, selection_mode="multi", key="rep_est", on_change=normalizar_multi, args=("rep_est", "Todas"))
+        r2, r3, r4, r5 = st.columns([2.6, 1.6, 1.2, 1.2])
+        r2.multiselect("Cliente", ["Todos"] + sorted({c["cliente"] for c in cots_all}), key="rep_cli", on_change=normalizar_multi, args=("rep_cli", "Todos"))
         f_ciu = r3.selectbox("Ciudad del servicio", ["Todas"] + CIUDADES, key="rep_ciu")
         fechas = sorted(c["fecha"] for c in cots_all) or [str(date.today())]
         f_des = r4.date_input("Desde", value=date.fromisoformat(fechas[0]), key="rep_des")
         f_has = r5.date_input("Hasta", value=date.fromisoformat(fechas[-1]), key="rep_has")
+        f_est = ESTADOS if ("Todas" in ss.rep_est or not ss.rep_est) else ss.rep_est
+        f_cli = ss.rep_cli
     sel = [c for c in cots_all
-           if c["estado"] in f_est and (f_cli == "Todos" or c["cliente"] == f_cli)
+           if c["estado"] in f_est and ("Todos" in f_cli or not f_cli or c["cliente"] in f_cli)
            and (f_ciu == "Todas" or any(i["ciudad"] == f_ciu for i in c["items"]))
            and f_des.isoformat() <= c["fecha"] <= f_has.isoformat()]
     sel.sort(key=lambda c: c["fecha"], reverse=True)
