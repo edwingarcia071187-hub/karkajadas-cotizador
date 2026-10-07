@@ -22,7 +22,11 @@ COLORES = {   # paleta de datos sobria: distinta a los botones (verde = confirma
     "Cancelada": "#B85C78",  # rosa antiguo
 }
 MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-CIUDADES = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]
+CIUDADES_DEMO = ["Quito", "Guayaquil", "Cuenca", "Ambato", "Manta", "Varias ciudades"]   # solo para el catálogo de ejemplo
+CIUDADES_BASE = ["Quito", "Guayaquil", "Cuenca", "Santo Domingo de los Tsáchilas", "Machala", "Manta", "Portoviejo", "Ambato",
+                 "Riobamba", "Loja", "Ibarra", "Esmeraldas", "Latacunga"]
+OTRA = "Otra..."
+CIUDADES = CIUDADES_BASE + ["Varias ciudades"]
 NUEVO_CLIENTE = "+ Registrar nuevo cliente..."
 IVA_CLIENTE = 0.15
 SIN_FILTRO = {"f_emp": "Todas", "f_mes": "Todos", "f_ciu": "Todas", "b_u": ""}
@@ -202,6 +206,8 @@ st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
 # ESTADO INICIAL
 # =============================================================================
 ss = st.session_state
+ss.setdefault("ciudades_extra", [])   # ciudades que se escriben con la opción "Otra..."
+CIUDADES[:] = CIUDADES_BASE + [c for c in ss.ciudades_extra if c not in CIUDADES_BASE] + ["Varias ciudades"]
 ss.setdefault("nav_menu", "Panel de control")
 ss.setdefault("items_cot", [])
 ss.setdefault("cotizacion_activa", None)
@@ -222,7 +228,7 @@ if "proveedores_catalogo" not in ss:
     ss.proveedores_catalogo = [
         {"servicio": s, "proveedor": f"Pro{cat} {ciu[:3].upper()}", "categoria": cat, "ciudad": ciu,
          "precio_base": precio, "iva": iva, "descripcion": "Estándar"}
-        for ciu in CIUDADES for s, cat, precio, iva in servicios_base
+        for ciu in CIUDADES_DEMO for s, cat, precio, iva in servicios_base
     ]
 
 
@@ -244,11 +250,36 @@ if "cotizaciones_guardadas" not in ss:
         {"codigo": "KG-20261005-006", "evento": "Feria de exposición", "cliente": "Hilton Colón Quito", "fecha": "2026-10-05", "estado": "Aprobada", "total": 2200.00, "items": [_item("Carpa", "2026-10-05", 2, 50.0, 0.15, 20.0)]},
     ]
 
+    def _cot(cod, evento, cliente, fecha, estado, lineas):
+        """lineas: (servicio, categoría, ciudad, cantidad, costo, iva, margen %). El proveedor sale del catálogo de ejemplo."""
+        items = [{"servicio": sv, "proveedor": f"Pro{cat} {ciu[:3].upper()}", "ciudad": ciu, "fecha": fecha,
+                  "cantidad": cant, "costo": costo, "iva_prov": iva, "fee_pct": fee} for sv, cat, ciu, cant, costo, iva, fee in lineas]
+        total = sum(c * k * (1 + v) * (1 + f / 100) for _, _, _, c, k, v, f in lineas) * (1 + IVA_CLIENTE)
+        return {"codigo": cod, "evento": evento, "cliente": cliente, "fecha": fecha, "estado": estado, "total": round(total, 2), "items": items}
+
+    ss.cotizaciones_guardadas += [
+        _cot("KG-20260918-008", "Convención anual de ventas", "Importadora Austral S.A.", "2026-09-18", "Aprobada",
+             [("Sonido profesional", "Audiovisual", "Cuenca", 1, 180.0, 0.15, 20.0), ("Catering premium", "Alimentos", "Cuenca", 120, 25.0, 0.15, 20.0)]),
+        _cot("KG-20261003-009", "Fiesta de fin de año", "Hotel Costa Azul S.A.", "2026-10-03", "Enviada",
+             [("Carpa estructural 6x6", "Estructuras", "Manta", 3, 220.0, 0.15, 20.0), ("Animador corporativo", "Animación", "Manta", 2, 150.0, 0.15, 20.0)]),
+        _cot("KG-20261112-010", "Lanzamiento de producto", "Grupo Litoral Cía. Ltda.", "2026-11-12", "Aprobada",
+             [("Cabina fotográfica 360", "Entretenimiento", "Guayaquil", 1, 300.0, 0.0, 20.0), ("Sonido profesional", "Audiovisual", "Guayaquil", 1, 180.0, 0.15, 20.0)]),
+        _cot("KG-20260825-011", "Feria de emprendedores", "Importadora Austral S.A.", "2026-08-25", "Borrador",
+             [("Carpa estructural 6x6", "Estructuras", "Ambato", 4, 220.0, 0.15, 15.0)]),
+        _cot("KG-20261205-012", "Gala empresarial", "Hotel Costa Azul S.A.", "2026-12-05", "Cancelada",
+             [("Catering premium", "Alimentos", "Manta", 200, 25.0, 0.15, 20.0), ("Animador corporativo", "Animación", "Manta", 1, 150.0, 0.15, 20.0)]),
+        _cot("KG-20261022-013", "Activación de marca", "Grupo Litoral Cía. Ltda.", "2026-10-22", "Enviada",
+             [("Cabina fotográfica 360", "Entretenimiento", "Guayaquil", 2, 300.0, 0.0, 20.0), ("Animador corporativo", "Animación", "Guayaquil", 3, 150.0, 0.15, 20.0)]),
+    ]
+
 if "clientes_catalogo" not in ss:
     ss.clientes_catalogo = [
         {"empresa": "Corrugadora Nacional Cransa S.A.", "ruc": "1791179382001", "ciudad": "Quito", "direccion": "Av. Galo Plaza", "web": "www.cransa.com", "contacto": "Compras", "email": "compras@cransa.com", "telefono": "02-2123-456", "dias_credito": 30},
         {"empresa": "Siemens Ecuador S.A.", "ruc": "1790151234001", "ciudad": "Quito", "direccion": "Av. República", "web": "www.siemens.ec", "contacto": "Logística", "email": "eventos@siemens.ec", "telefono": "02-393-2000", "dias_credito": 60},
         {"empresa": "Hilton Colón Quito", "ruc": "1790012345001", "ciudad": "Quito", "direccion": "Av. Patria", "web": "www.hilton.com", "contacto": "Eventos", "email": "eventos@hiltonquito.com", "telefono": "02-256-0666", "dias_credito": 15},
+        {"empresa": "Importadora Austral S.A.", "ruc": "0190123456001", "ciudad": "Cuenca", "direccion": "Av. Ordóñez Lasso", "web": "www.austral.ec", "contacto": "Marketing", "email": "eventos@austral.ec", "telefono": "07-410-2233", "dias_credito": 30},
+        {"empresa": "Hotel Costa Azul S.A.", "ruc": "1391234567001", "ciudad": "Manta", "direccion": "Malecón de Manta", "web": "www.costaazul.ec", "contacto": "Eventos", "email": "eventos@costaazul.ec", "telefono": "05-262-1100", "dias_credito": 15},
+        {"empresa": "Grupo Litoral Cía. Ltda.", "ruc": "0991234567001", "ciudad": "Guayaquil", "direccion": "Av. Francisco de Orellana", "web": "www.grupolitoral.ec", "contacto": "Gerencia", "email": "gerencia@grupolitoral.ec", "telefono": "04-268-5500", "dias_credito": 45},
     ]
 
 
@@ -358,8 +389,7 @@ def dialogo_editar(idx):
     prov = c1.selectbox("Proveedor", nombres, index=nombres.index(it["proveedor"]), key=f"ed_prov_{idx}")
     serv = c2.text_input("Servicio", it["servicio"], key=f"ed_serv_{idx}")
     c3, c4, c5 = st.columns(3)
-    ciudades = CIUDADES if it["ciudad"] in CIUDADES else CIUDADES + [it["ciudad"]]
-    ciudad = c3.selectbox("Ciudad", ciudades, index=ciudades.index(it["ciudad"]), key=f"ed_ciu_{idx}")
+    ciudad = selector_ciudad(c3, "Ciudad", f"ed_ciu_{idx}", it["ciudad"])
     try:
         f0 = datetime.strptime(str(it["fecha"])[:10], "%Y-%m-%d")
     except ValueError:
@@ -924,6 +954,26 @@ CFG_CUENTAS = {"banco": st.column_config.TextColumn("Banco"), "tipo": st.column_
                "numero": st.column_config.TextColumn("Número de cuenta"), "titular": st.column_config.TextColumn("Titular")}
 
 
+def selector_ciudad(contenedor, etiqueta, clave, valor=None):
+    """Lista de ciudades con la opción "Otra...": si se elige, aparece un campo para escribirla
+    y queda guardada en la lista para todo el ERP."""
+    if valor and valor not in CIUDADES:
+        ss.ciudades_extra.append(valor)
+        CIUDADES.insert(len(CIUDADES) - 1, valor)
+    opciones = CIUDADES + [OTRA]
+    pos = CIUDADES.index(valor) if valor in CIUDADES else 0
+    elegida = contenedor.selectbox(etiqueta, opciones, index=pos, key=clave)
+    if elegida != OTRA:
+        return elegida
+    nueva = contenedor.text_input("Escribe la ciudad", key=f"{clave}_otra").strip()
+    if nueva:
+        nueva = nueva[:1].upper() + nueva[1:]
+        if nueva not in CIUDADES:
+            ss.ciudades_extra.append(nueva)
+        return nueva
+    return valor if valor in CIUDADES else CIUDADES[0]
+
+
 def indice(opciones, valor):
     return opciones.index(valor) if valor in opciones else 0
 
@@ -958,7 +1008,7 @@ def form_cliente(prefijo, titulo_html="", datos=None, cancelar=False):
     c1, c2, c3, c4, c5 = st.columns([2.3, 1.4, 1.3, 1.8, 1])
     emp = c1.text_input("Razón social / empresa *", value=d.get("empresa", ""), key=f"{prefijo}_emp")
     ruc = c2.text_input("RUC *", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
-    ciu = c3.selectbox("Ciudad principal", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
+    ciu = selector_ciudad(c3, "Ciudad principal", f"{prefijo}_ciu", d.get("ciudad"))
     web = c4.text_input("Sitio web", value=d.get("web", ""), key=f"{prefijo}_web")
     dias = c5.number_input("Días crédito", min_value=0, value=int(d.get("dias_credito", 30)), step=15, key=f"{prefijo}_dias")
     t_con, t_dir = st.tabs(["Contactos (correos y teléfonos)", "Direcciones"])
@@ -990,7 +1040,7 @@ def form_proveedor(prefijo, titulo_html="", datos=None, cancelar=False):
     nom = c1.text_input("Proveedor *", value=d.get("proveedor", ""), key=f"{prefijo}_nom")
     ruc = c2.text_input("RUC", value=d.get("ruc", ""), key=f"{prefijo}_ruc")
     cat = c3.text_input("Categoría general", value=d.get("categoria", ""), key=f"{prefijo}_cat")
-    ciu = c4.selectbox("Ciudad base", CIUDADES, index=indice(CIUDADES, d.get("ciudad")), key=f"{prefijo}_ciu")
+    ciu = selector_ciudad(c4, "Ciudad base", f"{prefijo}_ciu", d.get("ciudad"))
     obs = st.text_input("Observaciones", value=d.get("observaciones", ""), key=f"{prefijo}_obs")
     t_srv, t_con, t_dir, t_cta = st.tabs(["Servicios y costos", "Contactos (correos y teléfonos)", "Direcciones", "Cuentas bancarias"])
     with t_con:
@@ -1429,33 +1479,56 @@ elif menu == "Nueva cotización":
         tab_cat, tab_man = st.tabs(["Seleccionar del catálogo", "Ingreso manual"])
 
         with tab_cat:
-            f1, f2 = st.columns([1, 2])
-            ciu_f = f1.selectbox("Filtrar ciudad", CIUDADES, index=0)
-            pal_b = f2.text_input("Buscar proveedor/servicio...").lower()
+            f1, f2, f3 = st.columns([1.1, 1.1, 1.8])
+            ciu_f = f1.selectbox("Ciudad", CIUDADES, index=0, key="cat_ciu")
+            en_ciudad = [p for p in ss.proveedores_catalogo if p["ciudad"] == ciu_f]
+            cat_f = f2.selectbox("Categoría", ["Todas"] + sorted({p.get("categoria", "") for p in en_ciudad if p.get("categoria")}), key="cat_cat")
+            pal_b = f3.text_input("Buscar", placeholder="Proveedor o servicio...", key="cat_bus").strip().lower()
 
-            res = [p for p in ss.proveedores_catalogo
-                   if p["ciudad"] == ciu_f and (pal_b in p["servicio"].lower() or pal_b in p["proveedor"].lower())]
+            res = [p for p in en_ciudad
+                   if (cat_f == "Todas" or p.get("categoria") == cat_f)
+                   and (not pal_b or pal_b in f"{p['servicio']} {p['proveedor']}".lower())]
+            res.sort(key=lambda p: (p["servicio"].lower(), p["precio_base"]))   # mismo servicio junto y de menor a mayor costo
             if not res:
-                st.warning("No hay registros.")
+                st.info(f"No hay servicios en {ciu_f} con ese filtro. Puedes registrarlos en la pestaña «Ingreso manual».")
             else:
-                opc = [f"{r['proveedor']} ➔ {r['servicio']} | IVA {int(r['iva']*100)}% | {r.get('descripcion', '')}" for r in res]
-                item_sel = res[opc.index(st.selectbox("Proveedor:", opc))]
-                ca, cb, cc, cd, ce, cf = st.columns([1.3, 0.8, 1.1, 0.9, 1.0, 1.4], vertical_alignment="bottom")
-                f_it = ca.date_input("Fecha de servicio", value=fecha_gral)
-                can_it = cb.number_input("Cantidad", min_value=1, value=1)
-                cos_it = cc.number_input("Costo unit. ($)", value=float(item_sel["precio_base"]))
-                iva_it = cd.selectbox("IVA prov.", [0.0, 0.15], index=1 if item_sel["iva"] > 0 else 0, format_func=lambda x: f"{int(x*100)}%")
-                fee_it = ce.number_input("Margen (%)", value=20.00, step=5.00, format="%.2f")
-                if cf.button("Agregar", type="primary", use_container_width=True, key="add_cat"):
-                    items.append({"servicio": item_sel["servicio"], "proveedor": item_sel["proveedor"], "ciudad": ciu_f, "fecha": str(f_it),
-                                  "cantidad": can_it, "costo": cos_it, "iva_prov": iva_it, "fee_pct": fee_it})
-                    st.rerun()
+                t_izq, t_der = st.columns([2.05, 1], gap="medium")
+                df_cat = pd.DataFrame([{
+                    "Servicio": r["servicio"], "Proveedor": r["proveedor"],
+                    "Costo ($)": float(r["precio_base"]), "IVA": f"{int(r['iva'] * 100)}%"} for r in res])
+                with t_izq:
+                    ev_cat = st.dataframe(
+                        df_cat, hide_index=True, use_container_width=True, on_select="rerun", selection_mode="single-row",
+                        key=f"cat_tbl_{ciu_f}_{cat_f}_{pal_b}", height=min(35 * (len(df_cat) + 1) + 3, 215),
+                        column_config={"Servicio": st.column_config.TextColumn(width=165), "Proveedor": st.column_config.TextColumn(width=150),
+                                       "Costo ($)": st.column_config.NumberColumn(format="$%.2f", width=75),
+                                       "IVA": st.column_config.TextColumn(width=50)})
+                    st.caption(f"{len(res)} servicio(s) en {ciu_f}. Del mismo servicio, primero el más económico.")
+                item_sel = res[ev_cat.selection.rows[0]] if ev_cat.selection.rows else None
+                with t_der:
+                    if not item_sel:
+                        st.markdown("<div style='padding:14px; border:1px dashed #C9D3E0; border-radius:8px; color:#64748B; font-size:0.9rem; margin-top:4px;'>Elige un servicio de la tabla (recuadro de la izquierda) para completar los datos.</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div style='padding:8px 12px; background:#EEF2F7; border-left:5px solid #1E3A8A; border-radius:6px; font-size:0.88rem; color:#0F172A; line-height:1.35;'>"
+                                    f"<b>{item_sel['servicio']}</b><br>{item_sel['proveedor']} · {ciu_f}"
+                                    + ("<br><span style='color:#B45309;'>Ficha del proveedor pendiente</span>" if faltantes_proveedor(proveedor_de(item_sel["proveedor"])) else "") + "</div>", unsafe_allow_html=True)
+                        d1, d2 = st.columns([1.5, 1])
+                        f_it = d1.date_input("Fecha", value=fecha_gral)
+                        can_it = d2.number_input("Cantidad", min_value=1, value=1)
+                        d3, d4, d5 = st.columns([1.05, 1.2, 1])
+                        cos_it = d3.number_input("Costo ($)", value=float(item_sel["precio_base"]))
+                        iva_it = d4.selectbox("IVA", [0.0, 0.15], index=1 if item_sel["iva"] > 0 else 0, format_func=lambda x: f"{int(x*100)}%")
+                        fee_it = d5.number_input("Margen", value=20.00, step=5.00, format="%.2f")
+                        if st.button("Agregar a la cotización", type="primary", use_container_width=True, key="add_cat"):
+                            items.append({"servicio": item_sel["servicio"], "proveedor": item_sel["proveedor"], "ciudad": ciu_f, "fecha": str(f_it),
+                                          "cantidad": can_it, "costo": cos_it, "iva_prov": iva_it, "fee_pct": fee_it})
+                            st.rerun()
 
         with tab_man:
             nc1, nc2, nc3, nc4 = st.columns(4)
             n_pro = nc1.text_input("Proveedor *")
             n_ser = nc2.text_input("Servicio *")
-            n_ciu = nc3.selectbox("Ciudad op.", CIUDADES, key="mc_c")
+            n_ciu = selector_ciudad(nc3, "Ciudad op.", "mc_c")
             n_cat = nc4.text_input("Categoría")
             ca, cb, cc, cd, ce, cf = st.columns([1.3, 0.8, 1.1, 0.9, 1.0, 1.4], vertical_alignment="bottom")
             f_it_m = ca.date_input("Fecha de servicio", value=fecha_gral, key="mc_f")
