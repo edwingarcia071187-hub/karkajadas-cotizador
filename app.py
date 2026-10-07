@@ -55,6 +55,11 @@ CSS_BASE = """
     box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 14px rgba(15,23,42,.06) !important; padding: 18px 25px !important;
 }
 
+/* Encabezado de módulo: mismo borde y una sombra neutra un poco más marcada para que resalte */
+[class*="st-key-card_h_"] { box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 10px 26px rgba(15,23,42,.11) !important; border-color: #B8C4D4 !important; padding: 14px 25px !important; }
+.hd-titulo { font-size: 1.55rem; font-weight: 800; color: #0F172A; line-height: 1.15; margin: 0; }
+.hd-sub { font-size: .85rem; font-weight: 600; color: #64748B; margin-top: 3px; }
+
 /* Botones globales: verde = avanzar, azul = neutro */
 button[kind="primary"], button[data-testid="stBaseButton-primary"], button[kind="primaryFormSubmit"], button[data-testid="stBaseButton-primaryFormSubmit"] {
     background-color: #059669 !important; border: 1px solid #059669 !important; color: #FFFFFF !important;
@@ -169,11 +174,10 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 .invoice-container { width: 100%; background-color: #F8FAFC; padding: 10px 16px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
 
 /* Monto estimado (encabezado de la cotización) */
-.monto-badge { text-align: right; line-height: 1; margin-bottom: 8px; }
-.monto-label { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748B; margin-bottom: 6px; }
-.monto-valor { font-size: 46px; font-weight: 900; letter-spacing: -.02em; color: #1E3A8A; font-variant-numeric: tabular-nums; }
-.monto-valor .mon { font-size: 26px; font-weight: 800; color: #059669; margin-right: 4px; vertical-align: top; position: relative; top: 4px; }
-.monto-badge::after { content: ""; display: block; width: 56px; height: 4px; border-radius: 2px; background: #059669; margin: 8px 0 0 auto; }
+.monto-badge { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1; padding: 9px 20px 10px 20px;
+    background: #F1F5F9; border: 1px solid #DCE3EC; border-right: 8px solid #1E3A8A; border-radius: 10px; margin-left: auto; width: fit-content; }
+.monto-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748B; margin-bottom: 6px; }
+.monto-valor { font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: #0F172A; font-variant-numeric: tabular-nums; }
 .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
 .invoice-total { display: flex; justify-content: space-between; border-top: 2px solid #CBD5E1; padding-top: 10px; margin-top: 10px; font-size: 20px; font-weight: 800; color: #1E3A8A; }
 """
@@ -420,6 +424,20 @@ def encabezado_modulo(clave, html, unsafe_allow_html=True):
     c_vol, c_tit = st.columns([2.1, 8], vertical_alignment="center")
     c_vol.button("← Panel de control", key=f"volver_{clave}", on_click=navegar, args=("Panel de control",), help="Volver al panel de control")
     c_tit.markdown(html, unsafe_allow_html=True)
+
+
+def encabezado_estandar(clave, titulo, subtitulo="", volver=True, derecha=None):
+    """Encabezado igual en todos los módulos: [← Panel de control] título y subtítulo a la izquierda, acciones o dato a la derecha."""
+    with st.container(border=True, key=f"card_h_{clave}"):
+        if volver:
+            c_vol, c_tit, c_der = st.columns([1.55, 3.6, 3], vertical_alignment="center")
+            c_vol.button("← Panel de control", key=f"volver_{clave}", on_click=navegar, args=("Panel de control",), help="Volver al panel de control", use_container_width=True)
+        else:
+            c_tit, c_der = st.columns([1.6, 3.6], vertical_alignment="center")
+        c_tit.markdown(f"<div class='hd-titulo'>{titulo}</div>" + (f"<div class='hd-sub'>{subtitulo}</div>" if subtitulo else ""), unsafe_allow_html=True)
+        if derecha:
+            with c_der:
+                derecha()
 
 
 def fijar_estado(estado):
@@ -1267,7 +1285,7 @@ if ss.get("aviso_pendiente"):
 # MÓDULOS EN CONSTRUCCIÓN
 # =============================================================================
 if menu in MENU_PRINCIPAL[1:] + MENU_SOPORTE:
-    encabezado_modulo("obra", f"<h2 style='color:#0F172A; font-weight:800; margin:0;'>{menu}</h2>")
+    encabezado_estandar("obra", menu, "Módulo en construcción")
     st.info("Módulo en construcción.")
 
 # =============================================================================
@@ -1276,17 +1294,13 @@ if menu in MENU_PRINCIPAL[1:] + MENU_SOPORTE:
 elif menu == "Panel de control":
 
     # 1. Título + accesos rápidos
-    with st.container(border=True, key="card_1"):
-        col_tit, col_btns = st.columns([1, 2.5])
-        with col_tit:
-            st.markdown("<h3 style='color:#0F172A; font-weight:800; margin:0; padding-top:5px;'>Panel de control</h3>", unsafe_allow_html=True)
-            st.markdown("<span style='color:#64748B; font-size:13px; font-weight:600;'>Resumen ejecutivo</span>", unsafe_allow_html=True)
-        with col_btns:
-            b1, b2, b3 = st.columns(3)
-            b1.button("Crear cotización", use_container_width=True, type="primary", key="go_new",
-                      on_click=ir, args=("Nueva cotización",), kwargs={"cotizacion_activa": None, "items_cot": []})
-            b2.button("Directorio de clientes", use_container_width=True, type="secondary", key="go_cli", on_click=navegar, args=(MENU_CLIENTES,))
-            b3.button("Directorio de proveedores", use_container_width=True, type="secondary", key="go_pro", on_click=navegar, args=(MENU_PROVEEDORES,))
+    def _accesos():
+        b1, b2, b3 = st.columns(3)
+        b1.button("Crear cotización", use_container_width=True, type="primary", key="go_new",
+                  on_click=ir, args=("Nueva cotización",), kwargs={"cotizacion_activa": None, "items_cot": []})
+        b2.button("Directorio de clientes", use_container_width=True, type="secondary", key="go_cli", on_click=navegar, args=(MENU_CLIENTES,))
+        b3.button("Directorio de proveedores", use_container_width=True, type="secondary", key="go_pro", on_click=navegar, args=(MENU_PROVEEDORES,))
+    encabezado_estandar("panel", "Panel de control", "Resumen ejecutivo", volver=False, derecha=_accesos)
 
     # 2. Filtros globales (con key para poder borrarlos desde el botón "Borrar selección")
     cotizaciones = ss.cotizaciones_guardadas
@@ -1435,11 +1449,9 @@ elif menu == "Nueva cotización":
 
     if ss.pop("confirmar_salida", False):
         dialogo_salida()
-    h_back, h_tit, h_monto = st.columns([1.15, 4, 2.2], vertical_alignment="center")
-    h_back.button("← Panel de control", key="back_btn", on_click=navegar, args=("Panel de control",), help="Volver al panel de control")
-    h_tit.markdown("<h2 style='font-weight:800; color:#0F172A; margin:0;'>Gestión de cotizaciones</h2>", unsafe_allow_html=True)
-    h_monto.markdown(f"""<div class='monto-badge'><div class='monto-label'>Monto estimado</div>
-        <div class='monto-valor'><span class='mon'>$</span>{tot_head:,.2f}</div></div>""", unsafe_allow_html=True)
+    def _monto():
+        st.markdown(f"<div class='monto-badge'><div class='monto-label'>Monto estimado</div><div class='monto-valor'>${tot_head:,.2f}</div></div>", unsafe_allow_html=True)
+    encabezado_estandar("cot", "Gestión de cotizaciones", "Datos del evento, servicios y totales", derecha=_monto)
 
     activa = ss.cotizacion_activa
     lista_cli = [c["empresa"] for c in ss.clientes_catalogo] + [NUEVO_CLIENTE]
@@ -1811,7 +1823,7 @@ elif menu == MENU_BODEGA:
 # VISTA 3: DIRECTORIOS
 # =============================================================================
 elif menu in (MENU_CLIENTES, MENU_PROVEEDORES):
-    encabezado_modulo("dir", f"<h2 style='color:#0F172A; font-weight:800; margin:0;'>{menu}</h2>")
+    encabezado_estandar("dir", menu, "Cuentas, contactos y datos de facturación" if menu == MENU_CLIENTES else "Contactos, servicios y costos")
 
     with st.container(border=True, key="card_9"):
         if menu == MENU_CLIENTES:
