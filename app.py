@@ -1372,12 +1372,12 @@ elif menu == "Panel de control":
             if df_donut.empty:
                 st.info("Sin datos para distribución.")
             else:
-                donut = alt.Chart(df_donut).mark_arc(innerRadius=40, outerRadius=72, cornerRadius=4, padAngle=0.03).encode(
+                donut = alt.Chart(df_donut).mark_arc(innerRadius={"expr": "min(width, height) / 2 * 0.56"}, outerRadius={"expr": "min(width, height) / 2"}, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta("Monto:Q"),
                     color=alt.Color("Segmento:N", scale=alt.Scale(domain=dominio, range=paleta), legend=None),
                     tooltip=[alt.Tooltip("Segmento", title="Detalle"), alt.Tooltip("Monto", format="$,.2f")],
-                ).properties(width=150, height=170, padding={"left": 8, "right": 8, "top": 8, "bottom": 8})
-                st.altair_chart(donut, use_container_width=False)
+                ).properties(height=176, padding={"left": 6, "right": 6, "top": 6, "bottom": 6})
+                st.altair_chart(donut, use_container_width=True)
                 # leyenda propia en su recuadro de alto fijo: si hay muchas empresas, solo ese recuadro se desplaza
                 col_de = dict(zip(dominio, paleta))
                 total_d = float(df_donut["Monto"].sum())
