@@ -1351,7 +1351,7 @@ elif menu == "Panel de control":
         st.markdown(f"<style>{css_tarjeta_activa(estado_actual)}</style>", unsafe_allow_html=True)  # anillo en la tarjeta activa
 
         st.markdown("<br>", unsafe_allow_html=True)
-        col_donut, col_trend = st.columns([1, 2.5])
+        col_donut, col_ley, col_trend = st.columns([0.95, 1.25, 2.45], gap="medium")
 
         with col_donut:
             if estado_actual == "Todas":   # distribución por estado
@@ -1372,22 +1372,25 @@ elif menu == "Panel de control":
             if df_donut.empty:
                 st.info("Sin datos para distribución.")
             else:
-                donut = alt.Chart(df_donut).mark_arc(innerRadius=48, outerRadius=88, cornerRadius=4, padAngle=0.03).encode(
+                donut = alt.Chart(df_donut).mark_arc(innerRadius=40, outerRadius=72, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta("Monto:Q"),
                     color=alt.Color("Segmento:N", scale=alt.Scale(domain=dominio, range=paleta), legend=None),
                     tooltip=[alt.Tooltip("Segmento", title="Detalle"), alt.Tooltip("Monto", format="$,.2f")],
-                ).properties(height=200, padding={"left": 10, "right": 10, "top": 10, "bottom": 10})
-                st.altair_chart(donut, use_container_width=True)
-                # leyenda propia (no se corta ni se traslapa): color, nombre, monto y porcentaje
+                ).properties(width=150, height=170, padding={"left": 8, "right": 8, "top": 8, "bottom": 8})
+                st.altair_chart(donut, use_container_width=False)
+                # leyenda propia en su recuadro de alto fijo: si hay muchas empresas, solo ese recuadro se desplaza
                 col_de = dict(zip(dominio, paleta))
                 total_d = float(df_donut["Monto"].sum())
                 filas_ley = "".join(
-                    f"<div style='display:flex; align-items:center; gap:8px; padding:3px 0; font-size:0.82rem; color:#334155;'>"
+                    f"<div style='display:flex; align-items:center; gap:8px; padding:4px 0; font-size:0.82rem; color:#334155;'>"
                     f"<span style='width:10px; height:10px; border-radius:50%; background:{col_de[r.Segmento]}; flex:none;'></span>"
                     f"<span style='flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' title='{r.Segmento}'>{r.Segmento}</span>"
                     f"<span style='flex:none; font-weight:700; color:#0F172A;'>{r.Monto / total_d:.0%}</span></div>"
                     for r in df_donut.itertuples())
-                st.markdown(f"<div style='font-size:0.78rem; font-weight:600; color:#64748B; margin:2px 0 4px;'>{titulo_leyenda}</div>{filas_ley}", unsafe_allow_html=True)
+                with col_ley:
+                    st.markdown(f"<div style='height:176px; margin-top:8px; overflow-y:auto; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:8px 14px;'>"
+                                f"<div style='font-size:0.74rem; font-weight:700; color:#64748B; letter-spacing:.04em; padding-bottom:4px; border-bottom:1px solid #E2E8F0; margin-bottom:2px;'>{titulo_leyenda}</div>{filas_ley}</div>",
+                                unsafe_allow_html=True)
 
         with col_trend:
             # "Todas" = una serie por estado (incluye canceladas); una tarjeta = solo esa serie
@@ -1408,7 +1411,7 @@ elif menu == "Panel de control":
 
                 # symbolOpacity=1: la leyenda no hereda la transparencia del área
                 color = alt.Color("Estado:N", scale=alt.Scale(domain=estados_graf, range=[COLORES[e] for e in estados_graf]),
-                                  legend=alt.Legend(title=None, orient="bottom", symbolOpacity=1, symbolType="circle") if len(estados_graf) > 1 else None)
+                                  legend=alt.Legend(title=None, orient="top", symbolOpacity=1, symbolType="circle", labelFontSize=11, padding=2) if len(estados_graf) > 1 else None)
                 base = alt.Chart(df).encode(
                     x=alt.X("Mes:O", sort=orden, title="Mes operativo", axis=alt.Axis(labelAngle=0, grid=False, labelColor="#64748B")),
                     y=alt.Y("Monto:Q", stack=None, title=y_title, axis=alt.Axis(format="$,.0f", gridColor="#E2E8F0", labelColor="#64748B")),
@@ -1419,7 +1422,7 @@ elif menu == "Panel de control":
                     + base.mark_line(strokeWidth=2.5, interpolate="monotone")
                     + base.mark_point(filled=True, size=70, opacity=1).encode(
                         tooltip=["Estado:N", alt.Tooltip("Mes:O", title="Periodo"), alt.Tooltip("Monto:Q", format="$,.2f", title="Total")])
-                ).properties(height=260)
+                ).properties(height=225, padding={"left": 4, "right": 8, "top": 4, "bottom": 4})
                 st.altair_chart(grafico, use_container_width=True)
             else:
                 st.markdown(f"<div style='padding-top:100px; text-align:center; color:#64748B;'>No hay ingresos registrados en la categoría <b>{estado_actual}</b> para el periodo seleccionado.</div>", unsafe_allow_html=True)
