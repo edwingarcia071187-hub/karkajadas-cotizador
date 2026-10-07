@@ -78,7 +78,7 @@ button[data-variant="pills"] { background: #E3E9F1 !important; border: 1px solid
 button[data-variant="pills"] p { color: inherit !important; font-weight: 600 !important; }
 button[data-variant="pills"]:hover { background: #D3DCE8 !important; color: #1E3A8A !important; }
 button[data-variant="pills"][aria-pressed="true"], button[data-variant="pills"][data-selected="true"] { background: #1E3A8A !important; border-color: #1E3A8A !important; color: #FFFFFF !important; }
-[data-testid="stMultiSelectTagsContainer"] [data-tag] { background: #1E3A8A !important; color: #FFFFFF !important; border-radius: 6px !important; }
+[data-testid="stMultiSelectTagsContainer"] [data-tag] { background: #475569 !important; color: #FFFFFF !important; border-radius: 6px !important; }
 [data-testid="stMultiSelectTagsContainer"] [data-tag] * { color: #FFFFFF !important; }
 
 /* Tarjetas KPI (el color de cada una, incluido hover/focus, se agrega por código según su estado) */
@@ -206,6 +206,17 @@ def css_kpi():
     return "".join(reglas)
 
 
+def css_pills_estado():
+    """Botones de estado del reporte con el color de cada estado (el mismo de las tarjetas del panel de control)."""
+    reglas = []
+    for i, e in enumerate(ESTADOS, start=2):   # el botón 1 es "Todas"
+        c = COLORES[e]
+        base = f'div.st-key-rep_est button[data-variant="pills"]:nth-of-type({i})'
+        reglas.append(f"{base}{{box-shadow: inset 5px 0 0 {c} !important; padding-left: 14px !important;}}")
+        reglas.append(f'{base}[aria-pressed="true"], {base}[data-selected="true"]{{background:{c} !important; border-color:{c} !important; color:#FFFFFF !important;}}')
+    return "".join(reglas)
+
+
 def css_tarjeta_activa(estado):
     """Tarjeta seleccionada: fondo tenue del color del estado y borde más marcado."""
     if estado not in COLORES:
@@ -215,7 +226,16 @@ def css_tarjeta_activa(estado):
     return f"{sel}{{background:{c}1A !important;border:1px solid {c} !important;border-left:10px solid {c} !important;}}"
 
 
-st.markdown(f"<style>{CSS_BASE}{css_kpi()}</style>", unsafe_allow_html=True)
+def css_pills_estado():
+    """Botones del filtro de estado: lo elegido toma el color de ese estado (los mismos de las tarjetas y gráficos del panel)."""
+    reglas = ['.st-key-rep_est button[data-variant="pills"][aria-pressed="true"]:nth-child(1){background:#334155 !important;border-color:#334155 !important;}']
+    for i, e in enumerate(ESTADOS, start=2):
+        c = COLORES[e]
+        reglas.append(f'.st-key-rep_est button[data-variant="pills"][aria-pressed="true"]:nth-child({i}){{background:{c} !important;border-color:{c} !important;color:#FFFFFF !important;}}')
+    return "".join(reglas)
+
+
+st.markdown(f"<style>{CSS_BASE}{css_kpi()}{css_pills_estado()}</style>", unsafe_allow_html=True)
 
 # =============================================================================
 # ESTADO INICIAL
