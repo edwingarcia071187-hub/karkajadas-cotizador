@@ -128,17 +128,19 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 
 /* Panel lateral */
 [data-testid="stSidebar"] { background: linear-gradient(180deg, #0F172A 0%, #1E293B 50%, #334155 100%) !important; }
-.brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 5px 0 20px; padding-left: 5px; }
-[data-testid="stSidebar"] div[data-testid="stButton"] { width: 100% !important; margin-bottom: 2px !important; }
+.brand-logo { font-size: 22px; font-weight: 900; color: #FFFFFF; margin: 5px 0 12px; padding-left: 5px; }
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] { gap: .3rem !important; }
+[data-testid="stSidebar"] div[data-testid="stButton"] { width: 100% !important; margin: 0 !important; }
+[data-testid="stSidebar"] p.side-sec { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; line-height: 34px !important; margin: 0 !important; padding: 0 0 0 4px !important; }
 [data-testid="stSidebar"] div[data-testid="stButton"] button {
     background-color: #1E293B !important; border: 1px solid #334155 !important; color: #CBD5E1 !important; border-radius: 8px !important;
-    padding: 12px 15px !important; width: 100% !important; display: flex !important; justify-content: flex-start !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,.1) !important; transition: all .3s ease !important;
+    padding: 8px 14px !important; min-height: 0 !important; width: 100% !important; display: flex !important; justify-content: flex-start !important;
+    box-shadow: none !important; transition: all .2s ease !important;
 }
 [data-testid="stSidebar"] div[data-testid="stButton"] button p { width: 100% !important; text-align: left !important; font-weight: 500 !important; margin: 0 !important; }
 [data-testid="stSidebar"] div[data-testid="stButton"] button:hover {
     background-color: #334155 !important; color: #FFFFFF !important; border-color: #475569 !important;
-    box-shadow: 0 8px 15px rgba(0,0,0,.4) !important; transform: translateX(4px) !important;
+    box-shadow: none !important; transform: translateX(3px) !important;
 }
 
 /* Campos: cada recuadro tiene fondo gris azulado, borde definido y sombra interior (se distingue del fondo blanco de la tarjeta) */
@@ -174,8 +176,8 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 .invoice-container { width: 100%; background-color: #F8FAFC; padding: 10px 16px; border-radius: 12px; border: 1px solid #CBD5E1; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 12px rgba(15,23,42,.06); }
 
 /* Monto estimado (encabezado de la cotización) */
-.monto-badge { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; line-height: 1; padding: 9px 20px 10px 20px;
-    background: #F1F5F9; border: 1px solid #DCE3EC; border-right: 8px solid #1E3A8A; border-radius: 10px; margin-left: auto; width: fit-content; }
+.monto-badge { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1; padding: 2px 0 2px 18px;
+    border-left: 4px solid #1E3A8A; margin-left: auto; width: fit-content; }
 .monto-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #64748B; margin-bottom: 6px; }
 .monto-valor { font-size: 30px; font-weight: 800; letter-spacing: -.01em; color: #0F172A; font-variant-numeric: tabular-nums; }
 .invoice-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #475569; }
@@ -1262,20 +1264,27 @@ CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}  
 MENU_PROV = "Órdenes a proveedores"
 MENU_BODEGA = "Bodega"
 
-for opcion in MENU_PRINCIPAL:
-    st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
-st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>COTIZADOR DE CATÁLOGOS</p>", unsafe_allow_html=True)
-for opcion in CATALOGOS:
-    st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
-st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>DIRECTORIOS</p>", unsafe_allow_html=True)
-for _op in (MENU_CLIENTES, MENU_PROVEEDORES):
-    st.sidebar.button(_op, use_container_width=True, key=f"nav_{_op}", on_click=navegar, args=(_op,))
-st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>OPERACIONES</p>", unsafe_allow_html=True)
-for _op in (MENU_PROV, MENU_BODEGA):
-    st.sidebar.button(_op, use_container_width=True, key=f"nav_{_op}", on_click=navegar, args=(_op,))
-st.sidebar.markdown("<p style='font-size:11px; color:#64748B; font-weight:700; margin-top:20px; padding-left:10px;'>SOPORTE Y PROCESOS</p>", unsafe_allow_html=True)
-for opcion in MENU_SOPORTE:
-    st.sidebar.button(opcion, use_container_width=True, key=f"nav_{opcion}", on_click=navegar, args=(opcion,))
+# Cada sección tiene un tono propio y apagado (franja izquierda, etiqueta y fondo muy tenue); la opción activa se resalta
+SECCIONES = [
+    ("pri", None, MENU_PRINCIPAL, "#94A3B8"),
+    ("cat", "COTIZADOR DE CATÁLOGOS", list(CATALOGOS), "#5FA8A0"),
+    ("dir", "DIRECTORIOS", [MENU_CLIENTES, MENU_PROVEEDORES], "#9B8EC9"),
+    ("ope", "OPERACIONES", [MENU_PROV, MENU_BODEGA], "#C9A961"),
+    ("sop", "SOPORTE Y PROCESOS", MENU_SOPORTE, "#C28A9B"),
+]
+_css_lat, _n = "", 0
+for _gid, _tit, _ops, _col in SECCIONES:
+    if _tit:
+        st.sidebar.markdown(f"<p class='side-sec' style='color:{_col};'>{_tit}</p>", unsafe_allow_html=True)
+    with st.sidebar.container(key=f"sec_{_gid}"):
+        for _op in _ops:
+            st.button(_op, use_container_width=True, key=f"nav_{_n}", on_click=navegar, args=(_op,))
+            if ss.nav_menu == _op:
+                _css_lat += f"[data-testid=\"stSidebar\"] .st-key-nav_{_n} div[data-testid=\"stButton\"] button{{background:{_col}33 !important; color:#FFFFFF !important; border-color:{_col}88 !important; border-left:4px solid {_col} !important;}}"
+            _n += 1
+    _css_lat += (f"[data-testid=\"stSidebar\"] .st-key-sec_{_gid} div[data-testid=\"stButton\"] button{{background:{_col}12 !important; border:1px solid {_col}30 !important; border-left:4px solid {_col}AA !important;}}"
+                 f"[data-testid=\"stSidebar\"] .st-key-sec_{_gid} div[data-testid=\"stButton\"] button:hover{{background:{_col}26 !important; border-left-color:{_col} !important;}}")
+st.sidebar.markdown(f"<style>{_css_lat}</style>", unsafe_allow_html=True)
 
 menu = ss.nav_menu
 if ss.get("aviso_pendiente"):
@@ -1363,14 +1372,22 @@ elif menu == "Panel de control":
             if df_donut.empty:
                 st.info("Sin datos para distribución.")
             else:
-                donut = alt.Chart(df_donut).mark_arc(innerRadius=45, outerRadius=90, cornerRadius=4, padAngle=0.03).encode(
+                donut = alt.Chart(df_donut).mark_arc(innerRadius=48, outerRadius=88, cornerRadius=4, padAngle=0.03).encode(
                     theta=alt.Theta("Monto:Q"),
-                    color=alt.Color("Segmento:N", scale=alt.Scale(domain=dominio, range=paleta),
-                                    legend=alt.Legend(title=titulo_leyenda, orient="bottom", offset=18, titlePadding=8, columns=1 if estado_actual != "Todas" else 2)),
+                    color=alt.Color("Segmento:N", scale=alt.Scale(domain=dominio, range=paleta), legend=None),
                     tooltip=[alt.Tooltip("Segmento", title="Detalle"), alt.Tooltip("Monto", format="$,.2f")],
-                    # CORRECCIÓN del TypeError 'bottom': el padding debe ser un dict, no un número
-                ).properties(height=260, padding={"left": 10, "right": 10, "top": 10, "bottom": 10})
+                ).properties(height=200, padding={"left": 10, "right": 10, "top": 10, "bottom": 10})
                 st.altair_chart(donut, use_container_width=True)
+                # leyenda propia (no se corta ni se traslapa): color, nombre, monto y porcentaje
+                col_de = dict(zip(dominio, paleta))
+                total_d = float(df_donut["Monto"].sum())
+                filas_ley = "".join(
+                    f"<div style='display:flex; align-items:center; gap:8px; padding:3px 0; font-size:0.82rem; color:#334155;'>"
+                    f"<span style='width:10px; height:10px; border-radius:50%; background:{col_de[r.Segmento]}; flex:none;'></span>"
+                    f"<span style='flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;' title='{r.Segmento}'>{r.Segmento}</span>"
+                    f"<span style='flex:none; font-weight:700; color:#0F172A;'>{r.Monto / total_d:.0%}</span></div>"
+                    for r in df_donut.itertuples())
+                st.markdown(f"<div style='font-size:0.78rem; font-weight:600; color:#64748B; margin:2px 0 4px;'>{titulo_leyenda}</div>{filas_ley}", unsafe_allow_html=True)
 
         with col_trend:
             # "Todas" = una serie por estado (incluye canceladas); una tarjeta = solo esa serie
