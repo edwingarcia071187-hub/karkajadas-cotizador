@@ -969,7 +969,7 @@ def pdf_ficha(cot, prov, ev, fp):
     filas = [
         ("FECHA DE EMISIÓN", fecha_larga(datetime.now())), ("CLIENTE:", nombre_cli),
         ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
-        ("LUGAR", ev["lugar"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
+        ("LUGAR", ev["lugar"] or ev["direccion"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
         ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
         ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
@@ -1117,6 +1117,23 @@ def _http(url, leer=0):
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
+def reverse_punto(lat, lng):
+    """Nombre del lugar y dirección aproximada (calle, sector, ciudad) de un punto del mapa, con OpenStreetMap."""
+    import json as _json
+    try:
+        _, js = _http(f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=es&lat={lat}&lon={lng}", leer=200000)
+        d = _json.loads(js)
+    except Exception:
+        return {"nombre": "", "calles": "", "falla": True}
+    a = d.get("address", {}) if isinstance(d, dict) else {}
+    via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
+    zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or ""
+    ciudad = a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or ""
+    calles = ", ".join(x for x in (via, zona, ciudad) if x) or (d.get("display_name", "") if isinstance(d, dict) else "")
+    return {"nombre": d.get("name", "") if isinstance(d, dict) else "", "calles": calles, "falla": False}
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
 def resolver_ubicacion(enlace):
     """Del enlace (Google Maps, Waze, acortado o largo) saca el punto, el nombre del lugar y la dirección aproximada (OpenStreetMap)."""
     import json as _json
@@ -1133,19 +1150,12 @@ def resolver_ubicacion(enlace):
             r = _json.loads(js)
             if r:
                 punto = (float(r[0]["lat"]), float(r[0]["lon"]))
-        if not punto:
-            return {"ok": False, "error": "No encontré el punto en ese enlace. Prueba con el enlace de «Compartir» de la ubicación."}
-        _, js = _http(f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=es&lat={punto[0]}&lon={punto[1]}", leer=200000)
-        d = _json.loads(js)
     except Exception:
-        d = {}
-    a = d.get("address", {}) if isinstance(d, dict) else {}
-    via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
-    zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or ""
-    ciudad = a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or ""
-    calles = ", ".join(x for x in (via, zona, ciudad) if x) or (d.get("display_name", "") if isinstance(d, dict) else "")
-    if not nombre:
-        nombre = d.get("name", "") if isinstance(d, dict) else ""
+        pass
+    if not punto:
+        return {"ok": False, "error": "No encontré el punto en ese enlace. Prueba con el enlace de «Compartir» de la ubicación o elige el punto en el mapa."}
+    r = reverse_punto(punto[0], punto[1])
+    calles, nombre = r["calles"], nombre or r["nombre"]
     return {"ok": True, "lat": punto[0], "lng": punto[1], "nombre": nombre, "calles": calles}
 
 
@@ -1161,48 +1171,79 @@ def bloque_evento(cot, sufijo):
 
     with st.container(border=True, key=f"card_ev_{k}"):
         st.markdown("<div class='sec-sub'>El evento</div>", unsafe_allow_html=True)
-        a, b = st.columns(2)
+        a, b, c3 = st.columns([1.1, 1.3, 1])
         f_ent = a.date_input("Fecha de entrega del servicio", value=f_base, key=f"ev_f_{k}", disabled=True, help="Viene de la cotización aprobada")
         try:
             inv_ini = int("".join(ch for ch in str(ev["invitados"]) if ch.isdigit()) or 0)
         except ValueError:
             inv_ini = 0
-        inv = b.number_input("Cantidad de invitados (aproximada)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
-        lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{k}")
+        inv = c3.number_input("Invitados (aprox.)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
         tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}", disabled=True, help="Viene de la cotización aprobada")
-        ukey = f"ubi_{k}"
+        pkey = f"pto_{k}"
+        if pkey not in ss and ev.get("lat"):
+            ss[pkey] = {"ok": True, "lat": ev["lat"], "lng": ev["lng"], "nombre": ev["lugar"], "calles": ev["direccion"], "aceptada": True}
+        lugar = ss.get(f"lug_{k}", ev["lugar"])
 
-        def _aceptar(k=k, ukey=ukey):
-            u = ss.get(ukey)
+        def _aceptar(k=k, pkey=pkey):
+            u = ss.get(pkey)
             if u and u.get("ok"):
-                if u.get("nombre"):
-                    ss[f"ev_l_{k}"] = u["nombre"]
                 ss[f"ev_d_{k}"] = u["calles"]
-                ss[ukey] = {**u, "aceptada": True}
+                ss[f"lug_{k}"] = u.get("nombre", "")
+                ss[pkey] = {**u, "aceptada": True}
 
+        st.markdown("<div class='sec-sub'>Ubicación</div>", unsafe_allow_html=True)
         e1, e2 = st.columns([4, 1], vertical_alignment="bottom")
-        enlace = e1.text_input("Enlace de la ubicación (Google Maps o Waze)", ev.get("enlace", ""), key=f"ev_e_{k}",
-                               placeholder="Pega aquí el enlace que te comparten y pulsa «Buscar ubicación»")
-        if e2.button("Buscar ubicación", key=f"ev_bu_{k}", use_container_width=True, type="secondary", disabled=not enlace.strip().startswith("http")):
-            with st.spinner("Buscando el punto en el mapa..."):
-                ss[ukey] = resolver_ubicacion(enlace.strip())
-        u = ss.get(ukey)
-        if u and not u.get("ok"):
-            st.warning(u["error"])
-        elif u and u.get("ok") and not u.get("aceptada"):
-            with st.container(border=True, key=f"card_ub_{k}"):
-                m1, m2 = st.columns([1.6, 1], vertical_alignment="center")
-                with m1:
-                    st.iframe(f"https://maps.google.com/maps?q={u['lat']},{u['lng']}&z=17&output=embed&hl=es", height=240)
-                with m2:
-                    st.markdown("<div class='col-head'>Lugar encontrado</div>"
-                                f"<div style='font-weight:700; margin:2px 0 10px;'>{esc(u['nombre']) or 'Sin nombre'}</div>"
-                                "<div class='col-head'>Dirección aproximada</div>"
-                                f"<div style='margin:2px 0 12px;'>{esc(u['calles']) or 'No disponible'}</div>", unsafe_allow_html=True)
-                    st.button("Aceptar ubicación", type="primary", key=f"ev_ac_{k}", on_click=_aceptar, use_container_width=True)
-                    st.caption("Al aceptar se llenan el lugar y la dirección; puedes corregirlos.")
-        elif u and u.get("aceptada"):
-            st.caption(f"✓ Ubicación aceptada: {u['calles'] or u['nombre']}. Completa la referencia si hace falta.")
+        enlace = e1.text_input("Enlace de Google Maps o Waze (opcional)", ev.get("enlace", ""), key=f"ev_e_{k}",
+                               placeholder="Pega el enlace y pulsa «Buscar»: el mapa te lleva al punto")
+        if e2.button("Buscar en el mapa", key=f"ev_bu_{k}", use_container_width=True, type="secondary", disabled=not enlace.strip().startswith("http")):
+            with st.spinner("Buscando el punto..."):
+                r = resolver_ubicacion(enlace.strip())
+            if r.get("ok"):
+                ss[pkey] = r
+                ss[f"zm_{k}"] = 17
+                ss.pop(f"err_{k}", None)
+            else:
+                ss[f"err_{k}"] = r["error"]
+        if ss.get(f"err_{k}"):
+            st.warning(ss[f"err_{k}"])
+        u = ss.get(pkey)
+        try:
+            import folium
+            from streamlit_folium import st_folium
+        except ImportError:
+            folium = None
+        m1, m2 = st.columns([1.7, 1])
+        with m1:
+            if folium is None:
+                st.info("El mapa interactivo no está disponible. Escribe la dirección a mano.")
+            else:
+                centro = [u["lat"], u["lng"]] if u else [-0.1807, -78.4678]
+                mapa = folium.Map(location=centro, zoom_start=ss.get(f"zm_{k}") or (17 if u else 12), tiles="OpenStreetMap", control_scale=True)
+                if u:
+                    folium.Marker(centro, icon=folium.Icon(color="darkblue", icon="map-marker", prefix="fa")).add_to(mapa)
+                res = st_folium(mapa, height=330, use_container_width=True, key=f"mapa_{k}", returned_objects=["last_clicked", "zoom"])
+                if res and res.get("zoom"):
+                    ss[f"zm_{k}"] = res["zoom"]
+                cl = res.get("last_clicked") if res else None
+                if cl and (round(cl["lat"], 7), round(cl["lng"], 7)) != ss.get(f"clk_{k}"):
+                    ss[f"clk_{k}"] = (round(cl["lat"], 7), round(cl["lng"], 7))
+                    rr = reverse_punto(cl["lat"], cl["lng"])
+                    ss[pkey] = {"ok": True, "lat": cl["lat"], "lng": cl["lng"], "nombre": rr["nombre"], "calles": rr["calles"]}
+                    st.rerun()
+        with m2:
+            if not u:
+                st.markdown("<div class='col-head'>Cómo elegir el punto</div><div style='color:#475569; line-height:1.6; margin-top:4px;'>"
+                            "Haz clic en el mapa donde será el evento, o pega arriba el enlace que te compartieron.</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div class='col-head'>Punto elegido</div>"
+                            f"<div style='font-weight:700; margin:2px 0 10px;'>{esc(u.get('nombre') or '') or 'Sin nombre'}</div>"
+                            "<div class='col-head'>Dirección aproximada</div>"
+                            f"<div style='margin:2px 0 12px;'>{esc(u.get('calles') or '') or 'No se pudo obtener; escríbela abajo'}</div>", unsafe_allow_html=True)
+                if u.get("aceptada"):
+                    st.success("Dirección aceptada")
+                else:
+                    st.button("Aceptar dirección", type="primary", key=f"ev_ac_{k}", on_click=_aceptar, use_container_width=True)
+                    st.caption("Si no es el punto exacto, haz clic en otro lugar del mapa.")
 
         d1, d2 = st.columns([1.5, 1])
         direccion = d1.text_area("Dirección", ev["direccion"], height=96, key=f"ev_d_{k}")
@@ -1266,7 +1307,7 @@ def bloque_evento(cot, sufijo):
             if obs_h.strip():
                 lineas.append(f"Nota: {obs_h.strip()}")
             ss.eventos[cod] = {
-                "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion,
+                "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion, "lat": (ss.get(pkey) or {}).get("lat"), "lng": (ss.get(pkey) or {}).get("lng"),
                 "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
                 "montaje": mon, "enlace": enlace.strip(), "referencia": referencia.strip(),
                 "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
