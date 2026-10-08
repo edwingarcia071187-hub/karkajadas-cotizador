@@ -1134,6 +1134,29 @@ def reverse_punto(lat, lng):
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
+def buscar_lugar(texto):
+    """Busca un lugar por palabras (ej. «Rincón de Puembo») en Ecuador con OpenStreetMap. Devuelve hasta 5 resultados."""
+    import json as _json
+    from urllib.parse import quote_plus as _q
+    try:
+        _, js = _http(f"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=ec&addressdetails=1&accept-language=es&q={_q(texto)}", leer=300000)
+        filas = _json.loads(js)
+    except Exception:
+        return None
+    sal = []
+    for d in filas:
+        a = d.get("address", {})
+        via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
+        zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or a.get("village") or ""
+        ciudad = a.get("city") or a.get("town") or a.get("municipality") or a.get("county") or ""
+        calles = ", ".join(x for x in (via, zona, ciudad) if x) or d.get("display_name", "")
+        nombre = d.get("name") or d.get("display_name", "").split(",")[0]
+        sal.append({"ok": True, "lat": float(d["lat"]), "lng": float(d["lon"]), "nombre": nombre, "calles": calles,
+                    "etiqueta": ", ".join(d.get("display_name", "").split(",")[:3])})
+    return sal
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
 def resolver_ubicacion(enlace):
     """Del enlace (Google Maps, Waze, acortado o largo) saca el punto, el nombre del lugar y la dirección aproximada (OpenStreetMap)."""
     import json as _json
@@ -1193,20 +1216,48 @@ def bloque_evento(cot, sufijo):
                 ss[pkey] = {**u, "aceptada": True}
 
         st.markdown("<div class='sec-sub'>Ubicación</div>", unsafe_allow_html=True)
-        e1, e2 = st.columns([4, 1], vertical_alignment="bottom")
-        enlace = e1.text_input("Enlace de Google Maps o Waze (opcional)", ev.get("enlace", ""), key=f"ev_e_{k}",
-                               placeholder="Pega el enlace y pulsa «Buscar»: el mapa te lleva al punto")
-        if e2.button("Buscar en el mapa", key=f"ev_bu_{k}", use_container_width=True, type="secondary", disabled=not enlace.strip().startswith("http")):
-            with st.spinner("Buscando el punto..."):
-                r = resolver_ubicacion(enlace.strip())
-            if r.get("ok"):
-                ss[pkey] = r
-                ss[f"zm_{k}"] = 17
-                ss.pop(f"err_{k}", None)
+        def _buscar(k=k, pkey=pkey):
+            texto = (ss.get(f"ev_q_{k}") or "").strip()
+            ss.pop(f"err_{k}", None)
+            ss.pop(f"res_{k}", None)
+            ss.pop(f"sel_{k}", None)
+            if not texto:
+                return
+            if texto.startswith("http"):
+                r = resolver_ubicacion(texto)
+                lista = [r] if r.get("ok") else None
+                if not lista:
+                    ss[f"err_{k}"] = r["error"]
             else:
-                ss[f"err_{k}"] = r["error"]
+                lista = buscar_lugar(texto)
+                if lista is None:
+                    ss[f"err_{k}"] = "No pude consultar el buscador de lugares. Revisa la conexión o elige el punto en el mapa."
+                elif not lista:
+                    ss[f"err_{k}"] = f"No encontré «{texto}». Prueba con otras palabras (por ejemplo, el sector y la ciudad) o haz clic en el mapa."
+                    lista = None
+            if lista:
+                ss[pkey] = lista[0]
+                ss[f"zm_{k}"] = 17
+                if len(lista) > 1:
+                    ss[f"res_{k}"] = lista
+
+        def _elegir_resultado(k=k, pkey=pkey):
+            lista = ss.get(f"res_{k}") or []
+            i = ss.get(f"sel_{k}")
+            if i is not None and 0 <= i < len(lista):
+                ss[pkey] = lista[i]
+                ss[f"zm_{k}"] = 17
+
+        e1, e2 = st.columns([4, 1], vertical_alignment="bottom")
+        e1.text_input("Buscar un lugar o pegar un enlace de Google Maps o Waze", key=f"ev_q_{k}", on_change=_buscar,
+                      placeholder="Ej. Rincón de Puembo, o pega aquí el enlace que te compartieron")
+        e2.button("Buscar", key=f"ev_bu_{k}", use_container_width=True, type="secondary", on_click=_buscar)
         if ss.get(f"err_{k}"):
             st.warning(ss[f"err_{k}"])
+        if ss.get(f"res_{k}"):
+            lista = ss[f"res_{k}"]
+            st.selectbox("Se encontraron varios lugares: elige el correcto", range(len(lista)), format_func=lambda i: f"{lista[i]['nombre']} - {lista[i]['etiqueta']}",
+                         key=f"sel_{k}", on_change=_elegir_resultado)
         u = ss.get(pkey)
         try:
             import folium
@@ -1235,7 +1286,7 @@ def bloque_evento(cot, sufijo):
         with m2:
             if not u:
                 st.markdown("<div class='col-head'>Cómo elegir el punto</div><div style='color:#475569; line-height:1.6; margin-top:4px;'>"
-                            "Haz clic en el mapa donde será el evento, o pega arriba el enlace que te compartieron.</div>", unsafe_allow_html=True)
+                            "Escribe el nombre del lugar arriba, haz clic en el mapa donde será el evento, o pega el enlace que te compartieron.</div>", unsafe_allow_html=True)
             else:
                 st.markdown("<div class='col-head'>Punto elegido</div>"
                             f"<div style='font-weight:700; margin:2px 0 10px;'>{esc(u.get('nombre') or '') or 'Sin nombre'}</div>"
@@ -1247,18 +1298,20 @@ def bloque_evento(cot, sufijo):
                     st.button("Aceptar dirección", type="primary", key=f"ev_ac_{k}", on_click=_aceptar, use_container_width=True)
                     st.caption("Al aceptar se completan la dirección y el enlace. Si no es el punto exacto, haz clic en otro lugar del mapa.")
 
-        d1, d2 = st.columns([1.5, 1])
+        d1, d2, d3 = st.columns([1.4, 1.2, 1.2])
         direccion = d1.text_area("Dirección", ev["direccion"], height=96, key=f"ev_d_{k}")
         referencia = d2.text_area("Referencia (opcional)", ev.get("referencia", ""), height=96, key=f"ev_rf_{k}",
                                   placeholder="Ej. Portón azul, frente al parque, preguntar por Juan en recepción")
+        enlace = d3.text_area("Enlace de la ubicación", ev.get("enlace", ""), height=96, key=f"ev_e_{k}",
+                              placeholder="Se completa solo al aceptar la dirección")
         texto_mapa = " ".join(x for x in (lugar.strip(), direccion.strip()) if x)
         if texto_mapa:
             q = quote_plus(texto_mapa + ", Ecuador")
-            b1, b2, b3 = st.columns([1, 1, 2])
+            b1, b2, b3 = st.columns([1, 1, 1])
             b1.link_button("Buscar en Google Maps", f"https://www.google.com/maps/search/?api=1&query={q}", use_container_width=True)
             b2.link_button("Buscar en Waze", f"https://waze.com/ul?q={q}&navigate=yes", use_container_width=True)
             if enlace.strip().startswith("http"):
-                b3.link_button("Abrir el enlace guardado", enlace.strip(), use_container_width=False)
+                b3.link_button("Abrir el enlace de la ubicación", enlace.strip(), use_container_width=True)
 
         st.markdown("<div class='sec-sub'>Horarios</div>", unsafe_allow_html=True)
         # cuadrícula: el evento y, en una sola fila, el montaje y el desmontaje (se bloquean si no hay montaje)
