@@ -996,7 +996,7 @@ def pdf_ficha(cot, prov, ev, fp):
         ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
         ("LUGAR", ev["lugar"] or ev["direccion"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
         ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
-        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("NOVEDADES:", ev.get("novedades", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
+        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
         ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
         ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
@@ -1019,7 +1019,7 @@ def pdf_ficha(cot, prov, ev, fp):
     barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
     datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
     for k, v in filas:
-        if k in ("MAPA:", "REFERENCIA:", "NOVEDADES:") and not str(v).strip():
+        if k in ("MAPA:", "REFERENCIA:") and not str(v).strip():
             continue
         txt = v if str(v).strip() else " "
         color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
@@ -1052,7 +1052,7 @@ def pdf_orden(cot, prov, items):
 
 def _info_evento(cot, ev):
     return [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
-            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")), ("Mapa", ev.get("enlace", "")), ("Novedades", ev.get("novedades", "")),
+            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")), ("Mapa", ev.get("enlace", "")),
             ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
             ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")),
             ("Inclusión y accesibilidad", texto_inclusion(ev)), ("Observación", ev["observacion"])]
@@ -1429,8 +1429,6 @@ def bloque_evento(cot, sufijo):
                               accept_new_options=True, key=f"ev_di_{k}")
         otros = st.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
         obs = st.text_area("Observaciones generales", ev["observacion"], height=110, key=f"ev_ob_{k}")
-        novedades = st.text_area("Novedades después de la aprobación (opcional)", ev.get("novedades", ""), height=80, key=f"ev_nv_{k}",
-                                 placeholder="Ej. El cliente pidió adelantar el montaje una hora. Lo aprobado en la cotización no cambia; aquí solo se anota lo nuevo.")
 
         if st.button("Guardar datos del evento", type="primary", key=f"ev_save_{k}"):
             fm = lambda d: d.strftime("%d/%m/%Y")
@@ -1445,7 +1443,7 @@ def bloque_evento(cot, sufijo):
             ss.eventos[cod] = {
                 "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion, "lat": (ss.get(pkey) or {}).get("lat"), "lng": (ss.get(pkey) or {}).get("lng"),
                 "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                "montaje": mon, "novedades": novedades.strip(),
+                "montaje": mon,
                 "inclusion": {"vegetarianos": int(vegt), "veganos": int(vega), "sin_gluten": int(glut), "alergias": int(aler), "nota_ali": nota_ali.strip(),
                               "movilidad": int(movi), "visual": int(visu), "auditiva": int(audi), "otra_acc": int(otra), "nota_acc": nota_acc.strip()}, "enlace": enlace.strip(), "referencia": referencia.strip(),
                 "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
