@@ -58,6 +58,8 @@ CSS_BASE = """
 
 /* Encabezado de módulo: mismo borde y una sombra neutra un poco más marcada para que resalte */
 [class*="st-key-card_h_"] { box-shadow: 0 2px 4px rgba(15,23,42,.08), 0 10px 26px rgba(15,23,42,.11) !important; border-color: #B8C4D4 !important; padding: 14px 25px !important; }
+.sec-sub { font-size: 1rem; font-weight: 700; color: #1E3A8A; padding: 2px 0 6px; margin: 10px 0 8px; border-bottom: 1px solid #E2E8F0; }
+.sec-sub:first-child { margin-top: 0; }
 .hd-titulo { font-size: 1.55rem; font-weight: 800; color: #0F172A; line-height: 1.15; margin: 0; }
 .hd-sub { font-size: .85rem; font-weight: 600; color: #64748B; margin-top: 3px; }
 
@@ -72,6 +74,11 @@ button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
     border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
+
+/* Botones de elección (Sí / No, Pendiente / Enviada): iguales a las píldoras */
+button[data-variant="segmented_control"] { background: #E3E9F1 !important; border: 1px solid #B4C0D0 !important; color: #475569 !important; box-shadow: none !important; }
+button[data-variant="segmented_control"] p { color: inherit !important; font-weight: 600 !important; }
+button[data-variant="segmented_control"][aria-checked="true"], button[data-variant="segmented_control"][data-selected="true"] { background: #1E3A8A !important; border-color: #1E3A8A !important; color: #FFFFFF !important; }
 
 /* Filtros de selección: botones tipo "píldora" y etiquetas, en gris azulado; lo elegido va en azul (igual que las pestañas) */
 button[data-variant="pills"] { background: #E3E9F1 !important; border: 1px solid #B4C0D0 !important; color: #475569 !important; border-radius: 8px !important; box-shadow: none !important; }
@@ -153,12 +160,12 @@ button:disabled { opacity: .45 !important; cursor: not-allowed !important; trans
 }
 
 /* Campos: cada recuadro tiene fondo gris azulado, borde definido y sombra interior (se distingue del fondo blanco de la tarjeta) */
-[data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"], [data-testid="stDateInputField"], [data-testid="stSelectbox"] [role="group"] {
+[data-testid="stTextInputRootElement"], [data-testid="stNumberInputContainer"], [data-testid="stDateInputField"], [data-testid="stSelectbox"] [role="group"], [data-testid="stTextAreaRootElement"], [data-testid="stTimeInputTimeDisplay"] {
     background-color: #EEF2F7 !important; border: 1px solid #B4C0D0 !important; border-radius: 8px !important;
     box-shadow: inset 0 1px 2px rgba(15,23,42,.08) !important; transition: border-color .15s, background-color .15s, box-shadow .15s;
 }
-[data-testid="stTextInputRootElement"]:hover, [data-testid="stNumberInputContainer"]:hover, [data-testid="stDateInputField"]:hover, [data-testid="stSelectbox"] [role="group"]:hover { border-color: #7C8CA3 !important; }
-[data-testid="stTextInputRootElement"]:focus-within, [data-testid="stNumberInputContainer"]:focus-within, [data-testid="stDateInputField"]:focus-within, [data-testid="stSelectbox"] [role="group"]:focus-within {
+[data-testid="stTextAreaRootElement"]:hover, [data-testid="stTimeInputTimeDisplay"]:hover, [data-testid="stTextInputRootElement"]:hover, [data-testid="stNumberInputContainer"]:hover, [data-testid="stDateInputField"]:hover, [data-testid="stSelectbox"] [role="group"]:hover { border-color: #7C8CA3 !important; }
+[data-testid="stTextAreaRootElement"]:focus-within, [data-testid="stTimeInputTimeDisplay"]:focus-within, [data-testid="stTextInputRootElement"]:focus-within, [data-testid="stNumberInputContainer"]:focus-within, [data-testid="stDateInputField"]:focus-within, [data-testid="stSelectbox"] [role="group"]:focus-within {
     background-color: #FFFFFF !important; border-color: #1E3A8A !important; box-shadow: 0 0 0 3px rgba(30,58,138,.15) !important;
 }
 
@@ -1020,44 +1027,114 @@ def aprobadas_con(propio):
             and any((i["proveedor"] == EMPRESA) == propio for i in c["items"])]
 
 
+DOCUMENTOS_INGRESO = ["Cédula de identidad", "Cédula y RUC de la empresa", "Pasaporte", "Credencial del proveedor", "Ninguno"]
+
+
+def _a_fecha(txt, defecto):
+    try:
+        return datetime.strptime(str(txt)[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return defecto
+
+
+def _a_hora(txt, defecto):
+    try:
+        return datetime.strptime(str(txt)[:5], "%H:%M").time()
+    except ValueError:
+        return defecto
+
+
+def _hh(t):
+    """05:00 -> 05h00"""
+    return f"{t:%H}h{t:%M}"
+
+
 def bloque_evento(cot, sufijo):
-    """Formulario de datos del evento. Se llena una vez por cotización y lo usan las fichas y bodega."""
+    """Datos del evento (se llenan una vez por cotización; los usan las fichas y bodega). Fechas con calendario y horas con reloj."""
     cod, cli = cot["codigo"], cliente_de(cot)
     ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
     contactos = cli.get("contactos", [])
     k = f"{sufijo}_{cod}"
-    if contactos:
-        def _rellenar(k=k, contactos=contactos):
-            x = next((c for c in contactos if _nom_contacto(c) == ss[f"pick_{k}"]), None)
-            if x:
-                ss[f"ev_n_{k}"], ss[f"ev_p_{k}"] = x["nombre"], x["telefono"]
-        st.selectbox("Atajo: rellenar «Persona que recibe» con un contacto registrado del cliente", [_nom_contacto(c) for c in contactos],
-                     index=None, placeholder="Elige un contacto (opcional)", key=f"pick_{k}", on_change=_rellenar)
-    with st.form(f"form_evento_{k}"):
+    f_base = _a_fecha(ev["fecha_entrega"], date.today())
+
+    with st.container(border=True, key=f"card_ev_{k}"):
+        st.markdown("<div class='sec-sub'>El evento</div>", unsafe_allow_html=True)
         a, b = st.columns(2)
-        f_ent = a.date_input("Fecha de entrega del servicio", value=datetime.strptime(ev["fecha_entrega"][:10], "%Y-%m-%d"), key=f"ev_f_{k}")
-        inv = b.text_input("Cantidad de invitados", ev["invitados"], placeholder="Ej. 100 aproximadamente", key=f"ev_i_{k}")
+        f_ent = a.date_input("Fecha de entrega del servicio", value=f_base, key=f"ev_f_{k}")
+        try:
+            inv_ini = int("".join(ch for ch in str(ev["invitados"]) if ch.isdigit()) or 0)
+        except ValueError:
+            inv_ini = 0
+        inv = b.number_input("Cantidad de invitados (aproximada)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
         lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{k}")
         tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}")
         direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{k}")
-        horario = st.text_area("Horario", ev["horario"], height=90, key=f"ev_h_{k}",
-                               placeholder="Montaje 06/10/2026 - A partir de las 05h00\nEvento 06/10/2026 - 06:00 - 08:30")
+
+        st.markdown("<div class='sec-sub'>Horarios</div>", unsafe_allow_html=True)
+        # cuadrícula: una fila por momento (montaje, evento, desmontaje); fecha con calendario y horas con reloj
+        g = [1.0, 1.5, 1.0, 1.0, 1.3]
+        hd = st.columns(g)
+        for col, t in zip(hd, ["", "Fecha", "Desde", "Hasta", ""]):
+            col.markdown(f"<span class='col-head'>{t}</span>", unsafe_allow_html=True)
+        r = st.columns(g, vertical_alignment="center")
+        r[0].markdown("<b>Montaje</b>", unsafe_allow_html=True)
+        mon = r[4].segmented_control("¿Hay montaje?", ["Sí", "No"], default="Sí" if ev["montaje"] != "No" else "No", key=f"ev_m_{k}", label_visibility="collapsed") or "Sí"
+        if mon == "Sí":
+            f_mon = r[1].date_input("Fecha del montaje", value=_a_fecha(ev.get("f_montaje", ""), f_base), key=f"ev_fm_{k}", label_visibility="collapsed")
+            h_mon = r[2].time_input("Montaje desde", value=_a_hora(ev.get("h_montaje", ""), datetime.strptime("06:00", "%H:%M").time()), step=900, key=f"ev_hm_{k}", label_visibility="collapsed")
+        else:
+            f_mon, h_mon = None, None
+            r[1].markdown("<span style='color:#64748B;'>No aplica</span>", unsafe_allow_html=True)
+        r = st.columns(g, vertical_alignment="center")
+        r[0].markdown("<b>Evento</b>", unsafe_allow_html=True)
+        f_eve = r[1].date_input("Fecha del evento", value=_a_fecha(ev.get("f_evento", ""), f_base), key=f"ev_fe_{k}", label_visibility="collapsed")
+        h_ini = r[2].time_input("Evento desde", value=_a_hora(ev.get("h_ini", ""), datetime.strptime("09:00", "%H:%M").time()), step=900, key=f"ev_hi_{k}", label_visibility="collapsed")
+        h_fin = r[3].time_input("Evento hasta", value=_a_hora(ev.get("h_fin", ""), datetime.strptime("12:00", "%H:%M").time()), step=900, key=f"ev_hf_{k}", label_visibility="collapsed")
+        r = st.columns(g, vertical_alignment="center")
+        r[0].markdown("<b>Desmontaje</b>", unsafe_allow_html=True)
+        f_des = r[1].date_input("Fecha del desmontaje", value=_a_fecha(ev.get("f_desm", ""), f_base), key=f"ev_fd_{k}", label_visibility="collapsed")
+        h_des = r[2].time_input("Desmontaje desde", value=_a_hora(ev.get("h_desm", ""), datetime.strptime("13:00", "%H:%M").time()), step=900, key=f"ev_hd_{k}", label_visibility="collapsed")
+        obs_h = st.text_input("Nota sobre los horarios (opcional)", ev.get("obs_horario", ""),
+                              placeholder="Ej. El horario del desmontaje puede variar según el cierre del evento", key=f"ev_oh_{k}")
+        if h_fin <= h_ini:
+            st.warning("La hora de fin del evento debe ser posterior a la de inicio.")
+
+        st.markdown("<div class='sec-sub'>Quién recibe y requisitos</div>", unsafe_allow_html=True)
+        if contactos:
+            def _rellenar(k=k, contactos=contactos):
+                x = next((c for c in contactos if _nom_contacto(c) == ss[f"pick_{k}"]), None)
+                if x:
+                    ss[f"ev_n_{k}"], ss[f"ev_p_{k}"] = x["nombre"], x["telefono"]
+            st.selectbox("Atajo: rellenar con un contacto registrado del cliente", [_nom_contacto(c) for c in contactos],
+                         index=None, placeholder="Elige un contacto (opcional)", key=f"pick_{k}", on_change=_rellenar)
         c2, c3 = st.columns(2)
         recibe = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{k}")
         tel = c3.text_input("Teléfono de quien recibe", ev["telefono_recibe"], key=f"ev_p_{k}")
-        d1, d2, d3, d4 = st.columns(4)
-        ubic = d1.selectbox("Ubicación enviada", ["Pendiente", "Enviada"], index=1 if ev["ubicacion"] == "Enviada" else 0, key=f"ev_u_{k}")
-        mon = d2.selectbox("Montaje", ["Sí", "No"], index=0 if ev["montaje"] == "Sí" else 1, key=f"ev_m_{k}")
-        hmon = d3.text_input("Hora del montaje", ev["hora_montaje"], placeholder="Ej. 06 de octubre a partir de las 4 AM", key=f"ev_hm_{k}")
-        desm = d4.text_input("Desmontaje", ev["desmontaje"], placeholder="Ej. 08 de octubre a partir de las 8:30 AM", key=f"ev_ds_{k}")
-        e1, e2 = st.columns(2)
-        doc_in = e1.text_input("Documento requerido para el ingreso", ev["documento"], key=f"ev_di_{k}")
-        otros = e2.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
-        obs = st.text_area("Observación", ev["observacion"], height=120, key=f"ev_ob_{k}")
-        if st.form_submit_button("Guardar datos del evento", type="primary"):
-            ss.eventos[cod] = {"fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": inv, "lugar": lugar, "direccion": direccion,
-                               "ubicacion": ubic, "horario": horario, "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                               "montaje": mon, "hora_montaje": hmon, "desmontaje": desm, "documento": doc_in, "otros": otros, "observacion": obs}
+        u1, u2 = st.columns([1, 2])
+        ubic = u1.segmented_control("Ubicación enviada", ["Pendiente", "Enviada"], default="Enviada" if ev["ubicacion"] == "Enviada" else "Pendiente", key=f"ev_u_{k}") or "Pendiente"
+        docs = DOCUMENTOS_INGRESO if ev["documento"] in DOCUMENTOS_INGRESO or not ev["documento"] else DOCUMENTOS_INGRESO + [ev["documento"]]
+        doc_in = u2.selectbox("Documento requerido para el ingreso", docs, index=docs.index(ev["documento"]) if ev["documento"] in docs else 0,
+                              accept_new_options=True, key=f"ev_di_{k}")
+        otros = st.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
+        obs = st.text_area("Observaciones generales", ev["observacion"], height=110, key=f"ev_ob_{k}")
+
+        if st.button("Guardar datos del evento", type="primary", key=f"ev_save_{k}"):
+            fm = lambda d: d.strftime("%d/%m/%Y")
+            lineas = []
+            if mon == "Sí":
+                lineas.append(f"Montaje {fm(f_mon)} - A partir de las {_hh(h_mon)}")
+            lineas.append(f"Evento {fm(f_eve)} - {h_ini:%H:%M} a {h_fin:%H:%M}")
+            lineas.append(f"Desmontaje {fm(f_des)} - A partir de las {_hh(h_des)}")
+            if obs_h.strip():
+                lineas.append(f"Nota: {obs_h.strip()}")
+            ss.eventos[cod] = {
+                "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion,
+                "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
+                "montaje": mon, "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "",
+                "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}", "documento": doc_in, "otros": otros, "observacion": obs,
+                "f_montaje": f_mon.strftime("%Y-%m-%d") if f_mon else "", "h_montaje": f"{h_mon:%H:%M}" if h_mon else "",
+                "f_evento": f_eve.strftime("%Y-%m-%d"), "h_ini": f"{h_ini:%H:%M}", "h_fin": f"{h_fin:%H:%M}",
+                "f_desm": f_des.strftime("%Y-%m-%d"), "h_desm": f"{h_des:%H:%M}", "obs_horario": obs_h.strip()}
             st.rerun()
     return {**evento_inicial(cot), **ss.eventos.get(cod, {})}
 
@@ -1891,7 +1968,7 @@ elif menu == MENU_PROV:
         tab_ev, tab_fi = st.tabs(["1. Datos del evento", "2. Fichas de proveedores"])
 
         with tab_ev:
-            st.caption("Fecha, lugar, horario, quién recibe, montaje... Se escriben una sola vez y salen en la ficha de cada proveedor y en el pedido a bodega.")
+            st.caption("Fecha, lugar, horario, quién recibe, montaje... Se escriben una sola vez y salen en cada ficha y en el pedido a bodega.")
             ev = bloque_evento(cot, "prov")
         with tab_fi:
             ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
