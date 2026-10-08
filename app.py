@@ -975,64 +975,133 @@ def texto_inclusion(ev, alimentacion=True):
 
 
 def pdf_ficha(cot, prov, ev, fp):
-    """Ficha de contratación con el formato de la empresa (rosado, como el Excel)."""
+    """Ficha de contratación para el proveedor: lo más importante (fecha, horario, lugar y servicio) arriba y en grande;
+    el resto, ordenado por bloques."""
     from io import BytesIO
     from xml.sax.saxutils import escape
     from reportlab.lib import colors
+    from reportlab.lib.enums import TA_RIGHT
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-    ROSA, ROSA_CLARO, NAVY = colors.HexColor("#D66BCB"), colors.HexColor("#F3D1EF"), colors.HexColor("#0F2740")
+    AZUL, VERDE = colors.HexColor("#1E3A8A"), colors.HexColor("#059669")
+    TINTA, GRIS = colors.HexColor("#0F172A"), colors.HexColor("#64748B")
+    LINEA, FONDO, SUAVE = colors.HexColor("#CBD5E1"), colors.HexColor("#F1F5F9"), colors.HexColor("#EEF2FF")
 
-    def P(t, size=10, bold=False, color=colors.black, align=0):
-        return Paragraph(escape(str(t)).replace("\n", "<br/>"), ParagraphStyle("x", fontName="Helvetica-Bold" if bold else "Helvetica",
-                                                                              fontSize=size, leading=size * 1.3, textColor=color, alignment=align))
+    def P(t, size=9.5, bold=False, color=TINTA, align=0, lead=None, raw=False):
+        txt = t if raw else escape(str(t)).replace("\n", "<br/>")
+        return Paragraph(txt, ParagraphStyle("x", fontName="Helvetica-Bold" if bold else "Helvetica", fontSize=size,
+                                             leading=lead or size * 1.3, textColor=color, alignment=align))
+
+    def etiqueta(t):
+        return P(t.upper(), 7, True, GRIS)
+
     saldo = a_numero(fp["total"]) - a_numero(fp["abono"])
-    nombre_cli = f"{EMPRESA.upper()} - {cot['cliente'].upper()}"
-    filas = [
-        ("FECHA DE EMISIÓN", fecha_larga(datetime.now())), ("CLIENTE:", nombre_cli),
-        ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
-        ("LUGAR", ev["lugar"] or ev["direccion"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
-        ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
-        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
-        ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
-        ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
-        ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
-        ("DESMONTAJE", ev["desmontaje"]), ("DOCUMENTO REQUERIDO PARA EL INGRESO", ev["documento"]),
-        ("INCLUSIÓN Y ACCESIBILIDAD:", texto_inclusion(ev, fp.get("alimentacion", True))),
-    ]
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm, topMargin=1.0 * cm, bottomMargin=0.8 * cm,
-                            title=f"Contratación {cot['codigo']} - {prov}", author=EMPRESA)
-    w = doc.width
     d = datos_empresa()
-    caja = Table([[[P(d["web"], 9.5), P(f"Ruc: {d['ruc']}", 9.5), P(f"Telf.: {d['telefono']}", 9.5),
-                    P(f"Correo: {d['correo']}", 9.5), P(f"Dirección: {d['direccion']}", 9.5)]]], colWidths=[w * 0.58],
-                 style=[("BACKGROUND", (0, 0), (-1, -1), ROSA), ("BOX", (0, 0), (-1, -1), 2, colors.black),
-                        ("ROUNDEDCORNERS", [10, 10, 10, 10]), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("TOPPADDING", (0, 0), (-1, -1), 6),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6)])
-    cab = Table([[_logo(4.6), caja]], colWidths=[w * 0.38, w * 0.62], style=[("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (0, 0), 0)])
-    titulo = Table([[P("CONTRATACIÓN DEL SERVICIO", 14, True, colors.white, 1)]], colWidths=[w],
-                   style=[("BACKGROUND", (0, 0), (-1, -1), ROSA), ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)])
-    barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
-    datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
-    for k, v in filas:
-        if k in ("MAPA:", "REFERENCIA:") and not str(v).strip():
-            continue
-        txt = v if str(v).strip() else " "
-        color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
-        datos.append([P(k, 9), P(txt, 9, color=color)])
-    tabla = Table(datos, colWidths=[w * 0.40, w * 0.60], repeatRows=1)
-    tabla.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, 0), ROSA), ("BACKGROUND", (0, 1), (0, -1), ROSA), ("BACKGROUND", (1, 1), (1, -1), ROSA_CLARO),
-                               ("GRID", (0, 0), (-1, -1), 0.5, colors.black), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                               ("TOPPADDING", (0, 0), (-1, -1), 1.8), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.8)]))
-    aviso = Table([[P("SU SERVICIO ES CONTRATADO POR KARKAJADAS GROUP, USTED NO ESTÁ AUTORIZADO A DAR NINGUNA INFORMACIÓN DE PRECIOS, "
-                      "NÚMEROS DE TELÉFONO, CORREOS ELECTRÓNICOS, NINGUNA INFORMACIÓN REFERENTE A SU SERVICIO.", 10, False, colors.white)]],
-                  colWidths=[w], style=[("BACKGROUND", (0, 0), (-1, -1), NAVY), ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-                                        ("LEFTPADDING", (0, 0), (-1, -1), 8)])
-    doc.build([cab, Spacer(1, 6), titulo, barra, tabla, aviso])
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.3 * cm, bottomMargin=1.8 * cm,
+                            title=f"Ficha de contratación {cot['codigo']} - {prov}", author=EMPRESA)
+    w = doc.width - 12   # el área útil de la página descuenta 6 pt de relleno por lado
+    sin_pad = [("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]
+
+    # 1. Encabezado: logo y datos de la empresa a la izquierda; tipo de documento, referencia y proveedor a la derecha
+    lineas_emp = [x for x in (f"RUC {d['ruc']}" if d.get("ruc") else "", f"Tel. {d['telefono']}" if d.get("telefono") else "",
+                              d.get("correo", ""), d.get("web", ""), d.get("direccion", "")) if x]
+    izq = [_logo(3.4), Spacer(1, 3)] + [P(x, 7.5, False, GRIS) for x in lineas_emp]
+    der = [P("FICHA DE CONTRATACIÓN", 9, True, GRIS, TA_RIGHT), P(cot["codigo"], 15, True, TINTA, TA_RIGHT), Spacer(1, 4),
+           P("PROVEEDOR", 7, True, GRIS, TA_RIGHT), P(prov, 11, True, AZUL, TA_RIGHT)]
+    cab = Table([[izq, der]], colWidths=[w * 0.55, w * 0.45])
+    cab.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LINEBELOW", (0, 0), (-1, 0), 2.5, VERDE), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                             ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
+
+    # 2. Datos clave, en grande: fecha, horario del evento y lugar
+    lineas_h = [l for l in str(ev.get("horario", "")).split("\n") if l.strip()]
+    h_evento = next((l.split(" - ", 1)[1] for l in lineas_h if l.startswith("Evento") and " - " in l), lineas_h[0] if lineas_h else "Por confirmar")
+    lugar = ev.get("lugar") or ev.get("direccion") or "Por confirmar"
+    clave = Table([[etiqueta("Fecha del servicio"), etiqueta("Horario del evento"), etiqueta("Lugar")],
+                   [P(fecha_larga(ev["fecha_entrega"]), 12.5, True, AZUL, lead=15), P(h_evento, 12.5, True, AZUL, lead=15), P(lugar, 12.5, True, AZUL, lead=15)]],
+                  colWidths=[w * 0.40, w * 0.25, w * 0.35])
+    clave.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), SUAVE), ("LINEABOVE", (0, 0), (-1, 0), 2, AZUL), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                               ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                               ("TOPPADDING", (0, 0), (-1, 0), 8), ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+                               ("TOPPADDING", (0, 1), (-1, 1), 0), ("BOTTOMPADDING", (0, 1), (-1, 1), 10)]))
+
+    # 3. Servicio contratado (lo más importante para el proveedor)
+    serv = Table([[etiqueta("Servicio contratado")], [P(fp["servicio"], 11, True, TINTA, lead=14.5)]], colWidths=[w])
+    serv.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.6, LINEA), ("LINEBEFORE", (0, 0), (0, -1), 4, VERDE), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                              ("LEFTPADDING", (0, 0), (-1, -1), 12), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                              ("TOPPADDING", (0, 0), (-1, 0), 8), ("BOTTOMPADDING", (0, 0), (-1, 0), 2),
+                              ("TOPPADDING", (0, 1), (-1, 1), 0), ("BOTTOMPADDING", (0, 1), (-1, 1), 10)]))
+
+    # bloques con título y filas etiqueta / valor
+    def bloque(titulo, filas, ancho):
+        filas = [(a, v) for a, v in filas if str(v).strip()]
+        t = Table([[P(a.upper(), 7, True, GRIS), v if not isinstance(v, str) else P(v, 9.5)] for a, v in filas], colWidths=[ancho * 0.34, ancho * 0.66])
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LINEBELOW", (0, 0), (-1, -1), 0.3, LINEA), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                               ("RIGHTPADDING", (0, 0), (-1, -1), 4), ("TOPPADDING", (0, 0), (-1, -1), 3.5), ("BOTTOMPADDING", (0, 0), (-1, -1), 3.5)]))
+        return [P(titulo, 10.5, True, AZUL), Spacer(1, 3), t]
+
+    def dos(izq_, der_):
+        t = Table([[izq_, "", der_]], colWidths=[w * 0.485, w * 0.03, w * 0.485])
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")] + sin_pad))
+        return t
+    c = w * 0.485
+
+    horas = []
+    for l in lineas_h:
+        if l.startswith("Nota:"):
+            horas.append(("Nota", P(l[5:].strip(), 9, False, GRIS)))
+        else:
+            e, _, r = l.partition(" ")
+            horas.append((e, r))
+    montaje = ev.get("montaje")
+    b_hor = bloque("Horarios", horas, c)
+    b_evento = bloque("El evento", [("Cliente", cot["cliente"]), ("Temática", ev["tematica"]), ("Invitados", ev["invitados"]),
+                                    ("Montaje", "No hay montaje" if montaje == "No" else "")], c)
+    mapa = ev.get("enlace", "")
+    b_ubi = bloque("Ubicación", [("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")),
+                                 ("Mapa", P(f'<link href="{escape(mapa, {chr(34): "&quot;"})}" color="#1E3A8A">Abrir la ubicación en el mapa</link>', 9.5, raw=True) if mapa else ""),
+                                 ("Ubicación enviada", ev["ubicacion"])], c)
+    b_rec = bloque("Quién recibe y acceso", [("Persona que recibe", ev["recibe"]), ("Teléfono", ev["telefono_recibe"]),
+                                              ("Documento de ingreso", ev["documento"])], c)
+
+    # Condiciones económicas: total y saldo resaltados
+    def cifra(et, valor, grande=False, color=TINTA):
+        return [etiqueta(et), P(valor, 12 if grande else 10, True, color)]
+    eco = Table([[cifra("Total", dinero(fp["total"]), True), cifra("Abono", dinero(fp["abono"])),
+                  cifra("Saldo pendiente", dinero(saldo), True, colors.HexColor("#B91C1C") if saldo < 0 else AZUL), cifra("Garantía", dinero(fp["garantia"]))],
+                 [cifra("Transporte", fp["transporte"]), cifra("Forma de pago", fp["pago"]), cifra("Factura", fp["factura"]), ""]],
+                colWidths=[w * 0.25] * 4)
+    eco.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.6, LINEA), ("LINEBELOW", (0, 0), (-1, 0), 0.3, LINEA), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                             ("BACKGROUND", (0, 0), (-1, 0), FONDO), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("TOPPADDING", (0, 0), (-1, -1), 6),
+                             ("BOTTOMPADDING", (0, 0), (-1, -1), 6)]))
+
+    inclusion = Table([[etiqueta("Inclusión y accesibilidad")], [P(texto_inclusion(ev, fp.get("alimentacion", True)), 9.5)]], colWidths=[w])
+    inclusion.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), FONDO), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("TOPPADDING", (0, 0), (-1, 0), 6),
+                                   ("BOTTOMPADDING", (0, 0), (-1, 0), 1), ("TOPPADDING", (0, 1), (-1, 1), 0), ("BOTTOMPADDING", (0, 1), (-1, 1), 7)]))
+
+    aviso = Table([[P("Su servicio es contratado por Karkajadas Group. Usted no está autorizado a dar información de precios, números de teléfono, "
+                      "correos electrónicos ni ninguna información referente a su servicio.", 8.5, False, colors.white, lead=11)]], colWidths=[w])
+    aviso.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), TINTA), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                               ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7)]))
+
+    historia = [cab, Spacer(1, 10), clave, Spacer(1, 8), serv, Spacer(1, 12), dos(b_hor, b_evento), Spacer(1, 10), dos(b_ubi, b_rec), Spacer(1, 10), inclusion,
+                Spacer(1, 12), P("Condiciones económicas", 10.5, True, AZUL), Spacer(1, 3), eco]
+    if str(ev.get("observacion", "")).strip():
+        historia += [Spacer(1, 12), P("Observaciones", 10.5, True, AZUL), Spacer(1, 3), P(ev["observacion"], 9, False, GRIS, lead=12)]
+    historia += [Spacer(1, 12), KeepTogether([aviso])]
+
+    def pie(canvas, dd):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7.5)
+        canvas.setFillColor(GRIS)
+        canvas.drawString(1.8 * cm, 1.0 * cm, f"{EMPRESA} · Ficha de contratación · {cot['codigo']} · Emitida el {fecha_larga(datetime.now())}")
+        canvas.drawRightString(A4[0] - 1.8 * cm, 1.0 * cm, f"Página {dd.page}")
+        canvas.restoreState()
+
+    doc.build(historia, onFirstPage=pie, onLaterPages=pie)
     return buf.getvalue()
 
 
