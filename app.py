@@ -1389,10 +1389,19 @@ def bloque_evento(cot, sufijo):
         sin = mon == "No"
         g2 = [1.0, 1.5, 1.0, 1.5, 1.0]
         m = st.columns(g2)
-        f_mon = m[1].date_input("Fecha del montaje", value=_a_fecha(ev.get("f_montaje", ""), f_base), key=f"ev_fm_{k}", disabled=sin)
-        h_mon = m[2].time_input("Hora del montaje", value=_a_hora(ev.get("h_montaje", ""), datetime.strptime("06:00", "%H:%M").time()), step=900, key=f"ev_hm_{k}", disabled=sin)
-        f_des = m[3].date_input("Fecha del desmontaje", value=_a_fecha(ev.get("f_desm", ""), f_base), key=f"ev_fd_{k}", disabled=sin)
-        h_des = m[4].time_input("Hora del desmontaje", value=_a_hora(ev.get("h_desm", ""), datetime.strptime("13:00", "%H:%M").time()), step=900, key=f"ev_hd_{k}", disabled=sin)
+        t_mon, t_des = datetime.strptime("06:00", "%H:%M").time(), datetime.strptime("13:00", "%H:%M").time()
+        if sin:   # sin montaje: no hay nada que llenar (se muestran apagados)
+            for col, t in zip(m[1:], ["Fecha del montaje", "Hora del montaje", "Fecha del desmontaje", "Hora del desmontaje"]):
+                col.markdown(f"<div style='font-size:0.875rem; color:#94A3B8; margin-bottom:6px;'>{t}</div>"
+                             "<div style='background:#F1F5F9; border:1px solid #E2E8F0; border-radius:8px; height:40px; line-height:40px; padding:0 12px; color:#94A3B8;'>No aplica</div>",
+                             unsafe_allow_html=True)
+            f_mon = f_des = f_base
+            h_mon, h_des = t_mon, t_des
+        else:
+            f_mon = m[1].date_input("Fecha del montaje", value=_a_fecha(ev.get("f_montaje", ""), f_base), key=f"ev_fm_{k}")
+            h_mon = m[2].time_input("Hora del montaje", value=_a_hora(ev.get("h_montaje", ""), t_mon), step=900, key=f"ev_hm_{k}")
+            f_des = m[3].date_input("Fecha del desmontaje", value=_a_fecha(ev.get("f_desm", ""), f_base), key=f"ev_fd_{k}")
+            h_des = m[4].time_input("Hora del desmontaje", value=_a_hora(ev.get("h_desm", ""), t_des), step=900, key=f"ev_hd_{k}")
         obs_h = st.text_input("Nota sobre los horarios (opcional)", ev.get("obs_horario", ""),
                               placeholder="Ej. El horario del desmontaje puede variar según el cierre del evento", key=f"ev_oh_{k}")
         if h_fin <= h_ini:
