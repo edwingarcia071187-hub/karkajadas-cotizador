@@ -971,7 +971,7 @@ def pdf_ficha(cot, prov, ev, fp):
         ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
         ("LUGAR", ev["lugar"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
         ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
-        ("UBICACIÓN:", ev["ubicacion"]), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
+        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
         ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
         ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
@@ -993,7 +993,7 @@ def pdf_ficha(cot, prov, ev, fp):
     barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
     datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
     for k, v in filas:
-        if k == "MAPA:" and not str(v).strip():
+        if k in ("MAPA:", "REFERENCIA:") and not str(v).strip():
             continue
         txt = v if str(v).strip() else " "
         color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
@@ -1025,7 +1025,7 @@ def pdf_orden(cot, prov, items):
 
 def _info_evento(cot, ev):
     return [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
-            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Mapa", ev.get("enlace", "")),
+            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")), ("Mapa", ev.get("enlace", "")),
             ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
             ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")), ("Observación", ev["observacion"])]
 
@@ -1086,42 +1086,136 @@ def _hh(t):
     return f"{t:%H}h{t:%M}"
 
 
+def _coords_en_texto(t):
+    """Busca latitud y longitud dentro de un enlace de Google Maps o Waze."""
+    import re
+    from urllib.parse import unquote
+    t = unquote(t)
+    for patron in (r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)", r"@(-?\d+\.\d+),(-?\d+\.\d+)", r"[?&](?:q|ll|query|center|destination|daddr)=(-?\d+\.\d+)[ ,]\s*(-?\d+\.\d+)"):
+        m = re.search(patron, t)
+        if m:
+            return float(m.group(1)), float(m.group(2))
+    return None
+
+
+def _nombre_en_enlace(url):
+    import re
+    from urllib.parse import unquote_plus
+    m = re.search(r"/place/([^/@?]+)", url)
+    if m:
+        n = unquote_plus(m.group(1)).strip()
+        return "" if _coords_en_texto(n) else n
+    return ""
+
+
+def _http(url, leer=0):
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 KarkajadasERP/1.0", "Accept-Language": "es"})
+    with urllib.request.urlopen(req, timeout=8) as r:
+        cuerpo = r.read(leer).decode("utf-8", "ignore") if leer else ""
+        return r.geturl(), cuerpo
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def resolver_ubicacion(enlace):
+    """Del enlace (Google Maps, Waze, acortado o largo) saca el punto, el nombre del lugar y la dirección aproximada (OpenStreetMap)."""
+    import json as _json
+    from urllib.parse import quote_plus as _q
+    try:
+        url, cuerpo = _http(enlace, leer=300000)
+    except Exception:
+        return {"ok": False, "error": "No pude abrir el enlace. Revisa que esté completo o escribe la dirección a mano."}
+    punto = _coords_en_texto(url) or _coords_en_texto(cuerpo[:300000])
+    nombre = _nombre_en_enlace(url)
+    try:
+        if not punto and nombre:   # el enlace solo trae el nombre: se busca el punto
+            _, js = _http(f"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q={_q(nombre + ', Ecuador')}", leer=200000)
+            r = _json.loads(js)
+            if r:
+                punto = (float(r[0]["lat"]), float(r[0]["lon"]))
+        if not punto:
+            return {"ok": False, "error": "No encontré el punto en ese enlace. Prueba con el enlace de «Compartir» de la ubicación."}
+        _, js = _http(f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=es&lat={punto[0]}&lon={punto[1]}", leer=200000)
+        d = _json.loads(js)
+    except Exception:
+        d = {}
+    a = d.get("address", {}) if isinstance(d, dict) else {}
+    via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
+    zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or ""
+    ciudad = a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or ""
+    calles = ", ".join(x for x in (via, zona, ciudad) if x) or (d.get("display_name", "") if isinstance(d, dict) else "")
+    if not nombre:
+        nombre = d.get("name", "") if isinstance(d, dict) else ""
+    return {"ok": True, "lat": punto[0], "lng": punto[1], "nombre": nombre, "calles": calles}
+
+
 def bloque_evento(cot, sufijo):
     """Datos del evento (se llenan una vez por cotización; los usan las fichas y bodega). Fechas con calendario y horas con reloj."""
     cod, cli = cot["codigo"], cliente_de(cot)
     ev = {**evento_inicial(cot), **ss.eventos.get(cod, {})}
     contactos = cli.get("contactos", [])
     k = f"{sufijo}_{cod}"
+    ev["fecha_entrega"] = min(i["fecha"] for i in cot["items"])   # vienen de la cotización aprobada: no se editan aquí
+    ev["tematica"] = cot["evento"]
     f_base = _a_fecha(ev["fecha_entrega"], date.today())
 
     with st.container(border=True, key=f"card_ev_{k}"):
         st.markdown("<div class='sec-sub'>El evento</div>", unsafe_allow_html=True)
         a, b = st.columns(2)
-        f_ent = a.date_input("Fecha de entrega del servicio", value=f_base, key=f"ev_f_{k}")
+        f_ent = a.date_input("Fecha de entrega del servicio", value=f_base, key=f"ev_f_{k}", disabled=True, help="Viene de la cotización aprobada")
         try:
             inv_ini = int("".join(ch for ch in str(ev["invitados"]) if ch.isdigit()) or 0)
         except ValueError:
             inv_ini = 0
         inv = b.number_input("Cantidad de invitados (aproximada)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
         lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{k}")
-        tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}")
-        direccion = st.text_area("Dirección o referencia", ev["direccion"], height=70, key=f"ev_d_{k}")
-        enlace = st.text_input("Enlace de la ubicación (Google Maps o Waze)", ev.get("enlace", ""), key=f"ev_e_{k}",
-                               placeholder="Marca el punto exacto en la app de mapas, toca compartir y pega aquí el enlace")
+        tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}", disabled=True, help="Viene de la cotización aprobada")
+        ukey = f"ubi_{k}"
+
+        def _aceptar(k=k, ukey=ukey):
+            u = ss.get(ukey)
+            if u and u.get("ok"):
+                if u.get("nombre"):
+                    ss[f"ev_l_{k}"] = u["nombre"]
+                ss[f"ev_d_{k}"] = u["calles"]
+                ss[ukey] = {**u, "aceptada": True}
+
+        e1, e2 = st.columns([4, 1], vertical_alignment="bottom")
+        enlace = e1.text_input("Enlace de la ubicación (Google Maps o Waze)", ev.get("enlace", ""), key=f"ev_e_{k}",
+                               placeholder="Pega aquí el enlace que te comparten y pulsa «Buscar ubicación»")
+        if e2.button("Buscar ubicación", key=f"ev_bu_{k}", use_container_width=True, type="secondary", disabled=not enlace.strip().startswith("http")):
+            with st.spinner("Buscando el punto en el mapa..."):
+                ss[ukey] = resolver_ubicacion(enlace.strip())
+        u = ss.get(ukey)
+        if u and not u.get("ok"):
+            st.warning(u["error"])
+        elif u and u.get("ok") and not u.get("aceptada"):
+            with st.container(border=True, key=f"card_ub_{k}"):
+                m1, m2 = st.columns([1.6, 1], vertical_alignment="center")
+                with m1:
+                    st.iframe(f"https://maps.google.com/maps?q={u['lat']},{u['lng']}&z=17&output=embed&hl=es", height=240)
+                with m2:
+                    st.markdown("<div class='col-head'>Lugar encontrado</div>"
+                                f"<div style='font-weight:700; margin:2px 0 10px;'>{esc(u['nombre']) or 'Sin nombre'}</div>"
+                                "<div class='col-head'>Dirección aproximada</div>"
+                                f"<div style='margin:2px 0 12px;'>{esc(u['calles']) or 'No disponible'}</div>", unsafe_allow_html=True)
+                    st.button("Aceptar ubicación", type="primary", key=f"ev_ac_{k}", on_click=_aceptar, use_container_width=True)
+                    st.caption("Al aceptar se llenan el lugar y la dirección; puedes corregirlos.")
+        elif u and u.get("aceptada"):
+            st.caption(f"✓ Ubicación aceptada: {u['calles'] or u['nombre']}. Completa la referencia si hace falta.")
+
+        d1, d2 = st.columns([1.5, 1])
+        direccion = d1.text_area("Dirección", ev["direccion"], height=96, key=f"ev_d_{k}")
+        referencia = d2.text_area("Referencia (opcional)", ev.get("referencia", ""), height=96, key=f"ev_rf_{k}",
+                                  placeholder="Ej. Portón azul, frente al parque, preguntar por Juan en recepción")
         texto_mapa = " ".join(x for x in (lugar.strip(), direccion.strip()) if x)
-        m1, m2, m3, m4 = st.columns([1, 1, 1, 1.3], vertical_alignment="bottom")
         if texto_mapa:
             q = quote_plus(texto_mapa + ", Ecuador")
-            m1.link_button("Buscar en Google Maps", f"https://www.google.com/maps/search/?api=1&query={q}", use_container_width=True)
-            m2.link_button("Buscar en Waze", f"https://waze.com/ul?q={q}&navigate=yes", use_container_width=True)
-        if enlace.strip().startswith("http"):
-            m3.link_button("Abrir el enlace", enlace.strip(), use_container_width=True)
-        ver_mapa = m4.segmented_control("Vista previa del mapa", ["Ocultar", "Mostrar"], default="Mostrar", key=f"ev_vm_{k}") or "Ocultar"
-        if ver_mapa == "Mostrar":
-            if texto_mapa:
-                st.iframe(f"https://maps.google.com/maps?q={q}&output=embed&hl=es", height=280)
-            else:
-                st.caption("Escribe el lugar o la dirección y aquí aparecerá el mapa.")
+            b1, b2, b3 = st.columns([1, 1, 2])
+            b1.link_button("Buscar en Google Maps", f"https://www.google.com/maps/search/?api=1&query={q}", use_container_width=True)
+            b2.link_button("Buscar en Waze", f"https://waze.com/ul?q={q}&navigate=yes", use_container_width=True)
+            if enlace.strip().startswith("http"):
+                b3.link_button("Abrir el enlace guardado", enlace.strip(), use_container_width=False)
 
         st.markdown("<div class='sec-sub'>Horarios</div>", unsafe_allow_html=True)
         # cuadrícula: el evento y, en una sola fila, el montaje y el desmontaje (se bloquean si no hay montaje)
@@ -1174,7 +1268,7 @@ def bloque_evento(cot, sufijo):
             ss.eventos[cod] = {
                 "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion,
                 "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                "montaje": mon, "enlace": enlace.strip(),
+                "montaje": mon, "enlace": enlace.strip(), "referencia": referencia.strip(),
                 "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
                 "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}" if mon == "Sí" else "No aplica", "documento": doc_in, "otros": otros, "observacion": obs,
                 "f_montaje": f_mon.strftime("%Y-%m-%d"), "h_montaje": f"{h_mon:%H:%M}",
