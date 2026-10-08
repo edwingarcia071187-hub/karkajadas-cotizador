@@ -6,6 +6,7 @@ import streamlit.components.v1 as components
 import streamlit as st
 import pandas as pd
 import altair as alt
+from urllib.parse import quote_plus
 from datetime import date, datetime
 
 # Requiere Streamlit >= 1.39 (usa las clases .st-key-<key> para estilizar botones)
@@ -74,6 +75,9 @@ button[kind="secondary"], button[data-testid="stBaseButton-secondary"] {
     border-radius: 8px !important; font-weight: 600 !important; transition: all .2s ease !important; box-shadow: none !important;
 }
 button[kind="secondary"]:hover, button[data-testid="stBaseButton-secondary"]:hover { background-color: #1E40AF !important; transform: translateY(-1px); }
+a[data-testid="stBaseLinkButton-secondary"] { background-color: #1E3A8A !important; border: 1px solid #1E3A8A !important; color: #FFFFFF !important; border-radius: 8px !important; font-weight: 600 !important; box-shadow: none !important; }
+a[data-testid="stBaseLinkButton-secondary"] p, a[data-testid="stBaseLinkButton-secondary"] span { color: #FFFFFF !important; }
+a[data-testid="stBaseLinkButton-secondary"]:hover { background-color: #1E40AF !important; }
 
 /* Botones de elección (Sí / No, Pendiente / Enviada): iguales a las píldoras */
 button[data-variant="segmented_control"] { background: #E3E9F1 !important; border: 1px solid #B4C0D0 !important; color: #475569 !important; box-shadow: none !important; }
@@ -680,7 +684,10 @@ def generar_pdf(cot, cliente):
                    P(cot["codigo"], size=15, bold=True, align=TA_RIGHT)]]], colWidths=[ancho * 0.55, ancho * 0.45])
     cab.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LINEBELOW", (0, 0), (-1, 0), 2.5, VERDE),
                              ("BOTTOMPADDING", (0, 0), (-1, -1), 10), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
-    historia += [cab, Spacer(1, 14)]
+    de = datos_empresa()
+    linea_emp = " · ".join(x for x in (f"RUC {de['ruc']}" if de.get("ruc") else "", f"Tel. {de['telefono']}" if de.get("telefono") else "",
+                                       de.get("correo", ""), de.get("web", ""), de.get("direccion", "")) if x)
+    historia += [cab, Spacer(1, 4), P(linea_emp, size=8, color=GRIS), Spacer(1, 12)]
 
     # Datos del evento y del cliente
     def ficha(filas):
@@ -733,6 +740,18 @@ def generar_pdf(cot, cliente):
                              ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                              ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
     historia += [tot, Spacer(1, 14), P("Valores expresados en dólares americanos (USD).", size=8, color=GRIS)]
+    cond = []
+    if de.get("validez_dias"):
+        cond.append(f"Validez de la oferta: {de['validez_dias']} días.")
+    if str(de.get("forma_pago", "")).strip():
+        cond.append(f"Forma de pago: {de['forma_pago'].strip()}")
+    if str(de.get("notas_comerciales", "")).strip():
+        cond.append(de["notas_comerciales"].strip())
+    for c in de.get("cuentas", []):
+        cond.append(f"Cuenta {c.get('tipo', '').lower()} {c.get('banco', '')} N.º {c.get('numero', '')} - {c.get('titular', '')}")
+    if cond:
+        historia += [Spacer(1, 10), P("CONDICIONES COMERCIALES", size=8.5, bold=True, color=AZUL), Spacer(1, 3)]
+        historia += [P(x, size=8.5, color=GRIS) for x in cond]
 
     def pie(canvas, d):
         canvas.saveState()
@@ -754,6 +773,15 @@ EMPRESA = "Karkajadas Group"
 EMPRESA_DATOS = {"web": "www.karkajadasgroup.com", "ruc": "1713272845001", "telefono": "0998526514 / 02 3076303",
                  "correo": "edwin.garcia@karkajadasgroup.com", "direccion": "La Victoria Baja, Calle D, Lote 50 B"}
 LOGO_B64 = "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"
+ss.setdefault("empresa", {**EMPRESA_DATOS, "razon_social": "", "representante": "", "cargo_representante": "", "ciudad": "Quito",
+                          "logo_b64": "", "cuentas": [], "validez_dias": 15, "forma_pago": "", "notas_comerciales": ""})
+
+
+def datos_empresa():
+    """Datos de la empresa que salen en el encabezado de los documentos (se editan en Perfil de la empresa)."""
+    return ss.empresa
+
+
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 
@@ -787,8 +815,11 @@ def _logo(ancho_cm):
     import base64
     from io import BytesIO
     from reportlab.lib.units import cm
+    from reportlab.lib.utils import ImageReader
     from reportlab.platypus import Image
-    return Image(BytesIO(base64.b64decode(LOGO_B64)), width=ancho_cm * cm, height=ancho_cm * cm * 196 / 372)
+    datos = base64.b64decode(ss.empresa.get("logo_b64") or LOGO_B64)
+    w, h = ImageReader(BytesIO(datos)).getSize()
+    return Image(BytesIO(datos), width=ancho_cm * cm, height=ancho_cm * cm * h / w)
 
 
 def pdf_documento(titulo, ref, subtitulo, bloques):
@@ -825,7 +856,11 @@ def pdf_documento(titulo, ref, subtitulo, bloques):
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.8 * cm, rightMargin=1.8 * cm, topMargin=1.4 * cm,
                             bottomMargin=2.0 * cm, title=titulo, author=EMPRESA)
     ancho = doc.width
-    cab = Table([[_logo(3.6), [P(titulo.upper(), 9, True, GRIS, TA_RIGHT), P(ref, 15, True, TINTA, TA_RIGHT)]]], colWidths=[ancho * 0.5, ancho * 0.5])
+    d = datos_empresa()
+    lineas_emp = [x for x in (f"RUC {d['ruc']}" if d.get("ruc") else "", f"Tel. {d['telefono']}" if d.get("telefono") else "",
+                              d.get("correo", ""), d.get("web", ""), d.get("direccion", "")) if x]
+    izq = [_logo(3.4), Spacer(1, 3)] + [P(x, 7.5, False, GRIS) for x in lineas_emp]
+    cab = Table([[izq, [P(titulo.upper(), 9, True, GRIS, TA_RIGHT), P(ref, 15, True, TINTA, TA_RIGHT)]]], colWidths=[ancho * 0.55, ancho * 0.45])
     cab.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LINEBELOW", (0, 0), (-1, 0), 2.5, VERDE),
                              ("BOTTOMPADDING", (0, 0), (-1, -1), 8), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0)]))
     h = [cab]
@@ -936,7 +971,7 @@ def pdf_ficha(cot, prov, ev, fp):
         ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
         ("LUGAR", ev["lugar"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
         ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
-        ("UBICACIÓN:", ev["ubicacion"]), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
+        ("UBICACIÓN:", ev["ubicacion"]), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
         ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
         ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
@@ -946,7 +981,7 @@ def pdf_ficha(cot, prov, ev, fp):
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm, topMargin=1.0 * cm, bottomMargin=0.8 * cm,
                             title=f"Contratación {cot['codigo']} - {prov}", author=EMPRESA)
     w = doc.width
-    d = EMPRESA_DATOS
+    d = datos_empresa()
     caja = Table([[[P(d["web"], 9.5), P(f"Ruc: {d['ruc']}", 9.5), P(f"Telf.: {d['telefono']}", 9.5),
                     P(f"Correo: {d['correo']}", 9.5), P(f"Dirección: {d['direccion']}", 9.5)]]], colWidths=[w * 0.58],
                  style=[("BACKGROUND", (0, 0), (-1, -1), ROSA), ("BOX", (0, 0), (-1, -1), 2, colors.black),
@@ -958,6 +993,8 @@ def pdf_ficha(cot, prov, ev, fp):
     barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
     datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
     for k, v in filas:
+        if k == "MAPA:" and not str(v).strip():
+            continue
         txt = v if str(v).strip() else " "
         color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
         datos.append([P(k, 9), P(txt, 9, color=color)])
@@ -988,7 +1025,7 @@ def pdf_orden(cot, prov, items):
 
 def _info_evento(cot, ev):
     return [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
-            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]),
+            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Mapa", ev.get("enlace", "")),
             ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
             ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")), ("Observación", ev["observacion"])]
 
@@ -1068,45 +1105,51 @@ def bloque_evento(cot, sufijo):
         inv = b.number_input("Cantidad de invitados (aproximada)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
         lugar = a.text_input("Lugar", ev["lugar"], placeholder="Ej. Instalaciones ARCA Guayaquil Sur", key=f"ev_l_{k}")
         tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}")
-        direccion = st.text_area("Dirección (puedes pegar el enlace de Google Maps)", ev["direccion"], height=70, key=f"ev_d_{k}")
+        direccion = st.text_area("Dirección o referencia", ev["direccion"], height=70, key=f"ev_d_{k}")
+        enlace = st.text_input("Enlace de la ubicación (Google Maps o Waze)", ev.get("enlace", ""), key=f"ev_e_{k}",
+                               placeholder="Marca el punto exacto en la app de mapas, toca compartir y pega aquí el enlace")
+        texto_mapa = " ".join(x for x in (lugar.strip(), direccion.strip()) if x)
+        m1, m2, m3, m4 = st.columns([1, 1, 1, 1.3], vertical_alignment="bottom")
+        if texto_mapa:
+            q = quote_plus(texto_mapa + ", Ecuador")
+            m1.link_button("Buscar en Google Maps", f"https://www.google.com/maps/search/?api=1&query={q}", use_container_width=True)
+            m2.link_button("Buscar en Waze", f"https://waze.com/ul?q={q}&navigate=yes", use_container_width=True)
+        if enlace.strip().startswith("http"):
+            m3.link_button("Abrir el enlace", enlace.strip(), use_container_width=True)
+        ver_mapa = m4.segmented_control("Vista previa del mapa", ["Ocultar", "Mostrar"], default="Mostrar", key=f"ev_vm_{k}") or "Ocultar"
+        if ver_mapa == "Mostrar":
+            if texto_mapa:
+                st.iframe(f"https://maps.google.com/maps?q={q}&output=embed&hl=es", height=280)
+            else:
+                st.caption("Escribe el lugar o la dirección y aquí aparecerá el mapa.")
 
         st.markdown("<div class='sec-sub'>Horarios</div>", unsafe_allow_html=True)
-        # cuadrícula: una fila por momento (montaje, evento, desmontaje); fecha con calendario y horas con reloj
+        # cuadrícula: el evento y, en una sola fila, el montaje y el desmontaje (se bloquean si no hay montaje)
         g = [1.0, 1.5, 1.0, 1.0, 1.3]
         hd = st.columns(g)
         for col, t in zip(hd, ["", "Fecha", "Desde", "Hasta", ""]):
             col.markdown(f"<span class='col-head'>{t}</span>", unsafe_allow_html=True)
         r = st.columns(g, vertical_alignment="center")
-        r[0].markdown("<b>Montaje</b>", unsafe_allow_html=True)
-        mon = r[4].segmented_control("¿Hay montaje?", ["Sí", "No"], default="Sí" if ev["montaje"] != "No" else "No", key=f"ev_m_{k}", label_visibility="collapsed") or "Sí"
-        if mon == "Sí":
-            f_mon = r[1].date_input("Fecha del montaje", value=_a_fecha(ev.get("f_montaje", ""), f_base), key=f"ev_fm_{k}", label_visibility="collapsed")
-            h_mon = r[2].time_input("Montaje desde", value=_a_hora(ev.get("h_montaje", ""), datetime.strptime("06:00", "%H:%M").time()), step=900, key=f"ev_hm_{k}", label_visibility="collapsed")
-        else:
-            f_mon, h_mon = None, None
-            r[1].markdown("<span style='color:#64748B;'>No aplica</span>", unsafe_allow_html=True)
-        r = st.columns(g, vertical_alignment="center")
         r[0].markdown("<b>Evento</b>", unsafe_allow_html=True)
         f_eve = r[1].date_input("Fecha del evento", value=_a_fecha(ev.get("f_evento", ""), f_base), key=f"ev_fe_{k}", label_visibility="collapsed")
         h_ini = r[2].time_input("Evento desde", value=_a_hora(ev.get("h_ini", ""), datetime.strptime("09:00", "%H:%M").time()), step=900, key=f"ev_hi_{k}", label_visibility="collapsed")
         h_fin = r[3].time_input("Evento hasta", value=_a_hora(ev.get("h_fin", ""), datetime.strptime("12:00", "%H:%M").time()), step=900, key=f"ev_hf_{k}", label_visibility="collapsed")
-        r = st.columns(g, vertical_alignment="center")
-        r[0].markdown("<b>Desmontaje</b>", unsafe_allow_html=True)
-        f_des = r[1].date_input("Fecha del desmontaje", value=_a_fecha(ev.get("f_desm", ""), f_base), key=f"ev_fd_{k}", label_visibility="collapsed")
-        h_des = r[2].time_input("Desmontaje desde", value=_a_hora(ev.get("h_desm", ""), datetime.strptime("13:00", "%H:%M").time()), step=900, key=f"ev_hd_{k}", label_visibility="collapsed")
+        t1, t2 = st.columns([1.0, 4.8], vertical_alignment="center")
+        t1.markdown("<b>Montaje y desmontaje</b>", unsafe_allow_html=True)
+        mon = t2.segmented_control("¿Hay montaje?", ["Sí", "No"], default="Sí" if ev["montaje"] != "No" else "No", key=f"ev_m_{k}", label_visibility="collapsed") or "Sí"
+        sin = mon == "No"
+        g2 = [1.0, 1.5, 1.0, 1.5, 1.0]
+        m = st.columns(g2)
+        f_mon = m[1].date_input("Fecha del montaje", value=_a_fecha(ev.get("f_montaje", ""), f_base), key=f"ev_fm_{k}", disabled=sin)
+        h_mon = m[2].time_input("Hora del montaje", value=_a_hora(ev.get("h_montaje", ""), datetime.strptime("06:00", "%H:%M").time()), step=900, key=f"ev_hm_{k}", disabled=sin)
+        f_des = m[3].date_input("Fecha del desmontaje", value=_a_fecha(ev.get("f_desm", ""), f_base), key=f"ev_fd_{k}", disabled=sin)
+        h_des = m[4].time_input("Hora del desmontaje", value=_a_hora(ev.get("h_desm", ""), datetime.strptime("13:00", "%H:%M").time()), step=900, key=f"ev_hd_{k}", disabled=sin)
         obs_h = st.text_input("Nota sobre los horarios (opcional)", ev.get("obs_horario", ""),
                               placeholder="Ej. El horario del desmontaje puede variar según el cierre del evento", key=f"ev_oh_{k}")
         if h_fin <= h_ini:
             st.warning("La hora de fin del evento debe ser posterior a la de inicio.")
 
         st.markdown("<div class='sec-sub'>Quién recibe y requisitos</div>", unsafe_allow_html=True)
-        if contactos:
-            def _rellenar(k=k, contactos=contactos):
-                x = next((c for c in contactos if _nom_contacto(c) == ss[f"pick_{k}"]), None)
-                if x:
-                    ss[f"ev_n_{k}"], ss[f"ev_p_{k}"] = x["nombre"], x["telefono"]
-            st.selectbox("Atajo: rellenar con un contacto registrado del cliente", [_nom_contacto(c) for c in contactos],
-                         index=None, placeholder="Elige un contacto (opcional)", key=f"pick_{k}", on_change=_rellenar)
         c2, c3 = st.columns(2)
         recibe = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{k}")
         tel = c3.text_input("Teléfono de quien recibe", ev["telefono_recibe"], key=f"ev_p_{k}")
@@ -1124,15 +1167,17 @@ def bloque_evento(cot, sufijo):
             if mon == "Sí":
                 lineas.append(f"Montaje {fm(f_mon)} - A partir de las {_hh(h_mon)}")
             lineas.append(f"Evento {fm(f_eve)} - {h_ini:%H:%M} a {h_fin:%H:%M}")
-            lineas.append(f"Desmontaje {fm(f_des)} - A partir de las {_hh(h_des)}")
+            if mon == "Sí":
+                lineas.append(f"Desmontaje {fm(f_des)} - A partir de las {_hh(h_des)}")
             if obs_h.strip():
                 lineas.append(f"Nota: {obs_h.strip()}")
             ss.eventos[cod] = {
                 "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion,
                 "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                "montaje": mon, "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "",
-                "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}", "documento": doc_in, "otros": otros, "observacion": obs,
-                "f_montaje": f_mon.strftime("%Y-%m-%d") if f_mon else "", "h_montaje": f"{h_mon:%H:%M}" if h_mon else "",
+                "montaje": mon, "enlace": enlace.strip(),
+                "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
+                "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}" if mon == "Sí" else "No aplica", "documento": doc_in, "otros": otros, "observacion": obs,
+                "f_montaje": f_mon.strftime("%Y-%m-%d"), "h_montaje": f"{h_mon:%H:%M}",
                 "f_evento": f_eve.strftime("%Y-%m-%d"), "h_ini": f"{h_ini:%H:%M}", "h_fin": f"{h_fin:%H:%M}",
                 "f_desm": f_des.strftime("%Y-%m-%d"), "h_desm": f"{h_des:%H:%M}", "obs_horario": obs_h.strip()}
             st.rerun()
@@ -1471,7 +1516,8 @@ def panel_directorio(k, registros, fila_tabla, texto_busqueda, form, validar, cr
 # =============================================================================
 st.sidebar.markdown("<div class='brand-logo'>Karkajadas Group</div>", unsafe_allow_html=True)
 MENU_PRINCIPAL = ["Panel de control", "Reportes financieros", "Proyecciones de ventas", "Noticias corporativas"]
-MENU_SOPORTE = ["Centro de ayuda", "Documentación operativa"]
+MENU_SOPORTE = ["Centro de ayuda"]
+MENU_PERFIL = "Perfil de la empresa"
 CATALOGOS = {"Catálogo regular": "regular", "Catálogo navideño": "navidad"}   # menú -> catálogo del cotizador
 MENU_PROV = "Órdenes a proveedores"
 MENU_BODEGA = "Bodega"
@@ -1483,6 +1529,7 @@ SECCIONES = [
     ("cat", "COTIZADOR DE CATÁLOGOS", list(CATALOGOS), "#5FA8A0"),
     ("dir", "DIRECTORIOS", [MENU_CLIENTES, MENU_PROVEEDORES], "#9B8EC9"),
     ("ope", "OPERACIONES", [MENU_PROV, MENU_BODEGA], "#C9A961"),
+    ("emp", "MI EMPRESA", [MENU_PERFIL], "#7C9CBF"),
     ("sop", "SOPORTE Y PROCESOS", MENU_SOPORTE, "#C28A9B"),
 ]
 _css_lat, _n = "", 0
@@ -1554,6 +1601,102 @@ elif menu == MENU_REPORTES:
                          column_config={"Total ($)": st.column_config.NumberColumn(format="$%.2f")})
         else:
             st.info("No hay cotizaciones con esos filtros.")
+
+
+elif menu == MENU_PERFIL:
+    encabezado_estandar("perfil", "Perfil de la empresa", "Se escribe una vez y sale en todos los documentos")
+    emp = ss.empresa
+    import base64 as _b64
+
+    def _vista_encabezado():
+        logo = emp.get("logo_b64") or LOGO_B64
+        lineas = [x for x in (f"RUC {emp['ruc']}" if emp.get("ruc") else "", f"Tel. {emp['telefono']}" if emp.get("telefono") else "",
+                              emp.get("correo", ""), emp.get("web", ""), emp.get("direccion", "")) if x]
+        st.markdown(
+            "<div style='display:flex; gap:22px; align-items:center; padding:6px 4px;'>"
+            f"<img src='data:image/png;base64,{logo}' style='height:62px; max-width:190px; object-fit:contain;'/>"
+            f"<div style='font-size:0.85rem; color:#475569; line-height:1.5;'><b style='color:#0F172A;'>{esc(emp.get('razon_social') or EMPRESA)}</b><br>"
+            + " · ".join(esc(x) for x in lineas) + "</div></div>", unsafe_allow_html=True)
+
+    t_dat, t_logo, t_cta, t_con, t_doc = st.tabs(["Datos generales", "Logo", "Cuentas bancarias", "Condiciones comerciales", "Documentación operativa"])
+
+    with t_dat:
+        with st.container(border=True, key="card_emp_prev"):
+            st.markdown("<div class='sec-sub'>Así sale en los documentos</div>", unsafe_allow_html=True)
+            _vista_encabezado()
+        with st.container(border=True, key="card_emp_dat"):
+            st.markdown("<div class='sec-sub'>Identificación</div>", unsafe_allow_html=True)
+            a, b = st.columns(2)
+            razon = a.text_input("Razón social", emp["razon_social"], key="emp_razon", placeholder="Nombre legal registrado en el SRI")
+            ruc = b.text_input("RUC", emp["ruc"], key="emp_ruc", max_chars=13)
+            a, b = st.columns(2)
+            rep_n = a.text_input("Representante legal", emp["representante"], key="emp_rep")
+            rep_c = b.text_input("Cargo", emp["cargo_representante"], key="emp_rep_c", placeholder="Gerente general")
+            st.markdown("<div class='sec-sub'>Contacto y ubicación</div>", unsafe_allow_html=True)
+            a, b = st.columns(2)
+            tel = a.text_input("Teléfonos", emp["telefono"], key="emp_tel")
+            correo = b.text_input("Correo", emp["correo"], key="emp_correo")
+            a, b = st.columns(2)
+            web = a.text_input("Sitio web", emp["web"], key="emp_web")
+            ciudad_e = b.text_input("Ciudad", emp["ciudad"], key="emp_ciu")
+            dire = st.text_input("Dirección", emp["direccion"], key="emp_dir")
+            if st.button("Guardar datos", type="primary", key="emp_guardar"):
+                if ruc.strip() and not (ruc.strip().isdigit() and len(ruc.strip()) == 13):
+                    st.error("El RUC debe tener 13 números.")
+                elif correo.strip() and "@" not in correo:
+                    st.error("Revisa el correo: falta el @.")
+                else:
+                    emp.update({"razon_social": razon.strip(), "ruc": ruc.strip(), "representante": rep_n.strip(), "cargo_representante": rep_c.strip(),
+                                "telefono": tel.strip(), "correo": correo.strip(), "web": web.strip(), "ciudad": ciudad_e.strip(), "direccion": dire.strip()})
+                    st.toast("Datos de la empresa guardados", icon="✅")
+                    st.rerun()
+
+    with t_logo:
+        with st.container(border=True, key="card_emp_logo"):
+            st.markdown("<div class='sec-sub'>Logo de la empresa</div>", unsafe_allow_html=True)
+            logo_actual = emp.get("logo_b64") or LOGO_B64
+            st.markdown(f"<img src='data:image/png;base64,{logo_actual}' style='height:90px; max-width:300px; object-fit:contain; margin:4px 0 10px;'/>", unsafe_allow_html=True)
+            arch = st.file_uploader("Subir un logo nuevo (PNG o JPG, de preferencia con fondo transparente)", type=["png", "jpg", "jpeg"], key="emp_logo_up")
+            c1, c2 = st.columns([1, 1])
+            if arch is not None and c1.button("Usar este logo", type="primary", key="emp_logo_ok"):
+                emp["logo_b64"] = _b64.b64encode(arch.getvalue()).decode()
+                st.rerun()
+            if emp.get("logo_b64") and c2.button("Volver al logo original", key="emp_logo_reset"):
+                emp["logo_b64"] = ""
+                st.rerun()
+
+    with t_cta:
+        with st.container(border=True, key="card_emp_cta"):
+            st.markdown("<div class='sec-sub'>Cuentas para recibir pagos</div>", unsafe_allow_html=True)
+            st.caption("Salen al final de la cotización, en «Condiciones comerciales».")
+            cuentas = editor_lista("emp_cuentas", emp["cuentas"], COL_CUENTAS, CFG_CUENTAS)
+            if st.button("Guardar cuentas", type="primary", key="emp_cta_ok"):
+                emp["cuentas"] = cuentas
+                st.toast("Cuentas guardadas", icon="✅")
+                st.rerun()
+
+    with t_con:
+        with st.container(border=True, key="card_emp_con"):
+            st.markdown("<div class='sec-sub'>Condiciones que salen en la cotización</div>", unsafe_allow_html=True)
+            a, b = st.columns([1, 3])
+            validez = a.number_input("Validez de la oferta (días)", min_value=0, step=5, value=int(emp.get("validez_dias") or 0), key="emp_val")
+            fpago = b.text_input("Forma de pago", emp.get("forma_pago", ""), key="emp_fpago", placeholder="Ej. 50% de anticipo y el saldo contra entrega")
+            notas = st.text_area("Otras condiciones o notas", emp.get("notas_comerciales", ""), height=110, key="emp_notas",
+                                 placeholder="Ej. Los precios no incluyen permisos municipales ni transporte fuera de la ciudad.")
+            if st.button("Guardar condiciones", type="primary", key="emp_con_ok"):
+                emp.update({"validez_dias": int(validez), "forma_pago": fpago.strip(), "notas_comerciales": notas.strip()})
+                st.toast("Condiciones guardadas", icon="✅")
+                st.rerun()
+
+    with t_doc:
+        with st.container(border=True, key="card_emp_doc"):
+            st.markdown("<div class='sec-sub'>Documentación operativa</div>", unsafe_allow_html=True)
+            st.info("Submódulo en construcción.")
+            st.markdown("<div style='color:#475569; line-height:1.9;'>Lo que irá aquí:<br>"
+                        "· Procedimientos paso a paso (montaje, bodega, atención al cliente)<br>"
+                        "· Formatos y plantillas de la empresa<br>"
+                        "· Normas de seguridad y checklists<br>"
+                        "· Políticas internas y manual de funciones</div>", unsafe_allow_html=True)
 
 
 # =============================================================================
