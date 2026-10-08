@@ -1,5 +1,7 @@
-streamlit>=1.50
-pandas
-altair
-reportlab
-openpyxl
+   streamlit>=1.50
+   pandas
+   altair
+   reportlab
+   openpyxl
+   folium
+   streamlit-folium
