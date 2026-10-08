@@ -331,6 +331,8 @@ if "clientes_catalogo" not in ss:
 
 def migrar_datos():
     """Pone al día los datos de la sesión (también los creados con versiones anteriores de la app)."""
+    for c in ss.cotizaciones_guardadas:
+        c.setdefault("invitados", 100)
     for n, c in enumerate(ss.clientes_catalogo, 1):
         c.setdefault("id", f"CLI-{n:03d}")
         c.setdefault("contactos", [{"nombre": c.get("contacto", ""), "cargo": "", "correo": c.get("email", ""), "telefono": c.get("telefono", "")}]
@@ -398,7 +400,7 @@ def _k(nombre):
 
 def estado_formulario():
     """Foto de lo que hay en el formulario (campos + servicios)."""
-    return (ss.get(_k("cod")), ss.get(_k("ev")), ss.get(_k("cli")), str(ss.get(_k("fec"))), ss.get(_k("est")),
+    return (ss.get(_k("cod")), ss.get(_k("ev")), ss.get(_k("cli")), str(ss.get(_k("fec"))), ss.get(_k("est")), ss.get(_k("inv")),
             json.dumps(ss.items_cot, sort_keys=True, default=str))
 
 
@@ -615,7 +617,7 @@ def siguiente_codigo():
     return f"KG-{datetime.now():%Y%m%d}-{n:03d}"
 
 
-def guardar_cotizacion(activa, codigo, evento, cliente, fecha, estado, total):
+def guardar_cotizacion(activa, codigo, evento, cliente, fecha, estado, total, invitados=0):
     """Valida y guarda (o reemplaza en su misma posición) la cotización. Devuelve la cotización guardada o None."""
     lista = ss.cotizaciones_guardadas
     if not evento.strip():
@@ -628,7 +630,7 @@ def guardar_cotizacion(activa, codigo, evento, cliente, fecha, estado, total):
         st.error("Ya existe una cotización con esa referencia.")
     else:
         nueva = {"codigo": codigo, "evento": evento, "cliente": cliente, "fecha": str(fecha),
-                 "estado": estado, "total": total, "items": [dict(i) for i in ss.items_cot]}
+                 "estado": estado, "total": total, "invitados": int(invitados), "items": [dict(i) for i in ss.items_cot]}
         pos = next((i for i, c in enumerate(lista) if activa and c["codigo"] == activa["codigo"]), None)
         if pos is None:
             lista.append(nueva)
@@ -928,7 +930,7 @@ def evento_inicial(cot):
     cli = cliente_de(cot)
     dirs, con = cli.get("direcciones", []), cli.get("contactos", [])
     return {
-        "fecha_entrega": min(i["fecha"] for i in cot["items"]), "invitados": "", "lugar": "",
+        "fecha_entrega": min(i["fecha"] for i in cot["items"]), "invitados": str(cot.get("invitados", "") or ""), "lugar": "",
         "direccion": dirs[0]["direccion"] if dirs else "", "ubicacion": "Pendiente", "horario": "", "tematica": cot["evento"],
         "recibe": con[0]["nombre"] if con else "", "telefono_recibe": con[0]["telefono"] if con else "",
         "montaje": "Sí", "hora_montaje": "", "desmontaje": "", "documento": "Cédula de identidad", "otros": "No aplica",
@@ -947,6 +949,29 @@ def proveedor_inicial(cot, prov, items):
     return {"servicio": "\n\n".join(lineas), "total": dinero(sum(calcular_linea(i)[0] for i in items)), "abono": dinero(0),
             "garantia": dinero(0), "transporte": "Incluido",
             "pago": f"A {cli['dias_credito']} días crédito" if cli.get("dias_credito") else "", "factura": "Factura"}
+
+
+def texto_inclusion(ev, alimentacion=True):
+    """Resumen de inclusión del evento para los documentos (solo cantidades, sin nombres). La alimentación puede omitirse por proveedor."""
+    inc = ev.get("inclusion") or {}
+
+    def lista(campos):
+        return [f"{inc[c]} {t}" for c, t in campos if inc.get(c)]
+    acc = lista([("movilidad", "con movilidad reducida o en silla de ruedas"), ("visual", "con discapacidad visual"),
+                 ("auditiva", "con discapacidad auditiva"), ("otra_acc", "con otra necesidad de accesibilidad")])
+    if str(inc.get("nota_acc", "")).strip():
+        acc.append(inc["nota_acc"].strip())
+    ali = lista([("vegetarianos", "vegetariano(s)"), ("veganos", "vegano(s)"), ("sin_gluten", "sin gluten"), ("alergias", "con alergia alimentaria")])
+    if str(inc.get("nota_ali", "")).strip():
+        ali.append(inc["nota_ali"].strip())
+    partes = []
+    if acc:
+        partes.append("Accesibilidad: " + "; ".join(acc) + ".")
+    if ali and alimentacion:
+        partes.append("Alimentación: " + "; ".join(ali) + ".")
+    if partes:
+        return "\n".join(partes)
+    return "No aplica a este servicio." if ali else "Sin necesidades especiales reportadas."
 
 
 def pdf_ficha(cot, prov, ev, fp):
@@ -971,11 +996,12 @@ def pdf_ficha(cot, prov, ev, fp):
         ("FECHA DE ENTREGA DEL SERVICIO", fecha_larga(ev["fecha_entrega"])), ("CANTIDAD DE INVITADOS:", ev["invitados"]),
         ("LUGAR", ev["lugar"] or ev["direccion"]), ("HORARIO:", ev["horario"]), ("TEMÁTICA:", ev["tematica"]), ("PROVEEDOR:", prov),
         ("SERVICIO REQUERIDO:", fp["servicio"]), ("OBSERVACIÓN", ev["observacion"]), ("DIRECCIÓN:", ev["direccion"]),
-        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
+        ("UBICACIÓN:", ev["ubicacion"]), ("REFERENCIA:", ev.get("referencia", "")), ("NOVEDADES:", ev.get("novedades", "")), ("MAPA:", ev.get("enlace", "")), ("TOTAL:", dinero(fp["total"])), ("ABONO:", dinero(fp["abono"])),
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
         ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
         ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
         ("DESMONTAJE", ev["desmontaje"]), ("DOCUMENTO REQUERIDO PARA EL INGRESO", ev["documento"]), ("OTROS", ev["otros"]),
+        ("INCLUSIÓN Y ACCESIBILIDAD:", texto_inclusion(ev, fp.get("alimentacion", True))),
     ]
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=1.5 * cm, rightMargin=1.5 * cm, topMargin=1.0 * cm, bottomMargin=0.8 * cm,
@@ -993,7 +1019,7 @@ def pdf_ficha(cot, prov, ev, fp):
     barra = Table([[""]], colWidths=[w], rowHeights=[0.45 * cm], style=[("BACKGROUND", (0, 0), (-1, -1), colors.black)])
     datos = [[P("INFORMACIÓN", 12, True, colors.white, 1), P("DETALLE", 12, True, colors.white, 1)]]
     for k, v in filas:
-        if k in ("MAPA:", "REFERENCIA:") and not str(v).strip():
+        if k in ("MAPA:", "REFERENCIA:", "NOVEDADES:") and not str(v).strip():
             continue
         txt = v if str(v).strip() else " "
         color = colors.red if k == "SALDO PENDIENTE:" and saldo < 0 else colors.black
@@ -1016,7 +1042,8 @@ def pdf_orden(cot, prov, items):
     filas = [[False, i["servicio"], fecha_larga(i["fecha"]), i["ciudad"], str(i["cantidad"]), ""] for i in items]
     bloques = [("info", [("Proveedor", prov), ("Contacto", f"{con[0]['nombre']} - {con[0]['telefono']}" if con else ""),
                          ("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
-                         ("Fecha de emisión", fecha_larga(datetime.now()))]),
+                         ("Fecha de emisión", fecha_larga(datetime.now()))]
+                        + ([("Inclusión y accesibilidad", texto_inclusion(ss.eventos[cot["codigo"]]))] if cot["codigo"] in ss.eventos else [])),
                ("seccion", "Servicios a contratar"),
                ("tabla", ["", "SERVICIO", "FECHA", "CIUDAD", "CANT.", "OBSERVACIONES"], filas, [0.5, 3.6, 2.8, 1.5, 0.9, 2.4], {0}),
                ("nota", "Marque cada servicio al confirmarlo con el proveedor.")]
@@ -1025,9 +1052,10 @@ def pdf_orden(cot, prov, items):
 
 def _info_evento(cot, ev):
     return [("Cotización aprobada", cot["codigo"]), ("Evento", cot["evento"]), ("Cliente", cot["cliente"]),
-            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")), ("Mapa", ev.get("enlace", "")),
+            ("Fecha de entrega", fecha_larga(ev["fecha_entrega"])), ("Lugar", ev["lugar"]), ("Dirección", ev["direccion"]), ("Referencia", ev.get("referencia", "")), ("Mapa", ev.get("enlace", "")), ("Novedades", ev.get("novedades", "")),
             ("Horario", ev["horario"]), ("Montaje", f"{ev['montaje']} - {ev['hora_montaje']}".strip(" -")), ("Desmontaje", ev["desmontaje"]),
-            ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")), ("Observación", ev["observacion"])]
+            ("Recibe", f"{ev['recibe']} - {ev['telefono_recibe']}".strip(" -")),
+            ("Inclusión y accesibilidad", texto_inclusion(ev)), ("Observación", ev["observacion"])]
 
 
 def pdf_pedido_bodega(cot, items, ev):
@@ -1224,17 +1252,15 @@ def bloque_evento(cot, sufijo):
     k = f"{sufijo}_{cod}"
     ev["fecha_entrega"] = min(i["fecha"] for i in cot["items"])   # vienen de la cotización aprobada: no se editan aquí
     ev["tematica"] = cot["evento"]
+    ev["invitados"] = str(cot.get("invitados", "") or "")
     f_base = _a_fecha(ev["fecha_entrega"], date.today())
 
     with st.container(border=True, key=f"card_ev_{k}"):
         st.markdown("<div class='sec-sub'>El evento</div>", unsafe_allow_html=True)
         a, b, c3 = st.columns([1.1, 1.3, 1])
         f_ent = a.date_input("Fecha de entrega del servicio", value=f_base, key=f"ev_f_{k}", disabled=True, help="Viene de la cotización aprobada")
-        try:
-            inv_ini = int("".join(ch for ch in str(ev["invitados"]) if ch.isdigit()) or 0)
-        except ValueError:
-            inv_ini = 0
-        inv = c3.number_input("Invitados (aprox.)", min_value=0, step=10, value=inv_ini, key=f"ev_i_{k}")
+        inv = c3.number_input("Invitados (aprox.)", min_value=0, value=int(cot.get("invitados", 0) or 0), key=f"ev_i_{k}", disabled=True,
+                              help="Viene de la cotización aprobada")
         tema = b.text_input("Temática", ev["tematica"], key=f"ev_t_{k}", disabled=True, help="Viene de la cotización aprobada")
         pkey = f"pto_{k}"
         if pkey not in ss and ev.get("lat"):
@@ -1343,9 +1369,8 @@ def bloque_evento(cot, sufijo):
             q = quote_plus(texto_mapa + ", Ecuador")
             b1, b2, b3 = st.columns([1, 1, 1])
             b1.link_button("Buscar en Google Maps", f"https://www.google.com/maps/search/?api=1&query={q}", use_container_width=True)
-            b2.link_button("Buscar en Waze", f"https://waze.com/ul?q={q}&navigate=yes", use_container_width=True)
             if enlace.strip().startswith("http"):
-                b3.link_button("Abrir el enlace de la ubicación", enlace.strip(), use_container_width=True)
+                b2.link_button("Abrir el enlace de la ubicación", enlace.strip(), use_container_width=True)
 
         st.markdown("<div class='sec-sub'>Horarios</div>", unsafe_allow_html=True)
         # cuadrícula: el evento y, en una sola fila, el montaje y el desmontaje (se bloquean si no hay montaje)
@@ -1373,6 +1398,26 @@ def bloque_evento(cot, sufijo):
         if h_fin <= h_ini:
             st.warning("La hora de fin del evento debe ser posterior a la de inicio.")
 
+        st.markdown("<div class='sec-sub'>Inclusión y necesidades especiales</div>", unsafe_allow_html=True)
+        st.caption("Solo cantidades de personas, sin nombres. Sale en las fichas de los proveedores para que se preparen.")
+        inc0 = ev.get("inclusion") or {}
+        st.markdown("<span class='col-head'>Alimentación</span>", unsafe_allow_html=True)
+        i1, i2, i3, i4 = st.columns(4)
+        vegt = i1.number_input("Vegetarianos", min_value=0, step=1, value=int(inc0.get("vegetarianos", 0)), key=f"in_v_{k}")
+        vega = i2.number_input("Veganos", min_value=0, step=1, value=int(inc0.get("veganos", 0)), key=f"in_vg_{k}")
+        glut = i3.number_input("Sin gluten (celíacos)", min_value=0, step=1, value=int(inc0.get("sin_gluten", 0)), key=f"in_g_{k}")
+        aler = i4.number_input("Con alergias alimentarias", min_value=0, step=1, value=int(inc0.get("alergias", 0)), key=f"in_a_{k}")
+        nota_ali = st.text_input("Detalle de alergias u otras restricciones (opcional)", inc0.get("nota_ali", ""), key=f"in_na_{k}",
+                                 placeholder="Ej. Alergia a mariscos y maní; una persona sin lactosa")
+        st.markdown("<span class='col-head'>Accesibilidad</span>", unsafe_allow_html=True)
+        j1, j2, j3, j4 = st.columns(4)
+        movi = j1.number_input("Movilidad reducida o silla de ruedas", min_value=0, step=1, value=int(inc0.get("movilidad", 0)), key=f"in_m_{k}")
+        visu = j2.number_input("Discapacidad visual", min_value=0, step=1, value=int(inc0.get("visual", 0)), key=f"in_vi_{k}")
+        audi = j3.number_input("Discapacidad auditiva", min_value=0, step=1, value=int(inc0.get("auditiva", 0)), key=f"in_au_{k}")
+        otra = j4.number_input("Otra necesidad", min_value=0, step=1, value=int(inc0.get("otra_acc", 0)), key=f"in_o_{k}")
+        nota_acc = st.text_input("Qué se necesita (opcional)", inc0.get("nota_acc", ""), key=f"in_nc_{k}",
+                                 placeholder="Ej. Rampa en el ingreso, espacio frente al escenario, intérprete de lengua de señas")
+
         st.markdown("<div class='sec-sub'>Quién recibe y requisitos</div>", unsafe_allow_html=True)
         c2, c3 = st.columns(2)
         recibe = c2.text_input("Persona que recibe", ev["recibe"], key=f"ev_n_{k}")
@@ -1384,6 +1429,8 @@ def bloque_evento(cot, sufijo):
                               accept_new_options=True, key=f"ev_di_{k}")
         otros = st.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
         obs = st.text_area("Observaciones generales", ev["observacion"], height=110, key=f"ev_ob_{k}")
+        novedades = st.text_area("Novedades después de la aprobación (opcional)", ev.get("novedades", ""), height=80, key=f"ev_nv_{k}",
+                                 placeholder="Ej. El cliente pidió adelantar el montaje una hora. Lo aprobado en la cotización no cambia; aquí solo se anota lo nuevo.")
 
         if st.button("Guardar datos del evento", type="primary", key=f"ev_save_{k}"):
             fm = lambda d: d.strftime("%d/%m/%Y")
@@ -1398,7 +1445,9 @@ def bloque_evento(cot, sufijo):
             ss.eventos[cod] = {
                 "fecha_entrega": f_ent.strftime("%Y-%m-%d"), "invitados": str(inv) if inv else "", "lugar": lugar, "direccion": direccion, "lat": (ss.get(pkey) or {}).get("lat"), "lng": (ss.get(pkey) or {}).get("lng"),
                 "ubicacion": ubic, "horario": "\n".join(lineas), "tematica": tema, "recibe": recibe, "telefono_recibe": tel,
-                "montaje": mon, "enlace": enlace.strip(), "referencia": referencia.strip(),
+                "montaje": mon, "novedades": novedades.strip(),
+                "inclusion": {"vegetarianos": int(vegt), "veganos": int(vega), "sin_gluten": int(glut), "alergias": int(aler), "nota_ali": nota_ali.strip(),
+                              "movilidad": int(movi), "visual": int(visu), "auditiva": int(audi), "otra_acc": int(otra), "nota_acc": nota_acc.strip()}, "enlace": enlace.strip(), "referencia": referencia.strip(),
                 "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
                 "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}" if mon == "Sí" else "No aplica", "documento": doc_in, "otros": otros, "observacion": obs,
                 "f_montaje": f_mon.strftime("%Y-%m-%d"), "h_montaje": f"{h_mon:%H:%M}",
@@ -2111,11 +2160,13 @@ elif menu == "Nueva cotización":
 
     with st.container(border=True, key="card_5"):
         st.markdown("<div class='section-title'>Información del evento</div>", unsafe_allow_html=True)
-        c1, c2, c3, c4, c5 = st.columns([1.5, 2, 2.5, 1.5, 1.5])
+        c1, c2, c3, c4, c6, c5 = st.columns([1.4, 1.8, 2.3, 1.4, 1.1, 1.4])
         cod_cotizacion = c1.text_input("Referencia", value=activa["codigo"] if activa else siguiente_codigo(), key=_k("cod"))
         nombre_evento = c2.text_input("Nombre del evento", value=activa["evento"] if activa else "", key=_k("ev"))
         cliente_sel = c3.selectbox("Cuenta de cliente", lista_cli, key=_k("cli"), **ini_cli)
         fecha_gral = c4.date_input("Fecha", fecha_def, key=_k("fec"))
+        invitados_cot = c6.number_input("Invitados", min_value=0, step=10, value=int(activa.get("invitados", 0)) if activa else 0, key=_k("inv"),
+                                        help="Cantidad aproximada de invitados; pasa a las fichas de proveedores")
         estado_cot = c5.selectbox("Estado", ESTADOS_COT, key=_k("est"), **ini_est)
 
     if ss.cot_base is None:   # primera vez que se pinta el formulario: esto es "sin cambios"
@@ -2266,7 +2317,7 @@ elif menu == "Nueva cotización":
                 ci.markdown(f"<div class='invoice-container'><div class='invoice-row'><span>Subtotal</span><span>${s_com:,.2f}</span></div><div class='invoice-row'><span>IVA 15%</span><span>${iva_cli:,.2f}</span></div><div class='invoice-total'><span>TOTAL INVERSIÓN</span><span>${t_cli:,.2f}</span></div></div>", unsafe_allow_html=True)
                 c_save = c_pdf = c_acc
                 if c_save.button("Guardar cotización", use_container_width=True, type="primary", key="btn_save"):
-                    if guardar_cotizacion(activa, cod_cotizacion, nombre_evento, cliente_sel, fecha_gral, estado_cot, t_cli):
+                    if guardar_cotizacion(activa, cod_cotizacion, nombre_evento, cliente_sel, fecha_gral, estado_cot, t_cli, invitados_cot):
                         st.toast("Cotización guardada. Ya puedes generar el PDF.")
 
                 # El PDF se habilita cuando la cotización está guardada y sin cambios pendientes (así siempre refleja lo guardado)
@@ -2378,9 +2429,12 @@ elif menu == MENU_PROV:
                             h1, h2 = st.columns(2)
                             pago = h1.text_input("Forma de pago", fp["pago"], key=f"fp_p_{n}_{cod}")
                             fac = h2.text_input("Factura", fp["factura"], key=f"fp_f_{n}_{cod}")
+                            ali_fi = st.segmented_control("¿Esta ficha lleva las necesidades de alimentación (vegetarianos, alergias)?", ["Sí", "No"],
+                                                          default="Sí" if fp.get("alimentacion", True) else "No", key=f"fp_al_{n}_{cod}") or "Sí"
+                            st.caption("La accesibilidad siempre se incluye. Apaga la alimentación solo si el servicio no tiene relación con comida.")
                             if st.form_submit_button("Guardar ficha", type="primary"):
                                 ss.fichas[clave] = {"servicio": serv, "total": tot, "abono": abo, "garantia": gar, "transporte": tra,
-                                                    "pago": pago, "factura": fac, "firma": firma_items(items)}
+                                                    "pago": pago, "factura": fac, "alimentacion": ali_fi == "Sí", "firma": firma_items(items)}
                                 st.rerun()
                     d1, d2 = st.columns(2)
                     d1.download_button("Ficha de contratación (PDF)", data=pdf_ficha(cot, prov, ev, fp) if listo_evento else b"", disabled=not listo_evento,
