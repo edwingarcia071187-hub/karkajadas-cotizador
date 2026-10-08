@@ -1401,22 +1401,27 @@ def bloque_evento(cot, sufijo):
         st.markdown("<div class='sec-sub'>Inclusión y necesidades especiales</div>", unsafe_allow_html=True)
         st.caption("Solo cantidades de personas, sin nombres. Sale en las fichas de los proveedores para que se preparen.")
         inc0 = ev.get("inclusion") or {}
-        st.markdown("<span class='col-head'>Alimentación</span>", unsafe_allow_html=True)
-        i1, i2, i3, i4 = st.columns(4)
-        vegt = i1.number_input("Vegetarianos", min_value=0, step=1, value=int(inc0.get("vegetarianos", 0)), key=f"in_v_{k}")
-        vega = i2.number_input("Veganos", min_value=0, step=1, value=int(inc0.get("veganos", 0)), key=f"in_vg_{k}")
-        glut = i3.number_input("Sin gluten (celíacos)", min_value=0, step=1, value=int(inc0.get("sin_gluten", 0)), key=f"in_g_{k}")
-        aler = i4.number_input("Con alergias alimentarias", min_value=0, step=1, value=int(inc0.get("alergias", 0)), key=f"in_a_{k}")
-        nota_ali = st.text_input("Detalle de alergias u otras restricciones (opcional)", inc0.get("nota_ali", ""), key=f"in_na_{k}",
-                                 placeholder="Ej. Alergia a mariscos y maní; una persona sin lactosa")
-        st.markdown("<span class='col-head'>Accesibilidad</span>", unsafe_allow_html=True)
-        j1, j2, j3, j4 = st.columns(4)
-        movi = j1.number_input("Movilidad reducida o silla de ruedas", min_value=0, step=1, value=int(inc0.get("movilidad", 0)), key=f"in_m_{k}")
-        visu = j2.number_input("Discapacidad visual", min_value=0, step=1, value=int(inc0.get("visual", 0)), key=f"in_vi_{k}")
-        audi = j3.number_input("Discapacidad auditiva", min_value=0, step=1, value=int(inc0.get("auditiva", 0)), key=f"in_au_{k}")
-        otra = j4.number_input("Otra necesidad", min_value=0, step=1, value=int(inc0.get("otra_acc", 0)), key=f"in_o_{k}")
-        nota_acc = st.text_input("Qué se necesita (opcional)", inc0.get("nota_acc", ""), key=f"in_nc_{k}",
-                                 placeholder="Ej. Rampa en el ingreso, espacio frente al escenario, intérprete de lengua de señas")
+        hay = any(v for v in inc0.values())
+        tiene_inc = st.segmented_control("¿El evento tiene personas con necesidades especiales?", ["Sí", "No"], default="Sí" if hay else "No", key=f"in_si_{k}") or "No"
+        vegt = vega = glut = aler = movi = visu = audi = otra = 0
+        nota_ali = nota_acc = ""
+        if tiene_inc == "Sí":
+            st.markdown("<span class='col-head'>Alimentación</span>", unsafe_allow_html=True)
+            i1, i2, i3, i4 = st.columns(4)
+            vegt = i1.number_input("Vegetarianos", min_value=0, step=1, value=int(inc0.get("vegetarianos", 0)), key=f"in_v_{k}")
+            vega = i2.number_input("Veganos", min_value=0, step=1, value=int(inc0.get("veganos", 0)), key=f"in_vg_{k}")
+            glut = i3.number_input("Sin gluten (celíacos)", min_value=0, step=1, value=int(inc0.get("sin_gluten", 0)), key=f"in_g_{k}")
+            aler = i4.number_input("Con alergias alimentarias", min_value=0, step=1, value=int(inc0.get("alergias", 0)), key=f"in_a_{k}")
+            nota_ali = st.text_input("Detalle de alergias u otras restricciones (opcional)", inc0.get("nota_ali", ""), key=f"in_na_{k}",
+                                     placeholder="Ej. Alergia a mariscos y maní; una persona sin lactosa")
+            st.markdown("<span class='col-head'>Accesibilidad</span>", unsafe_allow_html=True)
+            j1, j2, j3, j4 = st.columns(4)
+            movi = j1.number_input("Movilidad reducida o silla de ruedas", min_value=0, step=1, value=int(inc0.get("movilidad", 0)), key=f"in_m_{k}")
+            visu = j2.number_input("Discapacidad visual", min_value=0, step=1, value=int(inc0.get("visual", 0)), key=f"in_vi_{k}")
+            audi = j3.number_input("Discapacidad auditiva", min_value=0, step=1, value=int(inc0.get("auditiva", 0)), key=f"in_au_{k}")
+            otra = j4.number_input("Otra necesidad", min_value=0, step=1, value=int(inc0.get("otra_acc", 0)), key=f"in_o_{k}")
+            nota_acc = st.text_input("Qué se necesita (opcional)", inc0.get("nota_acc", ""), key=f"in_nc_{k}",
+                                     placeholder="Ej. Rampa en el ingreso, espacio frente al escenario, intérprete de lengua de señas")
 
         st.markdown("<div class='sec-sub'>Quién recibe y requisitos</div>", unsafe_allow_html=True)
         c2, c3 = st.columns(2)
