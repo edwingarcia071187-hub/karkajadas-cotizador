@@ -933,7 +933,7 @@ def evento_inicial(cot):
         "fecha_entrega": min(i["fecha"] for i in cot["items"]), "invitados": str(cot.get("invitados", "") or ""), "lugar": "",
         "direccion": dirs[0]["direccion"] if dirs else "", "ubicacion": "Pendiente", "horario": "", "tematica": cot["evento"],
         "recibe": con[0]["nombre"] if con else "", "telefono_recibe": con[0]["telefono"] if con else "",
-        "montaje": "Sí", "hora_montaje": "", "desmontaje": "", "documento": "Cédula de identidad", "otros": "No aplica",
+        "montaje": "Sí", "hora_montaje": "", "desmontaje": "", "documento": "Cédula de identidad",
         "observacion": OBS_BASE,
     }
 
@@ -1000,7 +1000,7 @@ def pdf_ficha(cot, prov, ev, fp):
         ("SALDO PENDIENTE:", dinero(saldo)), ("GARANTÍA", dinero(fp["garantia"])), ("TRANSPORTE", fp["transporte"]),
         ("FORMA DE PAGO:", fp["pago"]), ("FACTURA:", fp["factura"]), ("PERSONA QUE RECIBE", ev["recibe"]),
         ("TELEFONO PERSONA QUE RECIBE", ev["telefono_recibe"]), ("MONTAJE", ev["montaje"]), ("HORA DEL MONTAJE", ev["hora_montaje"]),
-        ("DESMONTAJE", ev["desmontaje"]), ("DOCUMENTO REQUERIDO PARA EL INGRESO", ev["documento"]), ("OTROS", ev["otros"]),
+        ("DESMONTAJE", ev["desmontaje"]), ("DOCUMENTO REQUERIDO PARA EL INGRESO", ev["documento"]),
         ("INCLUSIÓN Y ACCESIBILIDAD:", texto_inclusion(ev, fp.get("alimentacion", True))),
     ]
     buf = BytesIO()
@@ -1427,7 +1427,6 @@ def bloque_evento(cot, sufijo):
         docs = DOCUMENTOS_INGRESO if ev["documento"] in DOCUMENTOS_INGRESO or not ev["documento"] else DOCUMENTOS_INGRESO + [ev["documento"]]
         doc_in = u2.selectbox("Documento requerido para el ingreso", docs, index=docs.index(ev["documento"]) if ev["documento"] in docs else 0,
                               accept_new_options=True, key=f"ev_di_{k}")
-        otros = st.text_input("Otros", ev["otros"], key=f"ev_o_{k}")
         obs = st.text_area("Observaciones generales", ev["observacion"], height=110, key=f"ev_ob_{k}")
 
         if st.button("Guardar datos del evento", type="primary", key=f"ev_save_{k}"):
@@ -1447,7 +1446,7 @@ def bloque_evento(cot, sufijo):
                 "inclusion": {"vegetarianos": int(vegt), "veganos": int(vega), "sin_gluten": int(glut), "alergias": int(aler), "nota_ali": nota_ali.strip(),
                               "movilidad": int(movi), "visual": int(visu), "auditiva": int(audi), "otra_acc": int(otra), "nota_acc": nota_acc.strip()}, "enlace": enlace.strip(), "referencia": referencia.strip(),
                 "hora_montaje": f"{fecha_larga(f_mon)} a partir de las {_hh(h_mon)}" if mon == "Sí" else "No aplica",
-                "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}" if mon == "Sí" else "No aplica", "documento": doc_in, "otros": otros, "observacion": obs,
+                "desmontaje": f"{fecha_larga(f_des)} a partir de las {_hh(h_des)}" if mon == "Sí" else "No aplica", "documento": doc_in, "observacion": obs,
                 "f_montaje": f_mon.strftime("%Y-%m-%d"), "h_montaje": f"{h_mon:%H:%M}",
                 "f_evento": f_eve.strftime("%Y-%m-%d"), "h_ini": f"{h_ini:%H:%M}", "h_fin": f"{h_fin:%H:%M}",
                 "f_desm": f_des.strftime("%Y-%m-%d"), "h_desm": f"{h_des:%H:%M}", "obs_horario": obs_h.strip()}
