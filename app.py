@@ -1188,6 +1188,7 @@ def bloque_evento(cot, sufijo):
             u = ss.get(pkey)
             if u and u.get("ok"):
                 ss[f"ev_d_{k}"] = u["calles"]
+                ss[f"ev_e_{k}"] = f"https://www.google.com/maps?q={u['lat']:.6f},{u['lng']:.6f}"   # enlace del punto elegido
                 ss[f"lug_{k}"] = u.get("nombre", "")
                 ss[pkey] = {**u, "aceptada": True}
 
@@ -1215,7 +1216,8 @@ def bloque_evento(cot, sufijo):
         m1, m2 = st.columns([1.7, 1])
         with m1:
             if folium is None:
-                st.info("El mapa interactivo no está disponible. Escribe la dirección a mano.")
+                st.warning("Falta instalar el componente del mapa para poder hacer clic en él: sube el archivo requirements.txt a GitHub y reinicia la app. Mientras tanto se muestra una vista previa.")
+                st.iframe(f"https://maps.google.com/maps?q={u['lat']},{u['lng']}&z=17&output=embed&hl=es" if u else "https://maps.google.com/maps?q=Quito,Ecuador&z=12&output=embed&hl=es", height=300)
             else:
                 centro = [u["lat"], u["lng"]] if u else [-0.1807, -78.4678]
                 mapa = folium.Map(location=centro, zoom_start=ss.get(f"zm_{k}") or (17 if u else 12), tiles="OpenStreetMap", control_scale=True)
@@ -1243,7 +1245,7 @@ def bloque_evento(cot, sufijo):
                     st.success("Dirección aceptada")
                 else:
                     st.button("Aceptar dirección", type="primary", key=f"ev_ac_{k}", on_click=_aceptar, use_container_width=True)
-                    st.caption("Si no es el punto exacto, haz clic en otro lugar del mapa.")
+                    st.caption("Al aceptar se completan la dirección y el enlace. Si no es el punto exacto, haz clic en otro lugar del mapa.")
 
         d1, d2 = st.columns([1.5, 1])
         direccion = d1.text_area("Dirección", ev["direccion"], height=96, key=f"ev_d_{k}")
