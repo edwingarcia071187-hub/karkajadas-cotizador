@@ -1110,76 +1110,110 @@ def _nombre_en_enlace(url):
 
 def _http(url, leer=0):
     import urllib.request
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 KarkajadasERP/1.0", "Accept-Language": "es"})
+    req = urllib.request.Request(url, headers={"User-Agent": "KarkajadasERP/1.0 (sistema interno de gestion de eventos)", "Accept-Language": "es"})
     with urllib.request.urlopen(req, timeout=8) as r:
         cuerpo = r.read(leer).decode("utf-8", "ignore") if leer else ""
         return r.geturl(), cuerpo
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
-def reverse_punto(lat, lng):
-    """Nombre del lugar y dirección aproximada (calle, sector, ciudad) de un punto del mapa, con OpenStreetMap."""
+@st.cache_resource
+def _memoria():
+    return {}
+
+
+_MEM = _memoria()   # respuestas buenas de los buscadores (las fallas no se guardan, para poder reintentar)
+
+
+def _json_de(url):
     import json as _json
+    _, cuerpo = _http(url, leer=400000)
+    return _json.loads(cuerpo)
+
+
+def _arma_calles(via, num, zona, ciudad, respaldo=""):
+    via = " ".join(x for x in (via, num) if x)
+    return ", ".join(x for x in (via, zona, ciudad) if x) or respaldo
+
+
+def reverse_punto(lat, lng):
+    """Nombre del lugar y dirección aproximada (calle, sector, ciudad) de un punto del mapa. OpenStreetMap, con respaldo en Photon."""
+    clave = ("rev", round(lat, 5), round(lng, 5))
+    if clave in _MEM:
+        return _MEM[clave]
     try:
-        _, js = _http(f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=es&lat={lat}&lon={lng}", leer=200000)
-        d = _json.loads(js)
+        d = _json_de(f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=es&lat={lat}&lon={lng}")
+        a = d.get("address", {})
+        r = {"nombre": d.get("name", ""), "falla": False,
+             "calles": _arma_calles(a.get("road") or a.get("pedestrian") or "", a.get("house_number", ""),
+                                    a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or "",
+                                    a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or "", d.get("display_name", ""))}
+        _MEM[clave] = r
+        return r
+    except Exception:
+        pass
+    try:
+        d = _json_de(f"https://photon.komoot.io/reverse?lat={lat}&lon={lng}")
+        p = d["features"][0]["properties"]
+        r = {"nombre": p.get("name", ""), "falla": False,
+             "calles": _arma_calles(p.get("street", ""), p.get("housenumber", ""), p.get("district") or p.get("locality") or "", p.get("city") or p.get("county") or "")}
+        _MEM[clave] = r
+        return r
     except Exception:
         return {"nombre": "", "calles": "", "falla": True}
-    a = d.get("address", {}) if isinstance(d, dict) else {}
-    via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
-    zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or ""
-    ciudad = a.get("city") or a.get("town") or a.get("village") or a.get("municipality") or ""
-    calles = ", ".join(x for x in (via, zona, ciudad) if x) or (d.get("display_name", "") if isinstance(d, dict) else "")
-    return {"nombre": d.get("name", "") if isinstance(d, dict) else "", "calles": calles, "falla": False}
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
 def buscar_lugar(texto):
-    """Busca un lugar por palabras (ej. «Rincón de Puembo») en Ecuador con OpenStreetMap. Devuelve hasta 5 resultados."""
-    import json as _json
+    """Busca un lugar por palabras (ej. «Rincón de Puembo») en Ecuador. Devuelve (lista de hasta 5 resultados, error)."""
     from urllib.parse import quote_plus as _q
+    clave = ("bus", texto.lower())
+    if clave in _MEM:
+        return _MEM[clave], ""
+    sal, errores = [], []
     try:
-        _, js = _http(f"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=ec&addressdetails=1&accept-language=es&q={_q(texto)}", leer=300000)
-        filas = _json.loads(js)
-    except Exception:
-        return None
-    sal = []
-    for d in filas:
-        a = d.get("address", {})
-        via = " ".join(x for x in (a.get("road") or a.get("pedestrian") or "", a.get("house_number", "")) if x)
-        zona = a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or a.get("village") or ""
-        ciudad = a.get("city") or a.get("town") or a.get("municipality") or a.get("county") or ""
-        calles = ", ".join(x for x in (via, zona, ciudad) if x) or d.get("display_name", "")
-        nombre = d.get("name") or d.get("display_name", "").split(",")[0]
-        sal.append({"ok": True, "lat": float(d["lat"]), "lng": float(d["lon"]), "nombre": nombre, "calles": calles,
-                    "etiqueta": ", ".join(d.get("display_name", "").split(",")[:3])})
-    return sal
+        for d in _json_de(f"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=ec&addressdetails=1&accept-language=es&q={_q(texto)}"):
+            a = d.get("address", {})
+            dn = d.get("display_name", "")
+            sal.append({"ok": True, "lat": float(d["lat"]), "lng": float(d["lon"]), "nombre": d.get("name") or dn.split(",")[0],
+                        "calles": _arma_calles(a.get("road") or a.get("pedestrian") or "", a.get("house_number", ""),
+                                               a.get("suburb") or a.get("neighbourhood") or a.get("quarter") or a.get("village") or "",
+                                               a.get("city") or a.get("town") or a.get("municipality") or a.get("county") or "", dn),
+                        "etiqueta": ", ".join(dn.split(",")[:3])})
+    except Exception as e:
+        errores.append(f"OpenStreetMap: {type(e).__name__} {e}")
+    if not sal:
+        try:   # respaldo: Photon, limitado a Ecuador
+            for f in _json_de(f"https://photon.komoot.io/api/?limit=5&bbox=-81.1,-5.1,-75.1,1.5&q={_q(texto)}")["features"]:
+                p, (lng, lat) = f["properties"], f["geometry"]["coordinates"]
+                zona = p.get("district") or p.get("locality") or ""
+                ciudad = p.get("city") or p.get("county") or ""
+                sal.append({"ok": True, "lat": lat, "lng": lng, "nombre": p.get("name", ""),
+                            "calles": _arma_calles(p.get("street", ""), p.get("housenumber", ""), zona, ciudad, p.get("name", "")),
+                            "etiqueta": ", ".join(x for x in (p.get("name", ""), zona or ciudad, p.get("state", "")) if x)})
+        except Exception as e:
+            errores.append(f"Photon: {type(e).__name__} {e}")
+    if sal:
+        _MEM[clave] = sal
+        return sal, ""
+    return [], ("; ".join(errores) if errores else "")
 
 
-@st.cache_data(show_spinner=False, ttl=3600)
 def resolver_ubicacion(enlace):
-    """Del enlace (Google Maps, Waze, acortado o largo) saca el punto, el nombre del lugar y la dirección aproximada (OpenStreetMap)."""
-    import json as _json
+    """Del enlace (Google Maps, Waze, acortado o largo) saca el punto, el nombre del lugar y la dirección aproximada."""
     from urllib.parse import quote_plus as _q
     try:
         url, cuerpo = _http(enlace, leer=300000)
     except Exception:
-        return {"ok": False, "error": "No pude abrir el enlace. Revisa que esté completo o escribe la dirección a mano."}
+        return {"ok": False, "error": "No pude abrir el enlace. Revisa que esté completo o escribe el nombre del lugar."}
     punto = _coords_en_texto(url) or _coords_en_texto(cuerpo[:300000])
     nombre = _nombre_en_enlace(url)
-    try:
-        if not punto and nombre:   # el enlace solo trae el nombre: se busca el punto
-            _, js = _http(f"https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q={_q(nombre + ', Ecuador')}", leer=200000)
-            r = _json.loads(js)
-            if r:
-                punto = (float(r[0]["lat"]), float(r[0]["lon"]))
-    except Exception:
-        pass
+    if not punto and nombre:   # el enlace solo trae el nombre: se busca el punto
+        lista, _ = buscar_lugar(nombre)
+        if lista:
+            punto = (lista[0]["lat"], lista[0]["lng"])
     if not punto:
         return {"ok": False, "error": "No encontré el punto en ese enlace. Prueba con el enlace de «Compartir» de la ubicación o elige el punto en el mapa."}
     r = reverse_punto(punto[0], punto[1])
-    calles, nombre = r["calles"], nombre or r["nombre"]
-    return {"ok": True, "lat": punto[0], "lng": punto[1], "nombre": nombre, "calles": calles}
+    return {"ok": True, "lat": punto[0], "lng": punto[1], "nombre": nombre or r["nombre"], "calles": r["calles"]}
 
 
 def bloque_evento(cot, sufijo):
@@ -1229,9 +1263,9 @@ def bloque_evento(cot, sufijo):
                 if not lista:
                     ss[f"err_{k}"] = r["error"]
             else:
-                lista = buscar_lugar(texto)
-                if lista is None:
-                    ss[f"err_{k}"] = "No pude consultar el buscador de lugares. Revisa la conexión o elige el punto en el mapa."
+                lista, falla = buscar_lugar(texto)
+                if falla:
+                    ss[f"err_{k}"] = f"No pude consultar el buscador de lugares ({falla}). Elige el punto en el mapa o inténtalo de nuevo en un momento."
                 elif not lista:
                     ss[f"err_{k}"] = f"No encontré «{texto}». Prueba con otras palabras (por ejemplo, el sector y la ciudad) o haz clic en el mapa."
                     lista = None
