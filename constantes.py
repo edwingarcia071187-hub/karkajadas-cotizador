@@ -48,7 +48,8 @@ SIN_FILTRO = {"f_emp": "Todas", "f_mes": "Todos", "f_ciu": "Todas", "b_u": ""}
 EMPRESA_PROPIA = "Karkajadas Group"
 
 
-SERVICIOS_PROPIOS = [("Jenga gigante de madera", 60.0), ("Cuatro en raya gigante", 50.0), ("Rompecabezas gigante", 75.0)]
+SERVICIOS_PROPIOS = [("Jenga gigante de madera", 60.0), ("Cuatro en raya gigante", 50.0), ("Rompecabezas gigante", 75.0),
+                     ("Alquiler de parlante con micrófonos", 90.0), ("Decoración con globos", 120.0), ("Coach de liderazgo", 200.0)]
 
 
 EMPRESA = "Karkajadas Group"
@@ -87,6 +88,7 @@ MENU_PROV = "Órdenes a proveedores"
 
 
 MENU_BODEGA = "Bodega"
+MENU_LOGISTICA = "Logística"
 
 
 MENU_REPORTES = "Reportes financieros"
@@ -97,7 +99,7 @@ SECCIONES = [
     ("pri", None, MENU_PRINCIPAL, "#94A3B8"),
     ("cat", "COTIZADOR DE CATÁLOGOS", list(CATALOGOS), "#5FA8A0"),
     ("dir", "DIRECTORIOS", [MENU_CLIENTES, MENU_PROVEEDORES], "#9B8EC9"),
-    ("ope", "OPERACIONES", [MENU_PROV, MENU_BODEGA], "#C9A961"),
+    ("ope", "OPERACIONES", [MENU_PROV, MENU_BODEGA, MENU_LOGISTICA], "#C9A961"),
     ("emp", "MI EMPRESA", [MENU_PERFIL], "#7C9CBF"),
     ("sop", "SOPORTE Y PROCESOS", MENU_SOPORTE, "#C28A9B"),
 ]

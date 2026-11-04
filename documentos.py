@@ -148,7 +148,7 @@ def pdf_documento(titulo, ref, subtitulo, bloques):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
     AZUL, VERDE = colors.HexColor("#1E3A8A"), colors.HexColor("#059669")
     TINTA, GRIS = colors.HexColor("#0F172A"), colors.HexColor("#64748B")
@@ -207,6 +207,18 @@ def pdf_documento(titulo, ref, subtitulo, bloques):
                                    ("LINEBELOW", (0, 0), (-1, -1), 0.4, LINEA),
                                    ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
             h += [t, Spacer(1, 10)]
+        elif b[0] == "firmas":
+            h += [Spacer(1, 34)]
+            celdas = [[P("", 9)] * len(b[1]), [P(x, 8, True, GRIS, 1) for x in b[1]]]
+            t = Table(celdas, colWidths=[ancho / len(b[1])] * len(b[1]), rowHeights=[16, None])
+            t.setStyle(TableStyle([("LINEABOVE", (0, 1), (-1, 1), 0.6, GRIS), ("LEFTPADDING", (0, 0), (-1, -1), 14),
+                                   ("RIGHTPADDING", (0, 0), (-1, -1), 14), ("VALIGN", (0, 0), (-1, -1), "TOP")]))
+            h += [KeepTogether([t])]
+        elif b[0] == "qr":
+            from logistica_datos import qr_dibujo
+            t = Table([[qr_dibujo(b[1], 2.6 * cm), P(b[2], 8, False, GRIS)]], colWidths=[3.0 * cm, None])
+            t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+            h += [Spacer(1, 6), t]
 
     def pie(canvas, d):
         canvas.saveState()

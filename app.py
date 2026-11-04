@@ -3,17 +3,20 @@ import streamlit as st
 
 st.set_page_config(page_title="Karkajadas Group - ERP", layout="wide", initial_sidebar_state="expanded")
 
-from constantes import CATALOGOS, MENU_BODEGA, MENU_CLIENTES, MENU_PERFIL, MENU_PRINCIPAL, MENU_PROV, MENU_PROVEEDORES, MENU_REPORTES, MENU_SOPORTE
+from constantes import CATALOGOS, MENU_BODEGA, MENU_CLIENTES, MENU_LOGISTICA, MENU_PERFIL, MENU_PRINCIPAL, MENU_PROV, MENU_PROVEEDORES, MENU_REPORTES, MENU_SOPORTE
 from estilos import aplicar_estilos
 from estado import iniciar_estado
+from logistica_datos import atender_enlace_qr, iniciar_logistica
 from menu_lateral import dibujar_menu
-import vista_bodega, vista_catalogos, vista_cotizacion, vista_directorios, vista_obra
+import vista_bodega, vista_catalogos, vista_cotizacion, vista_directorios, vista_logistica, vista_obra
 import vista_ordenes, vista_panel, vista_perfil, vista_reportes
 
 ss = st.session_state
 
 aplicar_estilos()
 iniciar_estado()
+iniciar_logistica()
+atender_enlace_qr()
 menu = dibujar_menu()
 
 if ss.get("aviso_pendiente"):
@@ -35,5 +38,7 @@ elif menu == MENU_PROV:
     vista_ordenes.mostrar(menu)
 elif menu == MENU_BODEGA:
     vista_bodega.mostrar(menu)
+elif menu == MENU_LOGISTICA:
+    vista_logistica.mostrar(menu)
 elif menu in (MENU_CLIENTES, MENU_PROVEEDORES):
     vista_directorios.mostrar(menu)
